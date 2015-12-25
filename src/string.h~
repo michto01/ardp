@@ -1,0 +1,59 @@
+#ifndef ENTEE_STRING_H_
+#define ENTEE_STRING_H_
+
+#include <stdlib.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef struct string_header {
+	size_t capacity;
+	size_t length;
+};
+
+string* string_alloc( size_t length ) {
+	struct string_header *hdr = calloc(1, sizeof(string_header) + length);
+	hdr->capacity = length;
+	hdr->lenght   = 0;
+	return ((string *) hdr) + sizeof(string_header);
+}
+
+void string_dealloc( string* self ) {
+	struct string_header *head = self - sizeof(string_header);
+	free(head);
+}
+
+bool string_resize( string *str, size_t room );
+bool string_push( string *str, int type, int cp );
+bool string_finish( string *str );
+
+typedef struct {
+    char *chars;
+    size_t capacity;
+    size_t length;
+} string;
+
+string *string_new();
+
+void string_free(string *s);
+
+static inline void string_add(string *s, char c) {
+    *(s->chars + s->length++) = c;
+}
+
+bool string_make_room(string *s, size_t room);
+
+bool string_add_checked(string *s, char c);
+
+bool string_add_codepoint(string *s, int cp);
+
+bool string_end(string *s);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ENTEE_STRING_H_ */
