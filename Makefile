@@ -1,4 +1,4 @@
-NAME := entee
+NAME := ardp
 CC := clang
 CFLAGS :=-pedantic \
 	 -fPIC \
@@ -12,20 +12,20 @@ CFLAGS :=-pedantic \
 UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Linux)
-  EXT = so 
+  EXT = so
   LDFLAGS := -shared -Wl,-soname,lib$(NAME).$(EXT)
 endif
 ifeq ($(UNAME_S),Darwin)
   EXT = dylib
-  LDFLAGS := -dynamiclib 
+  LDFLAGS := -dynamiclib
 endif
 
 SRCDIR = src
-EXAMPLE_SOURCES = $(SRCDIR)/example.c
-EXAMPLE_OBJECTS = $(EXAMPLE_SOURCES:%.c=%.o)
+ARDP_SOURCES = $(SRCDIR)/ardp.c
+ARDP_OBJECTS = $(EXAMPLE_SOURCES:%.c=%.o)
 
 LIB_PARSERS := $(wildcard $(SRCDIR)/*.c.rl)
-LIB_SOURCES := $(filter-out $(EXAMPLE_SOURCES), $(wildcard $(SRCDIR)/*.c) $(LIB_PARSERS:%.c.rl=%.c))
+LIB_SOURCES := $(filter-out $(ARDP_SOURCES), $(wildcard $(SRCDIR)/*.c) $(LIB_PARSERS:%.c.rl=%.c))
 LIB_OBJECTS := $(LIB_SOURCES:%.c=%.o)
 
 all: lib
@@ -38,9 +38,9 @@ lib$(NAME).$(EXT): $(LIB_OBJECTS)
 %.c: %.c.rl
 	ragel -C -G2 -o $@ $<
 
-example: lib$(NAME).$(EXT) $(EXAMPLE_OBJECTS)
-	$(CC) $^ -L. -l$(NAME) -lz -lbz2 -Wl,-rpath,. -o $@
+ardp: lib$(NAME).$(EXT) $(ARDP_OBJECTS)
+	$(CC) $(ARDP_SOURCES) $^ -L. -l$(NAME) -lz -lbz2 -Wl,-rpath,. -o build/$@
 
 .PHONEY: clean
 clean:
-	@$(RM) $(EXAMPLE_OBJECTS) example $(LIB_OBJECTS) lib$(NAME).$(EXT)
+	@$(RM) $(ARDP_OBJECTS) ardp $(LIB_OBJECTS) lib$(NAME).$(EXT)

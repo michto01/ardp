@@ -6,3 +6,5 @@
    _:art <http://xmlns.com/foaf/0.1/name> "Art Barstow".
    _:dave <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
    _:dave <http://xmlns.com/foaf/0.1/name> "Dave Beckett".
+
+<http://www.cre8tiv.eu/rdf> <http://www.cre8iv.eu/rdf/define#type> <http://cre8iv.eu/rdf/specs/Document> .

@@ -219,6 +219,8 @@ ardp_parser *ardp_new_parser( void ) {
 }
 
 void ardp_free_parser( ardp_parser *parser ) {
+    if ( parser->string isnt NULL )
+        string_dealloc( parser->string );
     free(parser);
 }
 

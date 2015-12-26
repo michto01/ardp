@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <stdio.h>
-
 #include "util.h"
 
 #ifdef __cplusplus
@@ -21,13 +19,6 @@ typedef struct __attribute__ ((__packed__)) string_header {
 
 
 /**
-  * Debbuging information of the string.
-	*
-	* @param[in] str	String being investigated.
-  */
-void string_debug( utf8 str );
-
-/**
   * Push character into the string.
   *
   * The helper pushing the raw character to the string.
@@ -39,12 +30,8 @@ void string_debug( utf8 str );
 	* @param[in]		 c Character to be appended to string.
 	*/
 static inline void string_push( utf8 s, char c ) {
-		string_header_t* hdr = (string_header_t *) (s - sizeof(string_header_t));
-    //*(s + hdr->length++) = (uint8_t) c;
-		s[hdr->length++] = c;
-
-		//printf("[%c]  (%3zu %3zu ) \n", (int) s[hdr->length - 1], hdr->length -1, hdr->length);
-		//string_debug(s);
+		string_header_t* hdr = &((string_header_t *) s)[-1];
+		s[hdr->length++] = c;   //*(s + hdr->length++) = (uint8_t) c;
 }
 
 /**
@@ -100,11 +87,14 @@ bool string_append_utf8( utf8 *str, int cp );
 	* In the 'C' the string needs to be NULL-terminated with '\0' and this function
 	* provides just that.
 	*
+	* @note we regard this function as safe 'cause the string has preallocated
+	*			  the space to 'allways' accomodate the NUL terminator
+	*
 	* @param[in,out] str String being manipulated.
 	*
 	* @return True if the string was finished corretly, false otherwise.
 	*/
-bool string_finish( utf8 *str );
+void string_finish( utf8 str );
 
 /**
   * Allocate new string with the default length.
@@ -133,8 +123,16 @@ utf8 string_alloc( size_t length );
 	*/
 void string_dealloc( utf8 self );
 
+/**
+  * Debbuging information of the string.
+	*
+	* @param[in] str	String being investigated.
+  */
+void string_debug( utf8 str );
+
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ARDP_STRING_H_ */
+#endif /* ARDP2_STRING_H_ */

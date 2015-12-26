@@ -7,16 +7,18 @@
 #define MAX_PREALLOC     (1024 * 1024)
 #define INITIAL_CAPACITY  8
 
+#define string_hdr(ptr) &((string_header_t *) ptr)[-1]
+
 /*
  * Length of the string.
  */
 size_t string_strlen( utf8 str ) {
-    struct string_header *hdr = (string_header_t *) (str - sizeof(string_header_t));
+    struct string_header *hdr = string_hdr( str );
     return hdr->length;
 }
 
 void string_debug( utf8 str ) {
-    struct string_header *hdr = (string_header_t *) (str - sizeof(string_header_t));
+    struct string_header *hdr = string_hdr( str );
     printf(CLR_GREEN  "Capacity:"
            CLR_RESET  "%3lu" ",\t"
            CLR_YELLOW "Lenght:"
@@ -33,13 +35,17 @@ void string_debug( utf8 str ) {
  * Allocate the string with the prefered length.
  */
 utf8 string_alloc( size_t len ) {
-    // Zero the input (save one memset call) on initialization and initialize
-    // with length specified + space for last '\0' character. ((<-Valgrind))
-    struct string_header *hdr = calloc(1, sizeof(string_header_t) + sizeof(uint8_t) * len + 1);
+    /*
+     *  Zero the input (save one memset call) on initialization and initialize
+     *  with length specified + space for last '\0' character. ((<-Valgrind))
+     *
+     *  sizeof(char) or sizeof(uint8_t) is 1 so we can ommit it.
+     */
+    struct string_header *hdr = calloc(1, sizeof(string_header_t) + len + 1);
     assert( hdr );
     hdr->capacity = len;
     hdr->length   = 0;
-    return ((utf8) hdr) + sizeof(string_header_t);
+    return (utf8) (&hdr[1]);  //((utf8) hdr) + sizeof(string_header_t);
 }
 
 /*
@@ -55,28 +61,20 @@ utf8 string_new() {
 void string_dealloc( utf8 self ) {
     if ( self is NULL )
         return;
-    string_header_t *hdr = (string_header_t *) (self - sizeof(string_header_t));
-    free(hdr);
+    free( string_hdr(self) );
 }
 
 /*
  * Resize string
  */
 bool string_resize( utf8 *str, size_t room ) {
-    utf8* p = str;
-
-    struct string_header *hdr = (string_header_t *) (*p - sizeof(string_header_t));
+    struct string_header *hdr = string_hdr( *str );
 
     size_t cap = hdr->capacity;
     size_t len = hdr->length;
 
-    /* Backup the current capacity if the process fails */
-    size_t bck = cap;
-
-    if ( len + room <= cap ) {
-        //printf("::hit\n");
-        return true;
-    }
+    if ( len + room <= cap )
+        return ARDP_SUCCESS;
 
     cap = len + room;
 
@@ -86,22 +84,18 @@ bool string_resize( utf8 *str, size_t room ) {
         cap += MAX_PREALLOC;
     }
 
-    // Valgrind detect memory leaks as the realloc returns the new pointer
-    // entirelly. To avaid it preset everything in advance.
+    string_header_t* r = realloc( hdr, sizeof(string_header_t) + cap + 1 );
+
+    if ( r is NULL )
+        return ARDP_FAILURE;
+
+    *str = (utf8) r + sizeof(string_header_t);
+    hdr = string_hdr( *str );
     hdr->capacity = cap;
-
-    void * new = realloc( hdr, sizeof(string_header_t) + cap + 1 );
-
-    if ( new is NULL ) {
-        hdr->capacity = bck;
-        return false;
-    }
-
-    *str = (utf8) new + sizeof(string_header_t);
 
     /* Remove garbage if there is any  after the string content */
     memset( *str+len, 0, cap-len + 1 );
-    return true;
+    return ARDP_SUCCESS;
 }
 
 bool string_append_char( utf8 *str, char c ) {
@@ -109,47 +103,43 @@ bool string_append_char( utf8 *str, char c ) {
         return ARDP_FAILURE;
 
     string_push( *str, c );
-    string_finish( str );
+    string_finish( *str );
     return ARDP_SUCCESS;
 }
 
 bool string_append_utf8( utf8 *s, int cp ) {
     if ( cp < 0 or cp > 0x10ffff ) {
-        return false;
+        return ARDP_FAILURE;
     }
     else if ( cp < 0x80 ) {
         return string_append_char(s, cp & 0x7F);
     }
     else if ( cp < 0x800 ) {
         if ( string_resize( s, 2 ) isnt ARDP_SUCCESS )
-            return false;
+            return ARDP_FAILURE;
         string_push( *s, 0xC0 | ((cp >> 6) & 0x1F) );
         string_push( *s, 0x80 | (cp & 0x3F) );
     }
     else if ( cp < 0x10000 ) {
         if ( string_resize( s, 3 ) isnt ARDP_SUCCESS )
-            return false;
+            return ARDP_FAILURE;
         string_push( *s, 0xE0 | ((cp >> 12) & 0xF) );
         string_push( *s, 0x80 | ((cp >> 6)  & 0x3F) );
         string_push( *s, 0x80 |  (cp & 0x3F) );
     }
     else {
         if ( string_resize( s, 4 ) isnt ARDP_SUCCESS )
-            return false;
+            return ARDP_FAILURE;
         string_push( *s, 0xF0 | ((cp >> 18) & 0x7) );
         string_push( *s, 0x80 | ((cp >> 12) & 0x3F) );
         string_push( *s, 0x80 | ((cp >> 6)  & 0x3F) );
         string_push( *s, 0x80 |  (cp & 0x3F) );
     }
-    string_finish( s );
-    return true;
+    string_finish( *s );
+    return ARDP_SUCCESS;
 }
 
-bool string_finish( utf8 *str ) {
-    if ( string_resize(str, 1) )
-        return false;
-
-    string_header_t *hdr = (string_header_t *) (str - sizeof(string_header_t));
-    *(*str + hdr->length) = '\0';
-    return true;
+void string_finish( utf8 str ) {
+    string_header_t *hdr =  string_hdr( str );
+    *(str + hdr->length) = '\0';
 }
