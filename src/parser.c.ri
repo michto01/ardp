@@ -29,7 +29,7 @@ static unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     return i;
 }
 
-static void emit( entee_parser *parser, entee_token_type type ) {
+static void emit( ardp_parser *parser, ardp_token_type type ) {
         parser->handler( type, parser->string, parser->handler_arg );
 }
 
@@ -41,8 +41,8 @@ value int ntriples_error = 0;
 value int ntriples_en_skip_line = 148;
 value int ntriples_en_main = 149;
 
-host( "src/parser.c.rl", 209 ) @{entee_parser *entee_new_parser( void ) {
-    entee_parser *parser              = malloc(sizeof(entee_parser));
+host( "src/parser.c.rl", 209 ) @{ardp_parser *ardp_new_parser( void ) {
+    ardp_parser *parser              = malloc(sizeof(ardp_parser));
                   parser->line        = 1;
                   parser->finished    = 0;
                   parser->string      = NULL;
@@ -53,23 +53,23 @@ host( "src/parser.c.rl", 209 ) @{entee_parser *entee_new_parser( void ) {
     return parser;
 }
 
-void entee_free_parser( entee_parser *parser ) {
+void ardp_free_parser( ardp_parser *parser ) {
     free(parser);
 }
 
-void entee_parser_set_reader( entee_parser *parser, entee_reader reader, void *reader_arg ) {
+void ardp_parser_set_reader( ardp_parser *parser, ardp_reader reader, void *reader_arg ) {
     parser->reader     = reader;
     parser->reader_arg = reader_arg;
 }
 
-void entee_parser_set_handler( entee_parser *parser, entee_handler handler, void *handler_arg ) {
+void ardp_parser_set_handler( ardp_parser *parser, ardp_handler handler, void *handler_arg ) {
     parser->handler     = handler;
     parser->handler_arg = handler_arg;
 }
 
 //typedef unsigned char uchar;
 
-int entee_parser_parse(entee_parser *parser) {
+int ardp_parser_parse(ardp_parser *parser) {
     if ( parser->reader is NULL or parser->handler is NULL )
         return 0;
 
@@ -85,7 +85,7 @@ host( "src/parser.c.rl", 245 ) @{uint8_t buf[BUFSIZE];
     int have = 0;
     int res  = 1;
 
-    entee_reader reader = parser->reader;
+    ardp_reader reader = parser->reader;
 
     while ( parser->finished is 0 ) {
         uint8_t *pe;
@@ -787,11 +787,11 @@ goto ctr12;
 	goto ctr0;
 }
 ctr11:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st7;
 ctr189:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ARDP_BLANK_NODE); }$
 
 	goto st7;
 st7:
@@ -825,11 +825,11 @@ goto st8;
 	goto ctr0;
 }
 ctr12:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st8;
 ctr191:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ARDP_BLANK_NODE); }$
 
 	goto st8;
 st8:
@@ -1056,7 +1056,7 @@ goto ctr23;
 	goto ctr0;
 }
 ctr20:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st12;
 st12:
@@ -1103,7 +1103,7 @@ goto ctr27;
 	goto ctr0;
 }
 ctr21:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st13;
 st13:
@@ -1313,23 +1313,23 @@ goto ctr37;
 	goto ctr0;
 }
 ctr98:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st16;
 ctr34:
-	host( "src/parser.c.rl", 78 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 78 ) ${emit(parser, ARDP_SIMPLE_LITERAL_VALUE); }$
 
 	goto st16;
 ctr43:
-	host( "src/parser.c.rl", 81 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
+	host( "src/parser.c.rl", 81 ) ${emit(parser, ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
 
 	goto st16;
 ctr55:
-	host( "src/parser.c.rl", 82 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
+	host( "src/parser.c.rl", 82 ) ${emit(parser, ARDP_DATATYPE_LITERAL_IRI); }$
 
 	goto st16;
 ctr130:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ARDP_BLANK_NODE); }$
 
 	goto st16;
 st16:
@@ -1363,23 +1363,23 @@ goto st17;
 	goto ctr0;
 }
 ctr99:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st17;
 ctr35:
-	host( "src/parser.c.rl", 78 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 78 ) ${emit(parser, ARDP_SIMPLE_LITERAL_VALUE); }$
 
 	goto st17;
 ctr45:
-	host( "src/parser.c.rl", 81 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
+	host( "src/parser.c.rl", 81 ) ${emit(parser, ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
 
 	goto st17;
 ctr56:
-	host( "src/parser.c.rl", 82 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
+	host( "src/parser.c.rl", 82 ) ${emit(parser, ARDP_DATATYPE_LITERAL_IRI); }$
 
 	goto st17;
 ctr131:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ARDP_BLANK_NODE); }$
 
 	goto st17;
 st17:
@@ -1423,7 +1423,7 @@ goto ctr41;
 	goto ctr0;
 }
 ctr36:
-	host( "src/parser.c.rl", 80 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 80 ) ${emit(parser, ARDP_LANGUAGE_TAGGED_LITERAL_VALUE); }$
 
 	goto st18;
 st18:
@@ -1620,7 +1620,7 @@ goto ctr0;
 	goto ctr0;
 }
 ctr37:
-	host( "src/parser.c.rl", 79 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 79 ) ${emit(parser, ARDP_DATATYPE_LITERAL_VALUE); }$
 
 	goto st22;
 st22:
@@ -2664,7 +2664,7 @@ st_case_49:
 	goto ctr0;
 }
 ctr22:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 
 	goto st50;
 st50:
@@ -3271,7 +3271,7 @@ ctr27:
 
 	goto st65;
 ctr23:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ARDP_IRI); }$
 	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 

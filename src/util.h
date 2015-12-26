@@ -1,5 +1,5 @@
-#ifndef __ENTEE_UTIL_H__
-#define __ENTEE_UTIL_H__
+#ifndef __ARDP_UTIL_H__
+#define __ARDP_UTIL_H__
 
 #define is   ==
 #define isnt !=
@@ -38,4 +38,4 @@ typedef void* var;
 #define CLR_RESET    "\033[0m"
 
 
-#endif /* __ENTEE_UTIL_H__ */
+#endif /* __ARDP_UTIL_H__ */

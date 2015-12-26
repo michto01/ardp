@@ -1,18 +1,18 @@
-#ifndef ENTEE_PARSER_INTERNAL_H_
-#define ENTEE_PARSER_INTERNAL_H_
+#ifndef ARDP_PARSER_INTERNAL_H_
+#define ARDP_PARSER_INTERNAL_H_
 
 #include "string.h"
 #include "util.h"
 
 
-struct entee_parser_s {
+struct ardp_parser_s {
     utf8            string;
     int             line;
     int             finished;
-    entee_reader    reader;
+    ardp_reader    reader;
     var             reader_arg;
-    entee_handler   handler;
+    ardp_handler   handler;
     var             handler_arg;
 };
 
-#endif /* ENTEE_PARSER_INTERNAL_H_ */
+#endif /* ARDP_PARSER_INTERNAL_H_ */

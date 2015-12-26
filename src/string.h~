@@ -1,5 +1,5 @@
-#ifndef ENTEE_STRING_H_
-#define ENTEE_STRING_H_
+#ifndef ARDP_STRING_H_
+#define ARDP_STRING_H_
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -56,4 +56,4 @@ bool string_end(string *s);
 }
 #endif
 
-#endif /* ENTEE_STRING_H_ */
+#endif /* ARDP_STRING_H_ */

@@ -29,7 +29,7 @@ static unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     return i;
 }
 
-static void emit( entee_parser *parser, entee_token_type type ) {
+static void emit( ardp_parser *parser, ardp_token_type type ) {
         parser->handler( type, parser->string, parser->handler_arg );
 }
 
@@ -75,13 +75,13 @@ static void emit( entee_parser *parser, entee_token_type type ) {
             parser->finished = 1;
     }
 
-    action endSimpleLiteral   { emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }
-    action datatypeLiteral    { emit(parser, ENTEE_DATATYPE_LITERAL_VALUE); }
-    action langtagLiteral     { emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE); }
-    action endLangtagLiteral  { emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }
-    action endDatatypeLiteral { emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }
-    action endIRI             { emit(parser, ENTEE_IRI); }
-    action endBlankNode       { emit(parser, ENTEE_BLANK_NODE); }
+    action endSimpleLiteral   { emit(parser, ARDP_SIMPLE_LITERAL_VALUE); }
+    action datatypeLiteral    { emit(parser, ARDP_DATATYPE_LITERAL_VALUE); }
+    action langtagLiteral     { emit(parser, ARDP_LANGUAGE_TAGGED_LITERAL_VALUE); }
+    action endLangtagLiteral  { emit(parser, ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }
+    action endDatatypeLiteral { emit(parser, ARDP_DATATYPE_LITERAL_IRI); }
+    action endIRI             { emit(parser, ARDP_IRI); }
+    action endBlankNode       { emit(parser, ARDP_BLANK_NODE); }
 
     WS    = ' '  | '\t';
     EOL   = '\r' | '\n';
@@ -206,8 +206,8 @@ static void emit( entee_parser *parser, entee_token_type type ) {
     write data;
 }%%
 
-entee_parser *entee_new_parser( void ) {
-    entee_parser *parser              = malloc(sizeof(entee_parser));
+ardp_parser *ardp_new_parser( void ) {
+    ardp_parser *parser              = malloc(sizeof(ardp_parser));
                   parser->line        = 1;
                   parser->finished    = 0;
                   parser->string      = NULL;
@@ -218,23 +218,23 @@ entee_parser *entee_new_parser( void ) {
     return parser;
 }
 
-void entee_free_parser( entee_parser *parser ) {
+void ardp_free_parser( ardp_parser *parser ) {
     free(parser);
 }
 
-void entee_parser_set_reader( entee_parser *parser, entee_reader reader, void *reader_arg ) {
+void ardp_parser_set_reader( ardp_parser *parser, ardp_reader reader, void *reader_arg ) {
     parser->reader     = reader;
     parser->reader_arg = reader_arg;
 }
 
-void entee_parser_set_handler( entee_parser *parser, entee_handler handler, void *handler_arg ) {
+void ardp_parser_set_handler( ardp_parser *parser, ardp_handler handler, void *handler_arg ) {
     parser->handler     = handler;
     parser->handler_arg = handler_arg;
 }
 
 //typedef unsigned char uchar;
 
-int entee_parser_parse(entee_parser *parser) {
+int ardp_parser_parse(ardp_parser *parser) {
     if ( parser->reader is NULL or parser->handler is NULL )
         return 0;
 
@@ -248,7 +248,7 @@ int entee_parser_parse(entee_parser *parser) {
     int have = 0;
     int res  = 1;
 
-    entee_reader reader = parser->reader;
+    ardp_reader reader = parser->reader;
 
     while ( parser->finished is 0 ) {
         uint8_t *pe;

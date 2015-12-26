@@ -32,7 +32,7 @@ int read_bzip(unsigned char* p, unsigned int len, void *arg) {
     return BZ2_bzread(file, p, len);
 }
 
-void handler(entee_token_type type, utf8 s, void *arg) {
+void handler(ardp_token_type type, utf8 s, void *arg) {
 
     switch (state) {
         case STATE_SUBJECT: {
@@ -49,8 +49,8 @@ void handler(entee_token_type type, utf8 s, void *arg) {
         case STATE_OBJECT: {
             printf(CLR_GREEN "\tobject:   " CLR_CYAN " %s\n" CLR_RED "},\n" CLR_RESET, s);
             switch (type) {
-                case ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE:
-                case ENTEE_DATATYPE_LITERAL_VALUE: {
+                case ARDP_LANGUAGE_TAGGED_LITERAL_VALUE:
+                case ARDP_DATATYPE_LITERAL_VALUE: {
                     state = STATE_EXTRA;
                     goto cleanup;
                 }
@@ -115,14 +115,14 @@ int main( int argc, char **argv ) {
     }
 
     // parse
-    entee_parser *parser = entee_new_parser();
+    ardp_parser *parser = ardp_new_parser();
 
-    entee_reader reader  = isBzip ? read_bzip : read_gzip;
+    ardp_reader reader  = isBzip ? read_bzip : read_gzip;
 
-    entee_parser_set_reader  (parser, reader, file);
-    entee_parser_set_handler (parser, handler, NULL);
+    ardp_parser_set_reader  (parser, reader, file);
+    ardp_parser_set_handler (parser, handler, NULL);
 
-//    entee_parser_set_handler(parser, ^void(entee_token_type type, const char *s, void *arg){
+//    ardp_parser_set_handler(parser, ^void(ardp_token_type type, const char *s, void *arg){
 //        switch ( type ) {
 //            case STATE_SUBJECT:
 //                printf("Hello");
@@ -133,8 +133,8 @@ int main( int argc, char **argv ) {
 //        }
 //    }, NULL);
 
-    entee_parser_parse (parser);
-    entee_free_parser  (parser);
+    ardp_parser_parse (parser);
+    ardp_free_parser  (parser);
 
     fprintf(stderr, "triples: %d\n", triples);
 

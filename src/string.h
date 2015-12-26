@@ -1,5 +1,5 @@
-#ifndef ENTEE2_STRING_H_
-#define ENTEE2_STRING_H_
+#ifndef ARDP2_STRING_H_
+#define ARDP2_STRING_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -137,4 +137,4 @@ void string_dealloc( utf8 self );
 }
 #endif
 
-#endif /* ENTEE_STRING_H_ */
+#endif /* ARDP_STRING_H_ */

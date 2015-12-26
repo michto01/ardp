@@ -1,20 +1,20 @@
-#ifndef ENTEE_PARSER_H_
-#define ENTEE_PARSER_H_
+#ifndef ARDP_PARSER_H_
+#define ARDP_PARSER_H_
 
 #include "string.h"
 
-typedef struct entee_parser_s entee_parser;
+typedef struct ardp_parser_s ardp_parser;
 
-entee_parser *entee_new_parser();
+ardp_parser *ardp_new_parser();
 
-void entee_free_parser(entee_parser *parser);
+void ardp_free_parser(ardp_parser *parser);
 
-int entee_parser_parse(entee_parser *parser);
+int ardp_parser_parse(ardp_parser *parser);
 
-typedef int (*entee_reader)(unsigned char *buffer, unsigned len, void *arg);
+typedef int (*ardp_reader)(unsigned char *buffer, unsigned len, void *arg);
 
-void entee_parser_set_reader(entee_parser *parser,
-                             entee_reader reader,
+void ardp_parser_set_reader(ardp_parser *parser,
+                             ardp_reader reader,
                              void *reader_arg);
 
 /*
@@ -23,34 +23,34 @@ Grammar for the triples parser:
 
 TRIPLE = SUBJECT PREDICATE OBJECT
 
-SUBJECT = ENTEE_IRI
-        | ENTEE_BLANK_NODE
+SUBJECT = ARDP_IRI
+        | ARDP_BLANK_NODE
 
-PREDICATE = ENTEE_IRI
+PREDICATE = ARDP_IRI
 
-OBJECT = ENTEE_IRI
-       | ENTEE_BLANK_NODE
-       | ENTEE_SIMPLE_LITERAL_VALUE
-       | ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE
-       | ENTEE_DATATYPE_LITERAL_VALUE ENTEE_DATATYPE_LITERAL_IRI
+OBJECT = ARDP_IRI
+       | ARDP_BLANK_NODE
+       | ARDP_SIMPLE_LITERAL_VALUE
+       | ARDP_LANGUAGE_TAGGED_LITERAL_VALUE ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE
+       | ARDP_DATATYPE_LITERAL_VALUE ARDP_DATATYPE_LITERAL_IRI
 
 */
 
 typedef enum {
-    ENTEE_IRI,
-    ENTEE_BLANK_NODE,
-    ENTEE_SIMPLE_LITERAL_VALUE,
-    ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE,
-    ENTEE_DATATYPE_LITERAL_VALUE,
-    ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE,
-    ENTEE_DATATYPE_LITERAL_IRI,
-} entee_token_type;
+    ARDP_IRI,
+    ARDP_BLANK_NODE,
+    ARDP_SIMPLE_LITERAL_VALUE,
+    ARDP_LANGUAGE_TAGGED_LITERAL_VALUE,
+    ARDP_DATATYPE_LITERAL_VALUE,
+    ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE,
+    ARDP_DATATYPE_LITERAL_IRI,
+} ardp_token_type;
 
-typedef void (*entee_handler)(entee_token_type type, utf8 s, void *arg);
+typedef void (*ardp_handler)(ardp_token_type type, utf8 s, void *arg);
 
-void entee_parser_set_handler(entee_parser *parser,
-                              entee_handler handler,
+void ardp_parser_set_handler(ardp_parser *parser,
+                              ardp_handler handler,
                               void *handler_arg);
 
 
-#endif /* ENTEE_PARSER_H_ */
+#endif /* ARDP_PARSER_H_ */
