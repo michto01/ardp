@@ -3,15 +3,15 @@
 ardp - Another RDF Document parser
 .SH SYNOPSIS
 .B ardp
-[\fB\-o\fR \fIout.txt\fR]
-[\fB\-\-output\fR \fIout.txt\fR]
-.IR input.ttl ...
+[\fB\-f\fR \f input.txt\fR]
+[\fB\-b\fR]
 .SH DESCRIPTION
 .B ardp
 Parses tutle and n-triple files or archives.
 .SH OPTIONS
 .TP
-.BR \-n ", " \-\-bits =\fIBITS\fR
-Set the number of bits to modify.
-Default is one bit.
-
+.BR \-f ", " \-\-file=\fIfilename\fR
+  File to be opened
+.TP
+.BR \-b
+  Use un-archivation with the read (gzip)
