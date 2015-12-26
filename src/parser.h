@@ -1,7 +1,7 @@
 #ifndef ENTEE_PARSER_H_
 #define ENTEE_PARSER_H_
 
-#import "string.h"
+#include "string.h"
 
 typedef struct entee_parser_s entee_parser;
 

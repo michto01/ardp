@@ -1,5 +1,5 @@
-#ifndef ENTEE2_STRING_H_
-#define ENTEE2_STRING_H_
+#ifndef ENTEE_STRING_H_
+#define ENTEE_STRING_H_
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -41,10 +41,13 @@ void string_debug( utf8 str );
 static inline void string_push( utf8 s, char c ) {
 		string_header_t* hdr = (string_header_t *) (s - sizeof(string_header_t));
     //*(s + hdr->length++) = (uint8_t) c;
-		s[hdr->length++] = c;
+		size_t len = hdr->length++;
 
-		//printf("[%c]  (%3zu %3zu ) \n", (int) s[hdr->length - 1], hdr->length -1, hdr->length);
-		//string_debug(s);
+		s[len] = c;
+
+		printf("[%c]  (%3zu %3zu ) \n", (int) s[hdr->length - 1], hdr->length -1, hdr->length);
+		string_debug(s);
+		printf("[]Address of string is:   %20p.\n", s);
 }
 
 /**
@@ -80,7 +83,7 @@ bool string_resize( utf8 *str, size_t size );
 	*
 	* @return True if character was sucessfully appended, false otherwise.
 	*/
-bool string_append_char( utf8 *str, char c );
+bool string_append_char( utf8 str, char c );
 
 /**
   * Append the UTF8 codepoint to the string.
@@ -92,7 +95,7 @@ bool string_append_char( utf8 *str, char c );
 	*
 	* @return True if character was sucessfully appended, false otherwise.
 	*/
-bool string_append_utf8( utf8 *str, int cp );
+bool string_append_utf8( utf8 str, int cp );
 
 /**
   * Close finish the string.
@@ -104,7 +107,7 @@ bool string_append_utf8( utf8 *str, int cp );
 	*
 	* @return True if the string was finished corretly, false otherwise.
 	*/
-bool string_finish( utf8 *str );
+bool string_finish( utf8 str );
 
 /**
   * Allocate new string with the default length.

@@ -33,17 +33,18 @@ int read_bzip(unsigned char* p, unsigned int len, void *arg) {
 }
 
 void handler(entee_token_type type, utf8 s, void *arg) {
+
     switch (state) {
         case STATE_SUBJECT: {
             printf(CLR_RED "{\n" CLR_GREEN  "\tsubject:  " CLR_RESET  " %s\n", s);
             state = STATE_PREDICATE;
             triples += 1;
-            return;
+            goto cleanup;
         }
         case STATE_PREDICATE: {
-            printf(CLR_GREEN "\tpredicate:" CLR_YELLOW  " %s\n", s);
+            printf(CLR_GREEN "\tpredicate:" CLR_YELLOW  " %s\n" CLR_RESET, s);
             state = STATE_OBJECT;
-            return;
+            goto cleanup;
         }
         case STATE_OBJECT: {
             printf(CLR_GREEN "\tobject:   " CLR_CYAN " %s\n" CLR_RED "},\n" CLR_RESET, s);
@@ -51,61 +52,32 @@ void handler(entee_token_type type, utf8 s, void *arg) {
                 case ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE:
                 case ENTEE_DATATYPE_LITERAL_VALUE: {
                     state = STATE_EXTRA;
-                    return;
+                    goto cleanup;
                 }
                 default: {
                     state = STATE_SUBJECT;
-                    return;
+                    goto cleanup;
                 }
             }
-            return;
+            goto cleanup;
         }
         case STATE_EXTRA: {
             printf(CLR_CYAN "+" CLR_MAGENTA "...: %s\n" CLR_RESET, s);
             state = STATE_SUBJECT;
-            return;
+            goto cleanup;
         }
     }
+
+cleanup:
+    //string_dealloc(s);
+    return;
 }
 
-bool isPretty = false;
-
-void test_string(void) {
-    utf8 str = string_new();
-
-    string_debug( str );
-    string_append_char( str, '<'); string_debug( str );
-    string_append_char( str, 'h'); string_debug( str );
-    string_append_char( str, 't'); string_debug( str );
-    string_append_char( str, 't'); string_debug( str );
-    string_append_char( str, 'p'); string_debug( str );
-    string_append_char( str, ':'); string_debug( str );
-    string_append_char( str, '/'); string_debug( str );
-    string_append_char( str, '/'); string_debug( str );
-    string_append_char( str, 'g'); string_debug( str );
-    string_append_char( str, 'o'); string_debug( str );
-    string_append_char( str, 'o'); string_debug( str );
-    string_append_char( str, 'g'); string_debug( str );
-    string_append_char( str, 'l'); string_debug( str );
-    string_append_char( str, 'e'); string_debug( str );
-    string_append_char( str, '.'); string_debug( str );
-    string_append_char( str, 'c'); string_debug( str );
-    string_append_char( str, 'o'); string_debug( str );
-    string_append_char( str, 'm'); string_debug( str );
-    string_append_char( str, '/'); string_debug( str );
-    string_append_char( str, '?'); string_debug( str );
-    string_append_char( str, 's'); string_debug( str );
-    string_append_char( str, '='); string_debug( str );
-    string_append_char( str, 's'); string_debug( str );
-    string_append_char( str, 'a'); string_debug( str );
-    string_append_char( str, 'x'); string_debug( str );
-    string_append_char( str, '>'); string_debug( str );
-
-    string_finish(str);
-    string_dealloc(str);
-}
+extern void test_string(void);
 
 int main( int argc, char **argv ) {
+
+    //test_string();
 
     test_string();
 
@@ -115,18 +87,18 @@ int main( int argc, char **argv ) {
 
     // parse options
     int c;
-    while ((c = getopt(argc, argv, "bf:")) != -1) {
-        switch (c) {
-        case 'f':
-            filename = optarg;
-            break;
-        case 'b':
-            isBzip = true;
-            break;
+    while ( (c = getopt(argc, argv, "bf:")) isnt -1 ) {
+        switch ( c ) {
+            case 'f':
+                filename = optarg;
+                break;
+            case 'b':
+                isBzip = true;
+                break;
 
-        default:
-            printf("Error in parameters.");
-            return 100;//EXIT_FAILURE;
+            default:
+                printf("Error in parameters.");
+                return EXIT_FAILURE;
         }
     }
 
@@ -137,22 +109,18 @@ int main( int argc, char **argv ) {
     // open
     void *file = ( isBzip ? BZ2_bzopen(filename, "rb") : gzopen(filename, "rb") );
 
-    if (!file) {
+    if ( !file ) {
         fprintf(stderr, "Unable to open file \"%s\"", filename);
         return EXIT_FAILURE;
     }
 
-
-    printf("Hello I am still running\n");
-
     // parse
     entee_parser *parser = entee_new_parser();
 
-    entee_reader reader = isBzip ? read_bzip : read_gzip;
+    entee_reader reader  = isBzip ? read_bzip : read_gzip;
 
-    entee_parser_set_reader(parser, reader, file);
-
-    entee_parser_set_handler(parser, handler, NULL);
+    entee_parser_set_reader  (parser, reader, file);
+    entee_parser_set_handler (parser, handler, NULL);
 
 //    entee_parser_set_handler(parser, ^void(entee_token_type type, const char *s, void *arg){
 //        switch ( type ) {
@@ -171,10 +139,10 @@ int main( int argc, char **argv ) {
     fprintf(stderr, "triples: %d\n", triples);
 
     // close
-    if (isBzip) {
+    if ( isBzip ) {
         BZ2_bzclose(file);
     } else {
-        if (!gzeof(file)) {
+        if ( gzeof(file) is 0 ) {
             int err;
             const char *error_string = gzerror(file, &err);
             if (err) {

@@ -7,6 +7,8 @@
 #define MAX_PREALLOC     (1024 * 1024)
 #define INITIAL_CAPACITY  8
 
+
+#define DEBUG 1
 /*
  * Length of the string.
  */
@@ -16,6 +18,8 @@ size_t string_strlen( utf8 str ) {
 }
 
 void string_debug( utf8 str ) {
+    return;
+
     struct string_header *hdr = (string_header_t *) (str - sizeof(string_header_t));
     printf(CLR_GREEN  "Capacity:"
            CLR_RESET  "%3lu" ",\t"
@@ -33,9 +37,7 @@ void string_debug( utf8 str ) {
  * Allocate the string with the prefered length.
  */
 utf8 string_alloc( size_t len ) {
-    // Zero the input (save one memset call) on initialization and initialize
-    // with length specified + space for last '\0' character. ((<-Valgrind))
-    struct string_header *hdr = calloc(1, sizeof(string_header_t) + sizeof(uint8_t) * len + 1);
+    struct string_header *hdr = calloc(1, sizeof(string_header_t) + sizeof(uint8_t) * len);
     assert( hdr );
     hdr->capacity = len;
     hdr->length   = 0;
@@ -90,6 +92,9 @@ bool string_resize( utf8 *str, size_t room ) {
     // entirelly. To avaid it preset everything in advance.
     hdr->capacity = cap;
 
+    #ifdef DEBUG
+    printf("Address of string hdr is: %p\n", hdr);
+    #endif
     void * new = realloc( hdr, sizeof(string_header_t) + cap + 1 );
 
     if ( new is NULL ) {
@@ -97,23 +102,34 @@ bool string_resize( utf8 *str, size_t room ) {
         return false;
     }
 
-    *str = (utf8) new + sizeof(string_header_t);
+    #ifdef DEBUG
+    printf("And the new address of string hdr is: %p\n", new);
+    #endif
+    #ifdef DEBUG
+    printf("Address of string is:     %20p and is pointer by: %p\n", *str, str);
+    #endif
 
+    *str = (utf8) new + sizeof(string_header_t);
+    #ifdef DEBUG
+    printf("New address of string is: %20p and is pointed by: %p\n", *str,str);
+    #endif
     /* Remove garbage if there is any  after the string content */
     memset( *str+len, 0, cap-len + 1 );
     return true;
 }
 
-bool string_append_char( utf8 *str, char c ) {
-    if ( string_resize(str, 1) isnt ARDP_SUCCESS )
+bool string_append_char( utf8 str, char c ) {
+    if ( string_resize(&str, 1) isnt ARDP_SUCCESS )
         return ARDP_FAILURE;
 
-    string_push( *str, c );
-    string_finish( str );
+    string_push( str, c );
     return ARDP_SUCCESS;
 }
 
-bool string_append_utf8( utf8 *s, int cp ) {
+bool string_append_utf8( utf8 s, int cp ) {
+    #ifdef DEBUG
+    printf("{} Address of string is: %p\n", s);
+    #endif
     if ( cp < 0 or cp > 0x10ffff ) {
         return false;
     }
@@ -121,35 +137,34 @@ bool string_append_utf8( utf8 *s, int cp ) {
         return string_append_char(s, cp & 0x7F);
     }
     else if ( cp < 0x800 ) {
-        if ( string_resize( s, 2 ) isnt ARDP_SUCCESS )
+        if ( string_resize( &s, 2 ) isnt ARDP_SUCCESS )
             return false;
-        string_push( *s, 0xC0 | ((cp >> 6) & 0x1F) );
-        string_push( *s, 0x80 | (cp & 0x3F) );
+        string_push( s, 0xC0 | ((cp >> 6) & 0x1F) );
+        string_push( s, 0x80 | (cp & 0x3F) );
     }
     else if ( cp < 0x10000 ) {
-        if ( string_resize( s, 3 ) isnt ARDP_SUCCESS )
+        if ( string_resize( &s, 3 ) isnt ARDP_SUCCESS )
             return false;
-        string_push( *s, 0xE0 | ((cp >> 12) & 0xF) );
-        string_push( *s, 0x80 | ((cp >> 6)  & 0x3F) );
-        string_push( *s, 0x80 |  (cp & 0x3F) );
+        string_push( s, 0xE0 | ((cp >> 12) & 0xF) );
+        string_push( s, 0x80 | ((cp >> 6)  & 0x3F) );
+        string_push( s, 0x80 |  (cp & 0x3F) );
     }
     else {
-        if ( string_resize( s, 4 ) isnt ARDP_SUCCESS )
+        if ( string_resize( &s, 4 ) isnt ARDP_SUCCESS )
             return false;
-        string_push( *s, 0xF0 | ((cp >> 18) & 0x7) );
-        string_push( *s, 0x80 | ((cp >> 12) & 0x3F) );
-        string_push( *s, 0x80 | ((cp >> 6)  & 0x3F) );
-        string_push( *s, 0x80 |  (cp & 0x3F) );
+        string_push( s, 0xF0 | ((cp >> 18) & 0x7) );
+        string_push( s, 0x80 | ((cp >> 12) & 0x3F) );
+        string_push( s, 0x80 | ((cp >> 6)  & 0x3F) );
+        string_push( s, 0x80 |  (cp & 0x3F) );
     }
-    string_finish( s );
     return true;
 }
 
-bool string_finish( utf8 *str ) {
-    if ( string_resize(str, 1) )
+bool string_finish( utf8 str ) {
+    if ( string_resize(&str, 1) )
         return false;
 
     string_header_t *hdr = (string_header_t *) (str - sizeof(string_header_t));
-    *(*str + hdr->length) = '\0';
+    *(str + hdr->length) = '\0';
     return true;
 }

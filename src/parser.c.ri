@@ -12,7 +12,7 @@ host( "src/parser.c.rl", 1 ) @{#include <string.h>
 // TODO:
 // - error handling, also when string methods fail
 
-unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
+static unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     unsigned int i = 0;
 
     for ( unsigned int j = 0; j < len; j++ ) {
@@ -29,12 +29,8 @@ unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     return i;
 }
 
-void emit( entee_parser *parser, entee_token_type type ) {
-    if ( string_finish( parser->string) isnt true ) {
-        parser->finished = 1;
-    } else {
+static void emit( entee_parser *parser, entee_token_type type ) {
         parser->handler( type, parser->string, parser->handler_arg );
-    }
 }
 
 }@
@@ -45,7 +41,7 @@ value int ntriples_error = 0;
 value int ntriples_en_skip_line = 148;
 value int ntriples_en_main = 149;
 
-host( "src/parser.c.rl", 211 ) @{entee_parser *entee_new_parser( void ) {
+host( "src/parser.c.rl", 209 ) @{entee_parser *entee_new_parser( void ) {
     entee_parser *parser              = malloc(sizeof(entee_parser));
                   parser->line        = 1;
                   parser->finished    = 0;
@@ -74,9 +70,8 @@ void entee_parser_set_handler( entee_parser *parser, entee_handler handler, void
 //typedef unsigned char uchar;
 
 int entee_parser_parse(entee_parser *parser) {
-    if ( parser->reader is NULL or parser->handler is NULL ) {
+    if ( parser->reader is NULL or parser->handler is NULL )
         return 0;
-    }
 
     int cs;
 
@@ -84,7 +79,7 @@ int entee_parser_parse(entee_parser *parser) {
 	{
 	cs = ntriples_start;
 	}
-host( "src/parser.c.rl", 248 ) @{uint8_t buf[BUFSIZE];
+host( "src/parser.c.rl", 245 ) @{uint8_t buf[BUFSIZE];
     uint8_t *mark = 0;
 
     int have = 0;
@@ -423,14 +418,14 @@ host( "src/parser.c.rl", 248 ) @{uint8_t buf[BUFSIZE];
 	}
 	goto st_out;
 ctr2:
-	host( "src/parser.c.rl", 61 ) ${parser->line++;
+	host( "src/parser.c.rl", 57 ) ${parser->line++;
     }$
 
 	goto st149;
 ctr40:
-	host( "src/parser.c.rl", 57 ) ${// TODO: call handler?
+	host( "src/parser.c.rl", 53 ) ${// TODO: call handler?
     }$
-	host( "src/parser.c.rl", 61 ) ${parser->line++;
+	host( "src/parser.c.rl", 57 ) ${parser->line++;
     }$
 
 	goto st149;
@@ -489,7 +484,7 @@ goto ctr5;
 	goto ctr0;
 }
 ctr0:
-	host( "src/parser.c.rl", 201 ) ${// TODO: failed on line parser->line
+	host( "src/parser.c.rl", 199 ) ${// TODO: failed on line parser->line
         printf(_CLR_RED "[ERROR]" _CLR_RESET " on line: %d\n", parser->line );
 //        parser_error_callback(parser->line);
         ${ p = p - 1; }$ ${goto st148;}$}$
@@ -554,7 +549,7 @@ goto ctr5;
 	goto ctr0;
 }
 ctr41:
-	host( "src/parser.c.rl", 57 ) ${// TODO: call handler?
+	host( "src/parser.c.rl", 53 ) ${// TODO: call handler?
     }$
 
 	goto st2;
@@ -605,21 +600,23 @@ st_case_3:
 	goto ctr0;
 }
 ctr6:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st4;
 ctr7:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -674,19 +671,19 @@ goto ctr8;
 	goto ctr0;
 }
 ctr8:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st5;
 ctr169:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -751,9 +748,9 @@ goto ctr0;
 	goto ctr8;
 }
 ctr170:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -790,11 +787,11 @@ goto ctr12;
 	goto ctr0;
 }
 ctr11:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st7;
 ctr189:
-	host( "src/parser.c.rl", 86 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
 
 	goto st7;
 st7:
@@ -828,11 +825,11 @@ goto st8;
 	goto ctr0;
 }
 ctr12:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st8;
 ctr191:
-	host( "src/parser.c.rl", 86 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
 
 	goto st8;
 st8:
@@ -859,21 +856,23 @@ st_case_8:
 	goto ctr0;
 }
 ctr15:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st9;
 ctr16:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -928,19 +927,19 @@ goto ctr17;
 	goto ctr0;
 }
 ctr17:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st10;
 ctr155:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1005,9 +1004,9 @@ goto ctr0;
 	goto ctr17;
 }
 ctr156:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -1057,7 +1056,7 @@ goto ctr23;
 	goto ctr0;
 }
 ctr20:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st12;
 st12:
@@ -1104,7 +1103,7 @@ goto ctr27;
 	goto ctr0;
 }
 ctr21:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st13;
 st13:
@@ -1145,67 +1144,69 @@ goto ctr30;
 	goto ctr28;
 }
 ctr28:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st14;
 ctr31:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st14;
 ctr89:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st14;
 ctr71:
-	host( "src/parser.c.rl", 169 ) ${string_append_char( parser->string, '\"'); }$
+	host( "src/parser.c.rl", 166 ) ${string_append_char( &parser->string, '\"'); }$
 
 	goto st14;
 ctr72:
-	host( "src/parser.c.rl", 170 ) ${string_append_char( parser->string, '\''); }$
+	host( "src/parser.c.rl", 167 ) ${string_append_char( &parser->string, '\''); }$
 
 	goto st14;
 ctr74:
-	host( "src/parser.c.rl", 171 ) ${string_append_char( parser->string, '\\'); }$
+	host( "src/parser.c.rl", 168 ) ${string_append_char( &parser->string, '\\'); }$
 
 	goto st14;
 ctr75:
-	host( "src/parser.c.rl", 165 ) ${string_append_char( parser->string, '\b'); }$
+	host( "src/parser.c.rl", 162 ) ${string_append_char( &parser->string, '\b'); }$
 
 	goto st14;
 ctr76:
-	host( "src/parser.c.rl", 168 ) ${string_append_char( parser->string, '\f'); }$
+	host( "src/parser.c.rl", 165 ) ${string_append_char( &parser->string, '\f'); }$
 
 	goto st14;
 ctr77:
-	host( "src/parser.c.rl", 166 ) ${string_append_char( parser->string, '\n'); }$
+	host( "src/parser.c.rl", 163 ) ${string_append_char( &parser->string, '\n'); }$
 
 	goto st14;
 ctr78:
-	host( "src/parser.c.rl", 167 ) ${string_append_char( parser->string, '\r'); }$
+	host( "src/parser.c.rl", 164 ) ${string_append_char( &parser->string, '\r'); }$
 
 	goto st14;
 ctr79:
-	host( "src/parser.c.rl", 164 ) ${string_append_char( parser->string, '\t'); }$
+	host( "src/parser.c.rl", 161 ) ${string_append_char( &parser->string, '\t'); }$
 
 	goto st14;
 st14:
@@ -1246,10 +1247,12 @@ goto st39;
 	goto ctr31;
 }
 ctr29:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -1257,9 +1260,9 @@ ctr29:
 
 	goto st15;
 ctr90:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -1310,23 +1313,23 @@ goto ctr37;
 	goto ctr0;
 }
 ctr98:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st16;
 ctr34:
-	host( "src/parser.c.rl", 80 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 78 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
 
 	goto st16;
 ctr43:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
+	host( "src/parser.c.rl", 81 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
 
 	goto st16;
 ctr55:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
+	host( "src/parser.c.rl", 82 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
 
 	goto st16;
 ctr130:
-	host( "src/parser.c.rl", 86 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
 
 	goto st16;
 st16:
@@ -1360,23 +1363,23 @@ goto st17;
 	goto ctr0;
 }
 ctr99:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st17;
 ctr35:
-	host( "src/parser.c.rl", 80 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 78 ) ${emit(parser, ENTEE_SIMPLE_LITERAL_VALUE); }$
 
 	goto st17;
 ctr45:
-	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
+	host( "src/parser.c.rl", 81 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_LANGUAGE); }$
 
 	goto st17;
 ctr56:
-	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
+	host( "src/parser.c.rl", 82 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_IRI); }$
 
 	goto st17;
 ctr131:
-	host( "src/parser.c.rl", 86 ) ${emit(parser, ENTEE_BLANK_NODE); }$
+	host( "src/parser.c.rl", 84 ) ${emit(parser, ENTEE_BLANK_NODE); }$
 
 	goto st17;
 st17:
@@ -1420,7 +1423,7 @@ goto ctr41;
 	goto ctr0;
 }
 ctr36:
-	host( "src/parser.c.rl", 82 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 80 ) ${emit(parser, ENTEE_LANGUAGE_TAGGED_LITERAL_VALUE); }$
 
 	goto st18;
 st18:
@@ -1447,21 +1450,23 @@ st_case_18:
 	goto ctr0;
 }
 ctr42:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st19;
 ctr46:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1516,7 +1521,7 @@ goto ctr45;
 	goto ctr0;
 }
 ctr44:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1553,7 +1558,7 @@ st_case_20:
 	goto ctr0;
 }
 ctr47:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1615,7 +1620,7 @@ goto ctr0;
 	goto ctr0;
 }
 ctr37:
-	host( "src/parser.c.rl", 81 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_VALUE); }$
+	host( "src/parser.c.rl", 79 ) ${emit(parser, ENTEE_DATATYPE_LITERAL_VALUE); }$
 
 	goto st22;
 st22:
@@ -1670,21 +1675,23 @@ st_case_24:
 	goto ctr0;
 }
 ctr50:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st25;
 ctr51:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1739,19 +1746,19 @@ goto ctr52;
 	goto ctr0;
 }
 ctr52:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st26;
 ctr67:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -1816,9 +1823,9 @@ goto ctr0;
 	goto ctr52;
 }
 ctr68:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -1855,9 +1862,9 @@ goto ctr56;
 	goto ctr0;
 }
 ctr69:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -1918,7 +1925,7 @@ st_case_29:
 	goto ctr0;
 }
 ctr59:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st30;
@@ -2047,7 +2054,7 @@ st_case_33:
 	goto ctr0;
 }
 ctr70:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st34;
@@ -2235,10 +2242,12 @@ st_case_38:
 	goto ctr0;
 }
 ctr30:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -2246,9 +2255,9 @@ ctr30:
 
 	goto st39;
 ctr91:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -2360,7 +2369,7 @@ st_case_40:
 	goto ctr0;
 }
 ctr81:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st41;
@@ -2489,7 +2498,7 @@ st_case_44:
 	goto ctr0;
 }
 ctr92:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st45;
@@ -2655,7 +2664,7 @@ st_case_49:
 	goto ctr0;
 }
 ctr22:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
 
 	goto st50;
 st50:
@@ -2682,21 +2691,23 @@ st_case_50:
 	goto ctr0;
 }
 ctr93:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st51;
 ctr94:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -2751,19 +2762,19 @@ goto ctr95;
 	goto ctr0;
 }
 ctr95:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
 	goto st52;
 ctr110:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -2828,9 +2839,9 @@ goto ctr0;
 	goto ctr95;
 }
 ctr111:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -2867,9 +2878,9 @@ goto ctr99;
 	goto ctr0;
 }
 ctr112:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -2930,7 +2941,7 @@ st_case_55:
 	goto ctr0;
 }
 ctr102:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st56;
@@ -3059,7 +3070,7 @@ st_case_59:
 	goto ctr0;
 }
 ctr113:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st60;
@@ -3247,10 +3258,12 @@ st_case_64:
 	goto ctr0;
 }
 ctr27:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -3258,11 +3271,13 @@ ctr27:
 
 	goto st65;
 ctr23:
-	host( "src/parser.c.rl", 85 ) ${emit(parser, ENTEE_IRI); }$
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 83 ) ${emit(parser, ENTEE_IRI); }$
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -3385,7 +3400,7 @@ goto ctr129;
 	goto ctr0;
 }
 ctr115:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3522,7 +3537,7 @@ goto ctr129;
 	goto ctr0;
 }
 ctr116:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3555,7 +3570,7 @@ goto ctr0;
 	goto ctr0;
 }
 ctr117:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3569,7 +3584,7 @@ st_case_69:
 	goto ctr115;
 }
 ctr118:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3586,7 +3601,7 @@ st_case_70:
 	goto ctr115;
 }
 ctr132:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3603,7 +3618,7 @@ st_case_71:
 	goto ctr0;
 }
 ctr133:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3623,7 +3638,7 @@ st_case_72:
 	goto ctr115;
 }
 ctr120:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3643,7 +3658,7 @@ st_case_73:
 	goto ctr0;
 }
 ctr121:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3663,7 +3678,7 @@ st_case_74:
 	goto ctr117;
 }
 ctr134:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3709,7 +3724,7 @@ goto ctr138;
 	goto ctr0;
 }
 ctr135:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3734,7 +3749,7 @@ st_case_76:
 	goto ctr0;
 }
 ctr136:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3755,7 +3770,7 @@ st_case_77:
 	goto ctr115;
 }
 ctr137:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3772,7 +3787,7 @@ st_case_78:
 	goto ctr115;
 }
 ctr138:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3789,7 +3804,7 @@ st_case_79:
 	goto ctr115;
 }
 ctr123:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3809,7 +3824,7 @@ st_case_80:
 	goto ctr0;
 }
 ctr139:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3826,7 +3841,7 @@ st_case_81:
 	goto ctr0;
 }
 ctr124:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3840,7 +3855,7 @@ st_case_82:
 	goto ctr117;
 }
 ctr125:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3860,7 +3875,7 @@ st_case_83:
 	goto ctr117;
 }
 ctr126:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3896,7 +3911,7 @@ goto ctr141;
 	goto ctr0;
 }
 ctr140:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3917,7 +3932,7 @@ st_case_85:
 	goto ctr115;
 }
 ctr141:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3934,7 +3949,7 @@ st_case_86:
 	goto ctr115;
 }
 ctr127:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3954,7 +3969,7 @@ st_case_87:
 	goto ctr0;
 }
 ctr142:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3974,7 +3989,7 @@ st_case_88:
 	goto ctr0;
 }
 ctr128:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -3988,7 +4003,7 @@ st_case_89:
 	goto ctr124;
 }
 ctr129:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -4008,7 +4023,7 @@ st_case_90:
 	goto ctr124;
 }
 ctr119:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -4032,7 +4047,7 @@ st_case_91:
 	goto ctr0;
 }
 ctr122:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -4078,7 +4093,7 @@ goto ctr138;
 	goto ctr0;
 }
 ctr143:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -4099,7 +4114,7 @@ st_case_93:
 	goto ctr0;
 }
 ctr144:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -4116,9 +4131,9 @@ st_case_94:
 	goto ctr0;
 }
 ctr157:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -4179,7 +4194,7 @@ st_case_96:
 	goto ctr0;
 }
 ctr147:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st97;
@@ -4308,7 +4323,7 @@ st_case_100:
 	goto ctr0;
 }
 ctr158:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st101;
@@ -4496,9 +4511,9 @@ st_case_105:
 	goto ctr0;
 }
 ctr171:
-	host( "src/parser.c.rl", 49 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
+	host( "src/parser.c.rl", 45 ) ${unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }$
@@ -4559,7 +4574,7 @@ st_case_107:
 	goto ctr0;
 }
 ctr161:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st108;
@@ -4688,7 +4703,7 @@ st_case_111:
 	goto ctr0;
 }
 ctr172:
-	host( "src/parser.c.rl", 45 ) ${mark = p;
+	host( "src/parser.c.rl", 41 ) ${mark = p;
     }$
 
 	goto st112;
@@ -4876,10 +4891,12 @@ st_case_116:
 	goto ctr0;
 }
 ctr5:
-	host( "src/parser.c.rl", 70 ) ${if ( parser->string isnt NULL )
+	host( "src/parser.c.rl", 66 ) ${if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -5002,7 +5019,7 @@ goto ctr188;
 	goto ctr0;
 }
 ctr174:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5145,7 +5162,7 @@ goto ctr188;
 	goto ctr0;
 }
 ctr190:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5268,7 +5285,7 @@ goto ctr188;
 	goto ctr0;
 }
 ctr175:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5301,7 +5318,7 @@ goto ctr0;
 	goto ctr0;
 }
 ctr176:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5315,7 +5332,7 @@ st_case_122:
 	goto ctr174;
 }
 ctr177:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5332,7 +5349,7 @@ st_case_123:
 	goto ctr174;
 }
 ctr192:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5349,7 +5366,7 @@ st_case_124:
 	goto ctr0;
 }
 ctr193:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5369,7 +5386,7 @@ st_case_125:
 	goto ctr174;
 }
 ctr179:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5389,7 +5406,7 @@ st_case_126:
 	goto ctr0;
 }
 ctr180:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5409,7 +5426,7 @@ st_case_127:
 	goto ctr176;
 }
 ctr194:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5455,7 +5472,7 @@ goto ctr198;
 	goto ctr0;
 }
 ctr195:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5480,7 +5497,7 @@ st_case_129:
 	goto ctr0;
 }
 ctr196:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5501,7 +5518,7 @@ st_case_130:
 	goto ctr174;
 }
 ctr197:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5518,7 +5535,7 @@ st_case_131:
 	goto ctr174;
 }
 ctr198:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5535,7 +5552,7 @@ st_case_132:
 	goto ctr174;
 }
 ctr182:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5555,7 +5572,7 @@ st_case_133:
 	goto ctr0;
 }
 ctr199:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5572,7 +5589,7 @@ st_case_134:
 	goto ctr0;
 }
 ctr183:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5586,7 +5603,7 @@ st_case_135:
 	goto ctr176;
 }
 ctr184:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5606,7 +5623,7 @@ st_case_136:
 	goto ctr176;
 }
 ctr185:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5642,7 +5659,7 @@ goto ctr201;
 	goto ctr0;
 }
 ctr200:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5663,7 +5680,7 @@ st_case_138:
 	goto ctr174;
 }
 ctr201:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5680,7 +5697,7 @@ st_case_139:
 	goto ctr174;
 }
 ctr186:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5700,7 +5717,7 @@ st_case_140:
 	goto ctr0;
 }
 ctr202:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5720,7 +5737,7 @@ st_case_141:
 	goto ctr0;
 }
 ctr187:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5734,7 +5751,7 @@ st_case_142:
 	goto ctr183;
 }
 ctr188:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5754,7 +5771,7 @@ st_case_143:
 	goto ctr183;
 }
 ctr178:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5778,7 +5795,7 @@ st_case_144:
 	goto ctr0;
 }
 ctr181:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5824,7 +5841,7 @@ goto ctr198;
 	goto ctr0;
 }
 ctr203:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5845,7 +5862,7 @@ st_case_146:
 	goto ctr0;
 }
 ctr204:
-	host( "src/parser.c.rl", 65 ) ${if ( string_append_char( parser->string, *p ) is false )
+	host( "src/parser.c.rl", 61 ) ${if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }$
 
@@ -5885,9 +5902,9 @@ goto ctr206;
 	goto st148;
 }
 ctr206:
-	host( "src/parser.c.rl", 61 ) ${parser->line++;
+	host( "src/parser.c.rl", 57 ) ${parser->line++;
     }$
-	host( "src/parser.c.rl", 197 ) ${${goto st149;}$}$
+	host( "src/parser.c.rl", 195 ) ${${goto st149;}$}$
 
 	goto st150;
 st150:
@@ -6347,7 +6364,7 @@ st_case_150:
 	case 146: 
 		fallthrough;
 	case 147: 
-	host( "src/parser.c.rl", 201 ) ${// TODO: failed on line parser->line
+	host( "src/parser.c.rl", 199 ) ${// TODO: failed on line parser->line
         printf(_CLR_RED "[ERROR]" _CLR_RESET " on line: %d\n", parser->line );
 //        parser_error_callback(parser->line);
         ${ p = p - 1; }$ ${goto st148;}$}$
@@ -6357,7 +6374,7 @@ st_case_150:
 
 	_out: {}
 	}
-host( "src/parser.c.rl", 278 ) @{if ( cs is ntriples_error ) {
+host( "src/parser.c.rl", 275 ) @{if ( cs is ntriples_error ) {
             res = 0;
             break;
         } else if (mark) {

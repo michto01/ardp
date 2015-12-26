@@ -12,7 +12,7 @@
 // TODO:
 // - error handling, also when string methods fail
 
-unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
+static unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     unsigned int i = 0;
 
     for ( unsigned int j = 0; j < len; j++ ) {
@@ -29,12 +29,8 @@ unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     return i;
 }
 
-void emit( entee_parser *parser, entee_token_type type ) {
-    if ( string_finish( parser->string) isnt true ) {
-        parser->finished = 1;
-    } else {
+static void emit( entee_parser *parser, entee_token_type type ) {
         parser->handler( type, parser->string, parser->handler_arg );
-    }
 }
 
 %%{
@@ -49,7 +45,7 @@ void emit( entee_parser *parser, entee_token_type type ) {
     action unescape {
         unsigned int codepoint = parse_hex( mark, p - mark );
         mark = 0;
-        if ( string_append_utf8( parser->string, codepoint) is 0 ) {
+        if ( string_append_utf8( &parser->string, codepoint) is 0 ) {
             parser->finished = 1;
         }
     }
@@ -63,7 +59,7 @@ void emit( entee_parser *parser, entee_token_type type ) {
     }
 
     action putChar {
-        if ( string_append_char( parser->string, *p ) is false )
+        if ( string_append_char( &parser->string, *p ) is false )
             parser->finished = 1;
     }
 
@@ -71,7 +67,9 @@ void emit( entee_parser *parser, entee_token_type type ) {
         if ( parser->string isnt NULL )
             string_dealloc( parser->string );
 
-        parser->string = string_new();
+        utf8 string = string_new();
+
+        parser->string = string;
 
         if ( parser->string is NULL )
             parser->finished = 1;
@@ -154,22 +152,22 @@ void emit( entee_parser *parser, entee_token_type type ) {
 
     PN_CHARS_U = PN_CHARS_BASE | ('_' | ':') $putChar;
     PN_CHARS   = PN_CHARS_U
-                 | ( '-' | DIGIT | 0x00B7
-                  # 0x0300 .. 0x036F
-                   | 0xCC 0x80..0xFF | 0xCD 0x00..0xAF
-                  # 0x203F .. 0x2040
-                   | 0xE2 0x80 0xBF..0xFF | 0xE2 0x81 0x00..0x80
-                 ) $putChar;
+               | ( '-' | DIGIT | 0x00B7
+                  | 0xCC 0x80..0xFF      | 0xCD 0x00..0xAF        # 0x0300 .. 0x036F
+                  | 0xE2 0x80 0xBF..0xFF | 0xE2 0x81 0x00..0x80   # 0x203F .. 0x2040
+               ) $putChar;
+
     ECHAR  = '\\' .
-            (  ('t'  ${ string_append_char( parser->string, '\t'); })
-             | ('b'  ${ string_append_char( parser->string, '\b'); })
-             | ('n'  ${ string_append_char( parser->string, '\n'); })
-             | ('r'  ${ string_append_char( parser->string, '\r'); })
-             | ('f'  ${ string_append_char( parser->string, '\f'); })
-             | ('"'  ${ string_append_char( parser->string, '\"'); })
-             | ('\'' ${ string_append_char( parser->string, '\''); })
-             | ('\\' ${ string_append_char( parser->string, '\\'); })
+            (  ('t'  ${ string_append_char( &parser->string, '\t'); })
+             | ('b'  ${ string_append_char( &parser->string, '\b'); })
+             | ('n'  ${ string_append_char( &parser->string, '\n'); })
+             | ('r'  ${ string_append_char( &parser->string, '\r'); })
+             | ('f'  ${ string_append_char( &parser->string, '\f'); })
+             | ('"'  ${ string_append_char( &parser->string, '\"'); })
+             | ('\'' ${ string_append_char( &parser->string, '\''); })
+             | ('\\' ${ string_append_char( &parser->string, '\\'); })
              );
+
     UCHAR = '\\' . ( ('u' HEX{4} >mark %unescape) | ('U' HEX{8} >mark %unescape) );
 
     STRING_VALUE     = (^(0x22 | 0x5C | 0xA | 0xD) $putChar | ECHAR | UCHAR)* >startString;
@@ -237,9 +235,8 @@ void entee_parser_set_handler( entee_parser *parser, entee_handler handler, void
 //typedef unsigned char uchar;
 
 int entee_parser_parse(entee_parser *parser) {
-    if ( parser->reader is NULL or parser->handler is NULL ) {
+    if ( parser->reader is NULL or parser->handler is NULL )
         return 0;
-    }
 
     int cs;
 

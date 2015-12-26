@@ -1,6 +1,6 @@
 NAME := entee
 CC := clang
-CFLAGS :=# -pedantic \\ 
+CFLAGS :=-pedantic \
 	 -fPIC \
 	 -std=c99 \
 	 -O3 \
