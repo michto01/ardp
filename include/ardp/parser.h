@@ -1,7 +1,7 @@
-#ifndef ARDP_PARSER_H_
-#define ARDP_PARSER_H_
+#ifndef __ARDP_PARSER_H__
+#define __ARDP_PARSER_H__
 
-#include "string.h"
+#include <ardp/string.h>
 
 typedef struct ardp_parser_s ardp_parser;
 
@@ -53,4 +53,4 @@ void ardp_parser_set_handler(ardp_parser *parser,
                               void *handler_arg);
 
 
-#endif /* ARDP_PARSER_H_ */
+#endif /* __ARDP_PARSER_H__ */

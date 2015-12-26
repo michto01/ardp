@@ -1,5 +1,5 @@
-#ifndef ARDP_PARSER_INTERNAL_H_
-#define ARDP_PARSER_INTERNAL_H_
+#ifndef __ARDP_PARSER_INTERNAL_H__
+#define __ARDP_PARSER_INTERNAL_H__
 
 #include "string.h"
 #include "util.h"
@@ -15,4 +15,4 @@ struct ardp_parser_s {
     var             handler_arg;
 };
 
-#endif /* ARDP_PARSER_INTERNAL_H_ */
+#endif /* __ARDP_PARSER_INTERNAL_H__ */

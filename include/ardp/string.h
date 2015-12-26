@@ -1,5 +1,5 @@
-#ifndef ARDP2_STRING_H_
-#define ARDP2_STRING_H_
+#ifndef __ARDP2_STRING_H__
+#define __ARDP2_STRING_H__
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -135,4 +135,4 @@ void string_debug( utf8 str );
 }
 #endif
 
-#endif /* ARDP2_STRING_H_ */
+#endif /* __ARDP2_STRING_H__ */

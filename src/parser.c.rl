@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
-#include "parser.h"
-#include "parser_internal.h"
-#include "util.h"
+#include <ardp/parser.h>
+#include <ardp/parser_internal.h>
+#include <ardp/util.h>
 
 #define BUFSIZE 0x10000
 

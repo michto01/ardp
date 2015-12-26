@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "string.h"
+#include <ardp/string.h>
 
 bool test_string_addition_with_realloc(void);
 

@@ -1,13 +1,17 @@
+#
+# ARDP - Another RDF document parser Makefile
+#
+
 NAME := ardp
 CC := clang
-CFLAGS :=-pedantic \
-	 -fPIC \
-	 -std=c99 \
-	 -O3 \
-	 -march=native \
-	 -g \
-	 -Wall -Werror -Wextra -Winline \
-	 -Wno-unused-variable -Wno-unused-parameter
+CFLAGS := -pedantic \
+	 				-fPIC \
+	 				-std=c11 \
+	 				-O3 \
+	 				-march=native \
+	 				-g \
+	 				-Wall -Werror -Wextra -Winline \
+	 				-Wno-unused-variable -Wno-unused-parameter
 
 UNAME_S := $(shell uname -s)
 
@@ -20,27 +24,44 @@ ifeq ($(UNAME_S),Darwin)
   LDFLAGS := -dynamiclib
 endif
 
-SRCDIR = src
-ARDP_SOURCES = $(SRCDIR)/ardp.c
-ARDP_OBJECTS = $(EXAMPLE_SOURCES:%.c=%.o)
+# define any directories containing header files other than /usr/include
+#
+INCLUDES := -I/usr/local/include/ardp -I$(PWD)/include
 
-LIB_PARSERS := $(wildcard $(SRCDIR)/*.c.rl)
-LIB_SOURCES := $(filter-out $(ARDP_SOURCES), $(wildcard $(SRCDIR)/*.c) $(LIB_PARSERS:%.c.rl=%.c))
-LIB_OBJECTS := $(LIB_SOURCES:%.c=%.o)
+# Project directories
+SRC_ROOT   = src
+BUILD_ROOT = build
 
-all: lib
+
+
+ARDP_SOURCES = $(SRC_ROOT)/ardp.c
+ARDP_OBJECTS = $(ARDP_SOURCES:$(SRC_ROOT)/%.c=$(BUILD_ROOT)/%.o)
+
+LIB_PARSERS := $(wildcard $(SRC_ROOT)/*.c.rl)
+LIB_SOURCES := $(filter-out $(ARDP_SOURCES), $(wildcard $(SRC_ROOT)/*.c) $(LIB_PARSERS:%.c.rl=%.c))
+LIB_OBJECTS := $(patsubst $(SRC_ROOT)/%.c,$(BUILD_ROOT)/%.o, $(LIB_SOURCES))
+
+all: dir lib
+
+dir:
+	mkdir -p $(BUILD_ROOT)
 
 lib: lib$(NAME).$(EXT)
 
+$(LIB_OBJECTS): $(LIB_SOURCES)
+	  @echo "working with:" $<
+		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
 lib$(NAME).$(EXT): $(LIB_OBJECTS)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $(INCLUDES) $^ -o $@
+	mv lib$(NAME).$(EXT) $(BUILD_ROOT)/lib$(NAME).$(EXT)
 
 %.c: %.c.rl
 	ragel -C -G2 -o $@ $<
 
-ardp: lib$(NAME).$(EXT) $(ARDP_OBJECTS)
-	$(CC) $(ARDP_SOURCES) $^ -L. -l$(NAME) -lz -lbz2 -Wl,-rpath,. -o build/$@
+ardp: dir $(BUILD_ROOT)/lib$(NAME).$(EXT) $(ARDP_OBJECTS)
+	$(CC) $(INCLUDES) $^ -L. -l$(NAME) -lz -lbz2 -Wl,-rpath,. -o $(BUILD_ROOT)/$@
 
 .PHONEY: clean
 clean:
-	@$(RM) $(ARDP_OBJECTS) ardp $(LIB_OBJECTS) lib$(NAME).$(EXT)
+	@$(RM) $(ARDP_OBJECTS) ardp $(LIB_OBJECTS) $(BUILD_ROOT)/lib$(NAME).$(EXT)
