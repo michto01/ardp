@@ -1,0 +1,17 @@
+.TH ARDP 1
+.SH NAME
+ardp - Another RDF Document parser
+.SH SYNOPSIS
+.B ardp
+[\fB\-o\fR \fIout.txt\fR]
+[\fB\-\-output\fR \fIout.txt\fR]
+.IR input.ttl ...
+.SH DESCRIPTION
+.B ardp
+Parses tutle and n-triple files or archives.
+.SH OPTIONS
+.TP
+.BR \-n ", " \-\-bits =\fIBITS\fR
+Set the number of bits to modify.
+Default is one bit.
+
