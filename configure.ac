@@ -35,6 +35,8 @@ dnl address for reporting bugs.
 
 AC_INIT([ardp],[1.0.1],[tomas.michalek.st@vsb.cz])
 
+
+
 ARDP_VERSION_MAJOR=1
 ARDP_VERSION_MINOR=0
 ARDP_VERSION_PATCH=1
@@ -54,18 +56,14 @@ AC_SUBST(ARDP_COPYRIGHT,["Copyright (c) 2015-2016 Tomas Michalek <tomas.michalek
 AC_COPYRIGHT([Copyright (c) 2015-2016 Tomas Michalek <tomas.michalek.st@vsb.cz>.])
 
 dnl Indicate that we require autoconf 2.69 or later.
-AC_PREREQ(2.69)
+#AC_PREREQ(2.69)
 
 dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
-AC_CONFIG_SRCDIR([src/ardp.c])
+AC_CONFIG_SRCDIR([src/bin/ardp.c])
 
 # use the clang C compiler for the following checks
 AC_LANG([C])
-
-# Checks for programs.
-#AC_PROG_CC
-AC_PROG_CC(clang)
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -184,6 +182,17 @@ case $ardp_cv_platform_type in
 esac
 
 
+dnl --- Remove the warning of order precedence
+AM_INIT_AUTOMAKE()
+
+
+# Checks for programs.
+#AC_PROG_CC
+AC_PROG_CC(clang)
+AC_PROG_RANLIB
+
+
+
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for libraries.
@@ -209,6 +218,7 @@ AC_CONFIG_FILES([Makefile
                   doc/Makefile
 									tests/Makefile
                   scripts/Makefile
+									examples/Makefile
                   src/Makefile
                   src/bin/Makefile
                   src/lib/Makefile
