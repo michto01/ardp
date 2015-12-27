@@ -1,7 +1,13 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
+
+#ifdef HAVE_STDINT
+ #include <stdint.h>
+#endif
+
 #include <getopt.h>
 #include <zlib.h>
 #include <bzlib.h>
@@ -74,6 +80,10 @@ cleanup:
 }
 
 extern void test_string(void);
+
+void usage() {
+
+}
 
 int main( int argc, char **argv ) {
 

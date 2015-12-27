@@ -20,6 +20,19 @@ Makefile.in
 /stamp-h1
 build/*
 
+/config.h
+/config.log
+/config.status
+
+Makefile
+man/Makefile
+doc/Makefile
+src/Makefile
+src/*/Makefile
+tests/Makefile
+scripts/Makefile
+examples/Makefile
+
 ## C-ignore
 
 # Object files
