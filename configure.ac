@@ -191,85 +191,6 @@ dnl# These checks can be bypassed by passing a flag if necessary on a platform.
 dnl# We have to do these checks here so that we have the configuration
 dnl# of the standard C++ library finished.
 
-AC_ARG_ENABLE(compiler-version-checks,
-              AS_HELP_STRING([--enable-compiler-version-checks],
-                             [Check the version of the host compiler (default is YES)]),,
-                             enableval=default)
-case "$enableval" in
-  no)
-    ;;
-  yes|default)
-    AC_LANG_PUSH([C++])
-    case "$llvm_cv_cxx_compiler" in
-    clang)
-      AC_MSG_CHECKING([whether Clang is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
-#if __clang_major__ < 3 || (__clang_major__ == 5 && __clang_minor__ < 1)
-#error This version of Clang is too old to build ARDP
-#endif
-]])],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           AC_MSG_ERROR([
-The selected Clang compiler is not new enough to build LLVM. Please upgrade to
-Clang 3.5. You may pass --disable-compiler-version-checks to configure to
-bypass these sanity checks.])])
-
-      dnl# Note that libstdc++4.6 is known broken for C++11 builds. The errors
-      dnl# are sometimes deeply confusing though. Here we test for an obvious
-      dnl# incomplete feature in 4.6's standard library that was completed in
-      dnl# 4.7's. We also have to disable this test if 'ENABLE_LIBCPP' is set
-      dnl# because the enable flags don't actually fix CXXFLAGS, they rely on
-      dnl# that happening in the Makefile.
-      if test "$ENABLE_LIBCPP" -eq 0 ; then
-        AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
-        llvm_cv_old_cxxflags="$CXXFLAGS"
-        CXXFLAGS="$CXXFLAGS -std=c++0x"
-        AC_LINK_IFELSE([AC_LANG_SOURCE([[
-#include <atomic>
-std::atomic<float> x(0.0f);
-int main() { return (float)x; }
-]])],
-            [AC_MSG_RESULT([yes])],
-            [AC_MSG_RESULT([no])
-             AC_MSG_ERROR([
-We detected a missing feature in the standard C++ library that was known to be
-missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
-C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
-than 4.7. You will need to update your system and ensure Clang uses the newer
-standard library.
-
-If this error is incorrect or you need to force things to work, you may pass
-'--disable-compiler-version-checks' to configure to bypass this test.])])
-        CXXFLAGS="$llvm_cv_old_cxxflags"
-      fi
-      ;;
-    gcc)
-      AC_MSG_CHECKING([whether GCC is new enough])
-      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
-#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
-#error This version of GCC is too old to build LLVM
-#endif
-]])],
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])
-           AC_MSG_ERROR([
-The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
-to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
-bypass these sanity checks.])])
-      ;;
-    unknown)
-      ;;
-    esac
-    AC_LANG_POP([C++])
-    ;;
-  *)
-    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
-    ;;
-esac
-
-
-
 
 
 
@@ -279,7 +200,7 @@ AM_INIT_AUTOMAKE()
 
 
 # Checks for programs.
-#AC_PROG_CC
+AC_PROG_CC
 AC_PROG_CC(clang)
 AC_PROG_RANLIB
 

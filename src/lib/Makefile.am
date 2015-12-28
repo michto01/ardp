@@ -1,12 +1,15 @@
-AM_CFLAGS= -I../../include -I$(top_srcdir)/include @AM_CXXFLAGS@
+AM_CFLAGS= -I$(top_srcdir)/include
 
 # %.c: %.c.rl
-#SUFFIXES= .c.rl
+SUFFIXES= .c.rl
 
-#.c.c.rl:
-#	ragel -C -G2 -o $@ $<
+#.c.rl:
+#  ragel -C -G2 -o $@ $<
 
-noinst_LIBRARIES=libardpstring.a libardp.a
+.c.c.rl:
+	ragel -C -G2 -o $@ $<
+
+noinst_LIBRARIES= libardpstring.a libardp.a
 
 libardpstring_a_SOURCES= string.c
 
