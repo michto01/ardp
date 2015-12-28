@@ -1,0 +1,28 @@
+Entries are sorted chronologically from oldest to youngest within each release,
+releases are sorted from youngest to oldest.
+
+@version <next>:
+
+- competed switch to autoconf
+
+
+@version 1.0.1:
+
+- Automake tools and project
+- Fat-pointer based string library
+
+@version 0.9.0:
+
+- N-Triple parsing in Ragel
+- added support for the *.tar.gz archives
+- adding custom string library
+
+
+@version 0.8.9:
+
+- ragel switch from test to write pure parser
+
+
+@version 0.8.1:
+
+- initial public release

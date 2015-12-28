@@ -1,14 +1,11 @@
 #!/bin/sh
 #-x
 
-echo "ARDP bootstrap script"
+echo "\nARDP bootstrap script\n"\
+     "=============================================================================="
 
-echo "[info] Running autoheader ..."
-	autoheader
-echo "[info] Running aclocal"
-	aclocal
-echo "[info] Running automake"
-	automake
-echo "[info] Runnning auroreconf"
-	autoreconf
+echo "\x1B[32m[info]\033[0m Running autoheader ..."   ; autoheader
+echo "\x1B[32m[info]\033[0m Running aclocal ..."      ; aclocal
+echo "\x1B[32m[info]\033[0m Running automake ..."     ; automake
+echo "\x1B[32m[info]\033[0m Running autoreconf ..."   ; autoreconf
 

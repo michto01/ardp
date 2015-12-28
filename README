@@ -1,0 +1,3 @@
+ARDP - Another RDF Document parser
+
+Simple commnad line tool to parse RDF datasets in N-Triple and Turtle formats.
