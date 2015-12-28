@@ -29,8 +29,8 @@ dnl===
 dnl=== SECTION 1: Initialization & Setup
 dnl===
 dnl===-----------------------------------------------------------------------===
-dnl Initialize autoconf and define the package name, version number and
-dnl address for reporting bugs.
+dnl# Initialize autoconf and define the package name, version number and
+dnl# address for reporting bugs.
 
 
 AC_INIT([ardp],[1.0.1],[tomas.michalek.st@vsb.cz])
@@ -50,19 +50,20 @@ AC_SUBST([ARDP_VERSION_MAJOR])
 AC_SUBST([ARDP_VERSION_MINOR])
 AC_SUBST([ARDP_VERSION_PATCH])
 
-dnl Provide a copyright substitution and ensure the copyright notice is included
-dnl in the output of --version option of the generated configure script.
+dnl# Provide a copyright substitution and ensure the copyright notice is included
+dnl# in the output of --version option of the generated configure script.
 AC_SUBST(ARDP_COPYRIGHT,["Copyright (c) 2015-2016 Tomas Michalek <tomas.michalek.st@vsb.cz> "])
 AC_COPYRIGHT([Copyright (c) 2015-2016 Tomas Michalek <tomas.michalek.st@vsb.cz>.])
 
-dnl Indicate that we require autoconf 2.69 or later.
+dnl# Indicate that we require autoconf 2.69 or later.
 #AC_PREREQ(2.69)
 
-dnl Verify that the source directory is valid. This makes sure that we are
-dnl configuring LLVM and not some other package (it validates --srcdir argument)
+dnl# Verify that the source directory is valid. This makes sure that we are
+dnl# configuring LLVM and not some other package (it validates --srcdir argument)
 AC_CONFIG_SRCDIR([src/bin/ardp.c])
+#AC_CONFIG_HEADERS([include/config.h])
 
-# use the clang C compiler for the following checks
+dnl# use the clang C compiler for the following checks
 AC_LANG([C])
 
 dnl===-----------------------------------------------------------------------===
@@ -71,12 +72,12 @@ dnl=== SECTION 2: Architecture, target, and host checks
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-dnl Check the target for which we're compiling and the host that will do the
-dnl compilations. This needs to be done early because following tests depend on it.
+dnl# Check the target for which we're compiling and the host that will do the
+dnl# compilations. This needs to be done early because following tests depend on it.
 AC_CANONICAL_TARGET
 
-dnl Determine the platform type and cache its value. This helps us configure
-dnl the System library to the correct build platform.
+dnl# Determine the platform type and cache its value. This helps us configure
+dnl# the System library to the correct build platform.
 AC_CACHE_CHECK([type of operating system we're going to host on],
                [ardp_cv_os_type],
 [case $host in
@@ -136,38 +137,34 @@ AC_CACHE_CHECK([type of operating system we're going to target],
     ardp_cv_target_os_type="Darwin" ;;
   *-*-*bsd*)
     ardp_cv_target_os_type="BSD" ;;
-  *-*-*linux*)
+  *-*-*linux* | *-*-gnu*)
     ardp_cv_target_os_type="Linux" ;;
-  *-*-gnu*)
-    ardp_cv_target_os_type="GNU" ;;
   *-*-win32*)
     ardp_cv_target_os_type="Win32" ;;
   *-*-mingw*)
     ardp_cv_target_os_type="MingW" ;;
-  *-*-nacl*)
-    ardp_cv_target_os_type="NativeClient" ;;
   *)
     ardp_cv_target_os_type="Unknown" ;;
 esac])
 
-dnl Make sure we aren't attempting to configure for an unknown system
+dnl# Make sure we aren't attempting to configure for an unknown system
 if test "$ardp_cv_os_type" = "Unknown" ; then
   AC_MSG_ERROR([Operating system is unknown, configure can't continue])
 fi
 
-dnl Set the "OS" Makefile variable based on the platform type so the
-dnl makefile can configure itself to specific build hosts
+dnl# Set the "OS" Makefile variable based on the platform type so the
+dnl# makefile can configure itself to specific build hosts
 AC_SUBST(OS,$ardp_cv_os_type)
 AC_SUBST(HOST_OS,$ardp_cv_os_type)
 AC_SUBST(TARGET_OS,$ardp_cv_target_os_type)
 
-dnl Set the LINKALL and NOLINKALL Makefile variables based on the platform
+dnl# Set the LINKALL and NOLINKALL Makefile variables based on the platform
 AC_SUBST(LINKALL,$ardp_cv_link_all_option)
 AC_SUBST(NOLINKALL,$ardp_cv_no_link_all_option)
 
-dnl Set the "ARDP_ON_*" variables based on ardp_cv_platform_type
-dnl This is used by lib/Support to determine the basic kind of implementation
-dnl to use.
+dnl# Set the "ARDP_ON_*" variables based on ardp_cv_platform_type
+dnl# This is used by lib/Support to determine the basic kind of implementation
+dnl# to use.
 case $ardp_cv_platform_type in
   Unix)
     AC_DEFINE([ARDP_ON_UNIX],[1],[Define if this is Unixish platform])
@@ -181,8 +178,103 @@ case $ardp_cv_platform_type in
     ;;
 esac
 
+# ADD ARCH + CROSS_COMPILE to the target
 
-dnl --- Remove the warning of order precedence
+dnl===-----------------------------------------------------------------------===
+dnl===
+dnl=== SECTION 3: Command line arguments for the configure script.
+dnl===
+dnl===-----------------------------------------------------------------------===
+
+dnl# Check for sufficiently modern version of Clang (we don't care about).
+dnl# These checks can be bypassed by passing a flag if necessary on a platform.
+dnl# We have to do these checks here so that we have the configuration
+dnl# of the standard C++ library finished.
+
+AC_ARG_ENABLE(compiler-version-checks,
+              AS_HELP_STRING([--enable-compiler-version-checks],
+                             [Check the version of the host compiler (default is YES)]),,
+                             enableval=default)
+case "$enableval" in
+  no)
+    ;;
+  yes|default)
+    AC_LANG_PUSH([C++])
+    case "$llvm_cv_cxx_compiler" in
+    clang)
+      AC_MSG_CHECKING([whether Clang is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#if __clang_major__ < 3 || (__clang_major__ == 5 && __clang_minor__ < 1)
+#error This version of Clang is too old to build ARDP
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected Clang compiler is not new enough to build LLVM. Please upgrade to
+Clang 3.5. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+
+      dnl# Note that libstdc++4.6 is known broken for C++11 builds. The errors
+      dnl# are sometimes deeply confusing though. Here we test for an obvious
+      dnl# incomplete feature in 4.6's standard library that was completed in
+      dnl# 4.7's. We also have to disable this test if 'ENABLE_LIBCPP' is set
+      dnl# because the enable flags don't actually fix CXXFLAGS, they rely on
+      dnl# that happening in the Makefile.
+      if test "$ENABLE_LIBCPP" -eq 0 ; then
+        AC_MSG_CHECKING([whether Clang will select a modern C++ standard library])
+        llvm_cv_old_cxxflags="$CXXFLAGS"
+        CXXFLAGS="$CXXFLAGS -std=c++0x"
+        AC_LINK_IFELSE([AC_LANG_SOURCE([[
+#include <atomic>
+std::atomic<float> x(0.0f);
+int main() { return (float)x; }
+]])],
+            [AC_MSG_RESULT([yes])],
+            [AC_MSG_RESULT([no])
+             AC_MSG_ERROR([
+We detected a missing feature in the standard C++ library that was known to be
+missing in libstdc++4.6 and implemented in libstdc++4.7. There are numerous
+C++11 problems with 4.6's library, and we don't support GCCs or libstdc++ older
+than 4.7. You will need to update your system and ensure Clang uses the newer
+standard library.
+
+If this error is incorrect or you need to force things to work, you may pass
+'--disable-compiler-version-checks' to configure to bypass this test.])])
+        CXXFLAGS="$llvm_cv_old_cxxflags"
+      fi
+      ;;
+    gcc)
+      AC_MSG_CHECKING([whether GCC is new enough])
+      AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#if __GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 7)
+#error This version of GCC is too old to build LLVM
+#endif
+]])],
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])
+           AC_MSG_ERROR([
+The selected GCC C++ compiler is not new enough to build LLVM. Please upgrade
+to GCC 4.7. You may pass --disable-compiler-version-checks to configure to
+bypass these sanity checks.])])
+      ;;
+    unknown)
+      ;;
+    esac
+    AC_LANG_POP([C++])
+    ;;
+  *)
+    AC_MSG_ERROR([Invalid setting for --enable-compiler-version-checks. Use "yes" or "no"])
+    ;;
+esac
+
+
+
+
+
+
+
+dnl# Remove the warning of order precedence
 AM_INIT_AUTOMAKE()
 
 
@@ -196,8 +288,8 @@ AC_PROG_RANLIB
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for libraries.
-AC_CHECK_LIB(zlib, zlib)
-AC_CHECK_LIB(bzlib, bzlib)
+#AC_CHECK_LIB(zlib, zlib)
+#AC_CHECK_LIB(bzlib, bzlib)
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h])

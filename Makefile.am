@@ -1,7 +1,6 @@
-AUTOMAKE_OPTIONS = foreign
+#AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS = include \
-          src \
+SUBDIRS = src \
           doc \
           man \
           scripts \

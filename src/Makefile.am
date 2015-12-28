@@ -1,4 +1,5 @@
-SUBDIRS = bin lib
+SUBDIRS = lib bin
+AUTOMAKE_OPTIONS = subdir-objects
 
 
 #CFLAGS := -pedantic \

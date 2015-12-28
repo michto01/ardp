@@ -1,4 +1,4 @@
-AM_CFLAGS = -I../../include -I$(top_srcdir)/src @AM_CXXFLAGS@
+AM_CFLAGS = -I../../include -I$(top_srcdir)/include @AM_CXXFLAGS@
 
 bin_PROGRAMS = ardp
 
