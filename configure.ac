@@ -202,6 +202,7 @@ AM_INIT_AUTOMAKE()
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC(clang)
+#AC_PROG_LIBTOOL
 AC_PROG_RANLIB
 
 

@@ -1,1 +1,5 @@
-bin_SCRIPTS = objc.valgrind.suppr ragel_utf8_range.rb
+data_DATA =\
+          objc.valgrind.suppr \
+          ragel_utf8_range.rb
+
+bin_SCRIPTS =
