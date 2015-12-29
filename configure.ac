@@ -33,7 +33,7 @@ dnl# Initialize autoconf and define the package name, version number and
 dnl# address for reporting bugs.
 
 
-AC_INIT([ardp],[1.0.1],[tomas.michalek.st@vsb.cz])
+AC_INIT(ardp,1.0.1,tomas.michalek.st@vsb.cz)
 
 
 
