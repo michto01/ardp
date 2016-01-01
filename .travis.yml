@@ -1,2 +1,5 @@
 language: c
 compiler: clang
+
+before_install:
+- autoheader && aclocal && automake && autoconf
