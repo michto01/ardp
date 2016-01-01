@@ -1,4 +1,4 @@
-ARDP - Another RDF document parser
+ARDP - Another RDF document parser  [![Build Status](https://travis-ci.org/michto01/ardp.svg?branch=master)](https://travis-ci.org/michto01/ardp)
 ====================================
 
 This is the parser supporting the practical part of my bachelor thesis.
