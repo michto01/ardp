@@ -1,5 +1,6 @@
 language: c
 compiler: clang
+os:osx
 
 before_install:
 - autoheader && aclocal && automake --add-missing && automake && autoconf
