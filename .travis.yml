@@ -2,4 +2,4 @@ language: c
 compiler: clang
 
 before_install:
-- autoheader && aclocal && automake && autoconf
+- autoheader && aclocal && automake --add-missing && autoconf
