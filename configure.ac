@@ -33,13 +33,13 @@ dnl# Initialize autoconf and define the package name, version number and
 dnl# address for reporting bugs.
 
 
-AC_INIT(ardp,1.0.1,tomas.michalek.st@vsb.cz)
+AC_INIT(ardp,1.1.3,tomas.michalek.st@vsb.cz)
 
 
 
 ARDP_VERSION_MAJOR=1
-ARDP_VERSION_MINOR=0
-ARDP_VERSION_PATCH=1
+ARDP_VERSION_MINOR=1
+ARDP_VERSION_PATCH=3
 
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MAJOR], $ARDP_VERSION_MAJOR, [Major version of the ARDP API])
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MINOR], $ARDP_VERSION_MINOR, [Minor version of the ARDP API])
@@ -61,7 +61,6 @@ dnl# Indicate that we require autoconf 2.69 or later.
 dnl# Verify that the source directory is valid. This makes sure that we are
 dnl# configuring LLVM and not some other package (it validates --srcdir argument)
 AC_CONFIG_SRCDIR([src/bin/ardp.c])
-#AC_CONFIG_HEADERS([include/config.h])
 
 dnl# use the clang C compiler for the following checks
 AC_LANG([C])
@@ -200,7 +199,6 @@ AM_INIT_AUTOMAKE()
 
 
 # Checks for programs.
-AC_PROG_CC
 AC_PROG_CC(clang)
 #AC_PROG_LIBTOOL
 AC_PROG_RANLIB
@@ -239,3 +237,19 @@ AC_CONFIG_FILES([Makefile
                   ])
 
 AC_OUTPUT
+
+
+echo "
+Configuration for $PACKAGE_NAME ($PACKAGE_VERSION)
+=======================================================
+
+  Prefix.........: $prefix
+  Debug Build....: $debug
+  Platform.......: $ardp_cv_os_type ($ardp_cv_platform_type)
+  C Compiler.....: $CC $CFLAGS $CPPFLAGS
+  Global linker..: $LD $LDFLAGS $LIBS
+  Doxygen........: ${DOXYGEN:-NONE}
+
+  You're now ready to build this project! Quick build:
+	make && make install
+"

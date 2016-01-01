@@ -11,21 +11,21 @@
 # Test file with a variety of legal N-Triples
 #
 # Dave Beckett - http://purl.org/net/dajobe/
-# 
+#
 # $Id: test.nt,v 1.7 2003/10/06 15:52:19 dbeckett2 Exp $
-# 
+#
 #####################################################################
 
 # comment lines
   	  	   # comment line after whitespace
 # empty blank line, then one with spaces and tabs
 
-         	
+
 <http://example.org/resource1> <http://example.org/property> <http://example.org/resource2> .
 _:anon <http://example.org/property> <http://example.org/resource2> .
 <http://example.org/resource2> <http://example.org/property> _:anon .
 # spaces and tabs throughout:
- 	 <http://example.org/resource3> 	 <http://example.org/property>	 <http://example.org/resource2> 	.	 
+ 	 <http://example.org/resource3> 	 <http://example.org/property>	 <http://example.org/resource2> 	.
 
 # line ending with CR NL (ASCII 13, ASCII 10)
 <http://example.org/resource4> <http://example.org/property> <http://example.org/resource2> .
@@ -41,7 +41,7 @@ _:anon <http://example.org/property> <http://example.org/resource2> .
 <http://example.org/resource9> <http://example.org/property> "dquote:\"" .
 <http://example.org/resource10> <http://example.org/property> "newline:\n" .
 <http://example.org/resource11> <http://example.org/property> "return\r" .
-<http://example.org/resource12> <http://example.org/property> "tab:\t" .
+<http://example.org/resource12> <http://example.org/property> "tab:\t noo" .
 
 # Space is optional before final .
 <http://example.org/resource13> <http://example.org/property> <http://example.org/resource2>.
@@ -75,5 +75,5 @@ _:anon <http://example.org/property> <http://example.org/resource2> .
 <http://example.org/resource31> <http://example.org/property> "chat"@en .
 
 # Typed Literals
-<http://example.org/resource32> <http://example.org/property> "abc"^^<http://example.org/datatype1> .
+<http://example.org/resource32> <http://example.org/property> "ab\U00000020c"^^<http://example.org/datatype1> .
 # resource33 test removed 2003-08-03

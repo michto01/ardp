@@ -13,3 +13,5 @@ SUBDIRS = src \
           scripts \
           tests \
           examples
+
+EXTRA_DIST = include

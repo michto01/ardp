@@ -1,1 +1,1 @@
-<http://example/s> <http://example/p> "a\n" .
+<http://example/s> <http://example/p> "a\n\b\r\f" .
