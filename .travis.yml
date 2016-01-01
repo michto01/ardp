@@ -1,5 +1,6 @@
 language: c
 compiler: clang
+os: osx
 
 
 before_install:
@@ -15,7 +16,6 @@ env:
 
 matrix:
   include:
-    - os: osx
     - os: linux
       sudo: required
       dist: trusty
