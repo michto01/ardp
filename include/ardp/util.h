@@ -4,9 +4,11 @@
 #define is   ==
 #define isnt !=
 
-#define or  ||
-#define and &&
-#define not !
+#ifndef _ISO646_H_
+  #define or  ||
+  #define and &&
+  #define not !
+#endif /* not _ISO646_H_ */
 
 #define ARDP_SUCCESS true
 #define ARDP_FAILURE false

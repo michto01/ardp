@@ -1,10 +1,11 @@
-language: c
+:language: c
 compiler: clang
 os: osx
 
 
 before_install:
-  - autoheader && aclocal && automake --add-missing && automake && autoconf
+  - ./autogen.sh
+  - brew install ragel
 
 script:
   - ./configure && make
@@ -19,3 +20,6 @@ matrix:
     - os: linux
       sudo: required
       dist: trusty
+      before_install:
+        - ./autogen.sh
+        - apt-get install ragel

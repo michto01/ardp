@@ -212,7 +212,7 @@ AC_CONFIG_HEADERS([config.h])
 #AC_CHECK_LIB(bzlib, bzlib)
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h iso646.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL

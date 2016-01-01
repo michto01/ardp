@@ -2,6 +2,7 @@
 #include <ctype.h>
 
 #include <stdio.h>
+#include <iso646.h>
 
 #include <ardp/util.h>
 #include <ardp/parser.h>
@@ -12,7 +13,7 @@
 static unsigned int parse_hex( const uint8_t *src, unsigned int len ) {
     unsigned int i;
     unsigned int j;
-
+  
     for ( i = j = 0; j < len; j++ ) {
         i *= 16;
         char c = src[j];
@@ -101,9 +102,9 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     action endIRI             { emit(parser, ARDP_IRI); }
     action endBlankNode       { emit(parser, ARDP_BLANK_NODE); }
 
-    PN_CHARS_BASE    = UNICODE $putChar;                       #UNICODE in common
-    PN_CHARS_U       = PN_CHARS_BASE | ('_' | ':')   $putChar;
-    PN_CHARS         = PN_CHARS_U    | ( _PN_CHARS ) $putChar; #_PN_CHARS in common
+    PN_CHARS_BASE    = UNICODE $putChar;
+    PN_CHARS_U       = PN_CHARS_BASE | ('_' | ':') $putChar;
+    PN_CHARS         = PN_CHARS_U    | ( _PN_CHARS ) $putChar;
     ECHAR            = _ECHAR >mark %unescape_char;
     UCHAR            = _UCHAR >mark %unescape;
 

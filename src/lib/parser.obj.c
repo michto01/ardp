@@ -15,5 +15,11 @@ ardp_parser_obj_t* ardp_parser_obj_constructor() {
     return NULL;
 }
 
-void adrp_parser_obj_destroy( ardp_parser_obj_t *self ) {
-}
+void adrp_parser_obj_destroy( ardp_parser_obj_t *self ) ??<
+??>
+
+parser_t* p = parser_create();
+
+p->syntax = ARDP_SYNTAX_NQUADS;
+p->READER(void *fn, void *args);
+p->reader()
