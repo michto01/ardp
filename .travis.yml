@@ -1,9 +1,21 @@
 language: c
 compiler: clang
-os: osx
+
 
 before_install:
-- autoheader && aclocal && automake --add-missing && automake && autoconf
+  - autoheader && aclocal && automake --add-missing && automake && autoconf
 
 script:
-- ./configure && make
+  - ./configure && make
+
+env:
+  global:
+    - CACHE="$HOME/.local"
+
+
+matrix:
+  include:
+    - os: osx
+    - os: linux
+      sudo: required
+      dist: trusty
