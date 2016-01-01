@@ -4,3 +4,6 @@ os: osx
 
 before_install:
 - autoheader && aclocal && automake --add-missing && automake && autoconf
+
+install:
+- ./configure && make
