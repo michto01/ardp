@@ -5,5 +5,5 @@ os: osx
 before_install:
 - autoheader && aclocal && automake --add-missing && automake && autoconf
 
-install:
+script:
 - ./configure && make
