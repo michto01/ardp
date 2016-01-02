@@ -23,3 +23,7 @@ matrix:
       before_install:
         - ./autogen.sh
         - sudo apt-get install ragel
+      before_install:
+        - pip install --user codecov
+      after_success:
+        - codecov
