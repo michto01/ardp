@@ -22,8 +22,8 @@ matrix:
       dist: trusty
       before_install:
         - ./autogen.sh
-        - sudo apt-get install ragel
-      before_install:
         - pip install --user codecov
+        - sudo apt-get install ragel
+
       after_success:
         - codecov
