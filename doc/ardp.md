@@ -39,7 +39,7 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF
-	xmlns:rdf=http://www.w3.org/1999/02/22-rdf-syntax-ns#
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	xmlns:ex="http://example.com/#">
 
 	<rdf:Description rdf:about="http://example.com/Student">
@@ -84,3 +84,23 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
   }
 }
 ```
+
+###1.3.3 Turtle (Notation 3)
+```ruby
+@prefix ns0: <http://example.com/#> .
+
+<http://example.com/Student>
+  ns0:studiesAt "http://example.com/schools#VSB" ;
+  ns0:login "xyz123" .
+
+<http://example.com/Profesor> ns0:teaches "http://example.com/Student" .
+```
+
+###1.3.3 N-Triples
+```xml
+<http://example.com/Student> <http://example.com/#studiesAt> "http://example.com/schools#VSB" .
+<http://example.com/Student> <http://example.com/#login> "xyz123" .
+<http://example.com/Profesor> <http://example.com/#teaches> "http://example.com/Student" .
+```
+
+As is seen from those examples, the `N3` based examples are much easier to read to human.
