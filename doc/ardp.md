@@ -1,6 +1,6 @@
 #1	Resource Description Framework
 
-Resource Description Framework (from here on referred to as simply RDF) is W3C specification for description and modeling of objects, their relationships and properties. Data stored in RDF format is formed by `TRIPLET: SUBJECT - PREDICAMENT - OBJECT`. The triplet tells us:
+Resource Description Framework (from here on referred to as simply `RDF`) is `W3C` specification for description and modeling of objects, their relationships and properties. Data stored in RDF format is formed by `TRIPLET: SUBJECT - PREDICAMENT - OBJECT`. The triplet tells us:
 
     "SUBJECT has property PREDICAMENT and the predicament has value of OBJECT"
 
@@ -12,9 +12,9 @@ The other rather interesting property of RDF is ability to deduce additional inf
 
 Semantic web is all about the data. On the internet there are large quantities of the data available in different forms. The most dominant forms are still texts, images and tables. Those are easy to understand for human, as he draws his own logical conclusions about the data and links them together.
 
-Machines do not possess such ability to logical deductions, so how then it can recognize relationships between information? Exactly this problem is challenged by Semantic Web. 
+Machines do not possess such ability to do logical deductions, so how it can then recognize relationships between information? This exact problem is challenged by Semantic Web. 
 
-The basic principle is to complement the in human readable form (text, image …) by metadata. And from the metadata the machine will determine relationships between objects. 
+The basic principle is to complement the in human readable form (text, image ...) by metadata. And from the metadata the machine will determine relationships between objects. 
 
 The semantic web development is driven by the World Wide Web Consortium and it's technologies specifications contains specification for RDF and OWL.
 
@@ -26,7 +26,8 @@ The nodes can be of following types:
     * Blank nodes (not identified by URI)
 
 ##1.3	RDF serialization formats
-For exchanging the RDF metadata there are several file formats in use. The main focus of this thesis in on the following ones: `RDF/XML`, `RDF/JSON`, `Notation 3` and its subsets: `Turtle`, `N-Triples` and `N-Quads`. For the following discussion about each format the following example metadata will be used:
+
+For exchanging the RDF metadata there are numerous file formats in use. The main focus of this thesis in on the  `Notation 3` and particularly it's subset: `Turtle`, `N-Triples` and `N-Quads`. Other well known formats are: `RDF/XML`, `RDF/JSON`, `TriG`. For the following discussion about each format the following example metadata will be used:
 
 | OBJECT | PERDICAMENT | SUBJECT |
 | -- | -- | -- |
@@ -53,3 +54,33 @@ For exchanging the RDF metadata there are several file formats in use. The main 
 ```
 
 ###1.3.2 RDF/JSON
+
+```json
+{
+  "http://example.org/Student" : {
+    "http://example.org/#studiesAt" : 
+       [ 
+            {  
+                "value" : "http://example.com/schools#VSB", 
+                "type"  : "uri"
+            } 
+       ],
+    "http://example.org/#login" : 
+       [ 
+            {   
+                "value" : "xyz123", 
+                "type"  : "literal" 
+            }
+       ] 
+  },
+  "http://example.org/Profesor" : {
+    "http://example.org/#teaches" : 
+       [ 
+            {  
+                "value" : "http://example.com/Student", 
+                "type"  : "uri" 
+            } 
+       ] 
+  }
+}
+```
