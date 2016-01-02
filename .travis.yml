@@ -22,4 +22,4 @@ matrix:
       dist: trusty
       before_install:
         - ./autogen.sh
-        - apt-get install ragel
+        - sudo apt-get install ragel
