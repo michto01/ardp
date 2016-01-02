@@ -5,4 +5,5 @@ bin_PROGRAMS = ardp
 ardp_SOURCES = ardp.c string.test.c
 ardp_LDADD   = ../lib/libardp.a \
                ../lib/libardpstring.a \
-               $(AM_LDFLAGS) -lz -lz -lbz2 -coverage
+               $(AM_LDFLAGS) -lz -lz -lbz2
+ardp_LDFLAGS = -coverage
