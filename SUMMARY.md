@@ -1,4 +1,4 @@
 # Summary
 
-* [ARDP](doc/ardp.md)
+* [RDF](doc/rdf.md)
 
