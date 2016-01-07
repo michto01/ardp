@@ -43,14 +43,8 @@ int ardp_parser_parse(ardp_parser * _Nonnull parser);
 typedef int  (* _Nullable ardp_reader)(unsigned char * _Nonnull buffer, unsigned len, void * _Nullable arg);
 typedef void (* _Nullable ardp_handler)(ardp_token_type type, utf8 _Nullable  s, void *  _Nullable arg);
 
-void ardp_parser_set_reader(ardp_parser * _Nonnull parser,
-                             ardp_reader reader,
-                             void * _Nullable reader_arg);
-
-
-void ardp_parser_set_handler(ardp_parser * _Nonnull parser,
-                             ardp_handler handler,
-                             void * _Nullable handler_arg);
+void ardp_parser_set_reader  (ardp_parser * _Nonnull parser, ardp_reader  reader,  void * _Nullable reader_arg);
+void ardp_parser_set_handler (ardp_parser * _Nonnull parser, ardp_handler handler, void * _Nullable handler_arg);
 
 
 #endif /* __ARDP_PARSER_H__ */
