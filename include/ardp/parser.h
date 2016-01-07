@@ -22,7 +22,7 @@ OBJECT = ARDP_IRI
 
 */
 
-typedef enum {
+typedef enum __attribute__((flag_enum)) {
     ARDP_IRI,
     ARDP_BLANK_NODE,
     ARDP_SIMPLE_LITERAL_VALUE,
@@ -34,23 +34,23 @@ typedef enum {
 
 typedef struct ardp_parser_s ardp_parser;
 
-ardp_parser *ardp_new_parser();
+ardp_parser * _Nullable ardp_new_parser();
 
-void ardp_free_parser(ardp_parser *parser);
+void ardp_free_parser(ardp_parser * _Nullable parser);
 
-int ardp_parser_parse(ardp_parser *parser);
+int ardp_parser_parse(ardp_parser * _Nonnull parser);
 
-typedef int (*ardp_reader)(unsigned char *buffer, unsigned len, void *arg);
-typedef void (*ardp_handler)(ardp_token_type type, utf8 s, void *arg);
+typedef int  (* _Nullable ardp_reader)(unsigned char * _Nonnull buffer, unsigned len, void * _Nullable arg);
+typedef void (* _Nullable ardp_handler)(ardp_token_type type, utf8 _Nullable  s, void *  _Nullable arg);
 
-void ardp_parser_set_reader(ardp_parser *parser,
+void ardp_parser_set_reader(ardp_parser * _Nonnull parser,
                              ardp_reader reader,
-                             void *reader_arg);
+                             void * _Nullable reader_arg);
 
 
-void ardp_parser_set_handler(ardp_parser *parser,
+void ardp_parser_set_handler(ardp_parser * _Nonnull parser,
                              ardp_handler handler,
-                             void *handler_arg);
+                             void * _Nullable handler_arg);
 
 
 #endif /* __ARDP_PARSER_H__ */
