@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
-#include <inttypes.h>
+#include <inttypes.h> // uint8_t
 
 #include "util.h"
 
@@ -32,7 +32,7 @@ typedef struct __attribute__ ((__packed__)) string_header {
 	*/
 static inline void string_push( utf8 s, char c ) {
 		string_header_t* hdr = &((string_header_t *) s)[-1];
-		s[hdr->length++] = c;   //*(s + hdr->length++) = (uint8_t) c;
+		s[hdr->length++]     = c;   //*(s + hdr->length++) = (uint8_t) c;
 }
 
 /**

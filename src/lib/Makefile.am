@@ -2,7 +2,7 @@ AM_CFLAGS= -I$(top_srcdir)/include
 
 noinst_LIBRARIES= libardpstring.a libardp.a
 
-libardpstring_a_SOURCES= string.c
+libardpstring_a_SOURCES= color.c string.c
 
 #.c.rl:
 #	@echo "Working on :" $< " to produce:" $@

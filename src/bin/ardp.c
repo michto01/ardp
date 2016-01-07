@@ -16,6 +16,7 @@
 
 #include <ardp/parser.h>
 #include <ardp/string.h>
+#include <ardp/color.h>
 #include <ardp/util.h>
 
 typedef enum {
@@ -42,19 +43,19 @@ void handler(ardp_token_type type, utf8 s, void *arg) {
 
     switch (state) {
         case STATE_SUBJECT: {
-            printf(CLR_RED "{\n" CLR_GREEN  "\tsubject:  " CLR_RESET  " %s\n", s);
+            ardp_fprintf(stdout, ARDP_COLOR_CYAN, "%s ", s);
             state = STATE_PREDICATE;
             triples += 1;
             goto cleanup;
         }
         case STATE_PREDICATE: {
-            printf(CLR_GREEN "\tpredicate:" CLR_YELLOW  " %s\n" CLR_RESET, s);
+            ardp_fprintf(stdout, ARDP_COLOR_RED, "%s ", s);
             state = STATE_OBJECT;
             goto cleanup;
         }
         case STATE_OBJECT: {
-            printf(CLR_GREEN "\tobject:   " CLR_CYAN " %s\n" CLR_RED "},\n" CLR_RESET, s);
-            switch (type) {
+            ardp_fprintf(stdout, ARDP_COLOR_GREEN, "%s ", s);
+            switch ( type ) {
                 case ARDP_LANGUAGE_TAGGED_LITERAL_VALUE:
                 case ARDP_DATATYPE_LITERAL_VALUE: {
                     state = STATE_EXTRA;
@@ -62,13 +63,14 @@ void handler(ardp_token_type type, utf8 s, void *arg) {
                 }
                 default: {
                     state = STATE_SUBJECT;
+                    ardp_fprintf(stdout, ARDP_COLOR_NORMAL, "\n");
                     goto cleanup;
                 }
             }
             goto cleanup;
         }
         case STATE_EXTRA: {
-            printf(CLR_CYAN "+" CLR_MAGENTA "...: %s\n" CLR_RESET, s);
+            ardp_fprintf(stdout, ARDP_COLOR_BLUE, "%s\n", s);
             state = STATE_SUBJECT;
             goto cleanup;
         }
@@ -126,10 +128,7 @@ int main( int argc, char **argv ) {
 
     // parse
     ardp_parser *parser = ardp_new_parser();
-
-    ardp_reader reader  = isBzip ? read_bzip : read_gzip;
-
-    ardp_parser_set_reader  (parser, reader, file);
+    ardp_parser_set_reader  (parser, (ardp_reader) (isBzip ? read_bzip : read_gzip), file);
     ardp_parser_set_handler (parser, handler, NULL);
 
 //    ardp_parser_set_handler(parser, ^void(ardp_token_type type, const char *s, void *arg){
@@ -155,7 +154,7 @@ int main( int argc, char **argv ) {
         if ( gzeof(file) is 0 ) {
             int err;
             const char *error_string = gzerror(file, &err);
-            if (err) {
+            if ( err ) {
                 fprintf(stderr, "gzip error: %s.\n", error_string);
                 return EXIT_FAILURE;
             }

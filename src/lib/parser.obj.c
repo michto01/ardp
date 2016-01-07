@@ -18,8 +18,42 @@ ardp_parser_obj_t* ardp_parser_obj_constructor() {
 void adrp_parser_obj_destroy( ardp_parser_obj_t *self ) ??<
 ??>
 
-parser_t* p = parser_create();
+typedef struct {
 
-p->syntax = ARDP_SYNTAX_NQUADS;
-p->READER(void *fn, void *args);
-p->reader()
+}
+
+typedef int  (*ardp_parser_obj_reader)(unsigned char *buffer, unsigned len, void *arg);
+typedef void (*ardp_parser_obj_handler)(ardp_token_type type, utf8 s, void *arg);
+
+typedef struct {
+  int cs;
+
+  ardp_parser_obj_reader  reader;
+  ardp_parser_obj_handler handler;
+
+
+
+} Parser;
+
+
+typedef struct {
+
+} Plugin;
+
+
+
+/*
+parser_t* p = Parser();
+
+p->init->begin();
+p->init->syntax(ARDP_SYNTAX_NQUADS);
+p->init->handler(void *fn, void *args);
+p->init->finnish();
+
+p->read->block(const char* block);
+p->read->file(void *reader_fn, void *args);
+p->read->finish();
+
+void * parser = new(Parser);
+
+*/

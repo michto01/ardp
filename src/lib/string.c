@@ -1,8 +1,10 @@
 #include <ardp/string.h>
+#include <ardp/color.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 #define MAX_PREALLOC     (1024 * 1024)
 #define INITIAL_CAPACITY  8
@@ -19,16 +21,13 @@ size_t string_strlen( utf8 str ) {
 
 void string_debug( utf8 str ) {
     struct string_header *hdr = string_hdr( str );
-    printf(CLR_GREEN  "Capacity:"
-           CLR_RESET  "%3lu" ",\t"
-           CLR_YELLOW "Lenght:"
-           CLR_RESET  "%3lu" ",\t"
-           CLR_MAGENTA"Content:"
-           CLR_RESET  "%s \n",
-              hdr->capacity,
-              hdr->length,
-              str
-          );
+
+    ardp_fprintf(stderr, ARDP_COLOR_GREEN,   "Capacity: ");
+    ardp_fprintf(stderr, ARDP_COLOR_NORMAL,  "%3lu ", hdr->capacity);
+    ardp_fprintf(stderr, ARDP_COLOR_YELLOW,  "Lenght: ");
+    ardp_fprintf(stderr, ARDP_COLOR_NORMAL,  "%3lu ", hdr->length);
+    ardp_fprintf(stderr, ARDP_COLOR_MAGENTA, "Content: ");
+    ardp_fprintf(stderr, ARDP_COLOR_NORMAL,  "%s \n", str);
 }
 
 /*
