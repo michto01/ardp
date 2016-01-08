@@ -33,30 +33,30 @@ int triples = 0;
 int color_stdout_is_tty = -1;
 
 static const char ardp_usage_string[] = PACKAGE
-	" [-v | --version] [-h | --help] [-u | --usage] [-f <path>]"             "\n"
-	"     [-b | --use-bzip] [--color auto:none:always]"                      "\n"
+	" [-v | --version] [-h | --help] [-u | --usage] [-f | --file <path>]"    "\n"
+	"     [-b | --use-bzip] [-c | --color auto:none:always]"                 "\n"
 	"     [-s | --syntax tutle:nt:nq:guess]"                                 "\n";
 
 static const char ardp_help_string[] = PACKAGE_STRING "\n"
   "\t"  "-v --version" "\t\t" "Display current version";
 
 static void help_option_ln( FILE *fs , const char* option, const char *desc ) {
-  ardp_fprintf(fs, ARDP_COLOR_NORMAL, "\t");
+  fprintf(fs, "\t");
   ardp_fprintf(fs, ARDP_COLOR_BOLD, "%s", option);
-  ardp_fprintf(fs, ARDP_COLOR_NORMAL, "\t\t");
+  fprintf(fs, "\t\t");
   ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, "%s", desc);
 }
 
 static void help( FILE *fs ) {
   ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, PACKAGE_STRING);
-  help_option_ln(fs, "-v --version", "Display version string");
-  help_option_ln(fs, "-h --help", "Print this help");
-  help_option_ln(fs, "-u --usage", "Print compact help");
-  help_option_ln(fs, "-f --file", "File or archive to be processed");
-  help_option_ln(fs, "-s --syntax", "Process file with selected syntax parser [guess, turtle, nt, nq]");
+  help_option_ln(fs, "-v --version",  "Display version string");
+  help_option_ln(fs, "-h --help",     "Print this help");
+  help_option_ln(fs, "-u --usage",    "Print compact help");
+  help_option_ln(fs, "-f --file",     "File or archive to be processed");
+  help_option_ln(fs, "-s --syntax",   "Process file with selected syntax parser [guess, turtle, nt, nq]");
   help_option_ln(fs, "-b --use-bzip", "Use BZip library to read file/archive");
   fprintf(fs, "\n");
-  help_option_ln(fs, "   --color", "Change the coloring of the output");
+  help_option_ln(fs, "-c --color",    "Change the coloring of the output");
 }
 
 
@@ -152,7 +152,7 @@ int main( int argc, char **argv ) {
                   color_stdout_is_tty = ardp_want_color( -1 );
                 } else {
                   color_stdout_is_tty = clr;
-                }      
+                }
             }
             break;
 
