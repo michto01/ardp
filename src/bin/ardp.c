@@ -8,6 +8,7 @@
  #include <stdint.h>
 #endif
 
+#include <unistd.h>
 #include <getopt.h>
 #include <zlib.h>
 #include <bzlib.h>
@@ -18,7 +19,6 @@
 #include <ardp/string.h>
 #include <ardp/color.h>
 #include <ardp/util.h>
-#include "config.h"
 
 typedef enum {
     STATE_SUBJECT,
@@ -32,13 +32,22 @@ int triples = 0;
 
 int color_stdout_is_tty = -1;
 
-static const char ardp_usage_string[] = PACKAGE
-	" [-v | --version] [-h | --help] [-u | --usage] [-f | --file <path>]"    "\n"
-	"     [-b | --use-bzip] [-c | --color auto:none:always]"                 "\n"
-	"     [-s | --syntax tutle:nt:nq:guess]"                                 "\n";
+//Specifying the expected options
+static struct option long_options[] = {
+    { "version",   no_argument,       0,  'v' },
+    { "help",      no_argument,       0,  'h' },
+    { "usage",     no_argument,       0,  'u' },
+    { "use-bzip",  no_argument,       0,  'b' },
+    { "color",     required_argument, 0,  'c' },
+    { "syntax",    required_argument, 0,  's' },
+    { "file",      required_argument, 0,  'f' },
+    { 0,           0,                 0,   0  }
+};
 
-static const char ardp_help_string[] = PACKAGE_STRING "\n"
-  "\t"  "-v --version" "\t\t" "Display current version";
+static const char ardp_usage_string[] = "usage: " PACKAGE
+	" [-v | --version] [-h | --help] [-u | --usage] [-f | --file <path>]"    "\n"
+	"            [-b | --use-bzip] [-c | --color auto:none:always]"          "\n"
+	"            [-s | --syntax tutle:nt:nq:guess]"                          "\n";
 
 static void help_option_ln( FILE *fs , const char* option, const char *desc ) {
   fprintf(fs, "\t");
@@ -71,7 +80,6 @@ int read_bzip(unsigned char* p, unsigned int len, void *arg) {
 }
 
 void handler(ardp_token_type type, utf8 s, void *arg) {
-
     switch (state) {
         case STATE_SUBJECT: {
             ardp_fprintf(stdout, ARDP_COLOR_CYAN, "%s ", s);
@@ -107,7 +115,7 @@ void handler(ardp_token_type type, utf8 s, void *arg) {
         }
     }
 
-cleanup:
+ cleanup:
     //string_dealloc(s);
     return;
 }
@@ -121,20 +129,29 @@ int main( int argc, char **argv ) {
     test_string();
 
     char *filename = NULL;
-    bool isBzip    = false;
+    bool is_bzip    = false;
 
     // auto detect color predispositions at start
     color_stdout_is_tty = ardp_want_color( -1 );
 
+    int long_index =0;
     // parse options
-    int c;
-    while ( (c = getopt(argc, argv, "bhuavrf:c:")) isnt -1 ) {
-        switch ( c ) {
+    int opt;
+
+    // not enought arguments provided
+    if ( argc < 2 ) {
+      ardp_fprintf(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
+      return EXIT_FAILURE;
+    }
+
+    while ( (opt = getopt_long(argc, argv,"bhuvc:f:s:",
+                                  long_options, &long_index )) isnt -1 ) {
+        switch ( opt ) {
             case 'f':
                 filename = optarg;
                 break;
             case 'b':
-                isBzip = true;
+                is_bzip = true;
                 break;
             case 'h':
                 help(stdout);
@@ -145,16 +162,18 @@ int main( int argc, char **argv ) {
             case 'v':
                 ardp_fprintf_ln(stdout, ARDP_COLOR_BOLD, PACKAGE_STRING);
                 return EXIT_SUCCESS;
-
+            case 's':
+                ardp_fprintf_ln(stderr, ARDP_COLOR_RED, "Currently only placeholder as we recognize only N-triples.");
+                return EXIT_SUCCESS;
             case 'c': {
-                int clr = ardp_config_colorbool(optarg);
-                if( clr is ARDP_COLOR_AUTO) {
-                  color_stdout_is_tty = ardp_want_color( -1 );
-                } else {
-                  color_stdout_is_tty = clr;
+                    int clr = ardp_config_colorbool(optarg);
+                    if( clr is ARDP_COLOR_AUTO) {
+                      color_stdout_is_tty = ardp_want_color( -1 );
+                    } else {
+                      color_stdout_is_tty = clr;
+                    }
                 }
-            }
-            break;
+                break;
 
             default:
                 ardp_fprintf(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
@@ -167,7 +186,7 @@ int main( int argc, char **argv ) {
 
 
     // open
-    void *file = ( isBzip ? BZ2_bzopen(filename, "rb") : gzopen(filename, "rb") );
+    void *file = ( is_bzip ? BZ2_bzopen(filename, "rb") : gzopen(filename, "rb") );
 
     if ( !file ) {
         fprintf(stderr, "Unable to open file \"%s\"", filename);
@@ -176,7 +195,7 @@ int main( int argc, char **argv ) {
 
     // parse
     ardp_parser *parser = ardp_new_parser();
-    ardp_parser_set_reader  (parser, (ardp_reader) (isBzip ? read_bzip : read_gzip), file);
+    ardp_parser_set_reader  (parser, (ardp_reader) (is_bzip ? read_bzip : read_gzip), file);
     ardp_parser_set_handler (parser, handler, NULL);
 
 //    ardp_parser_set_handler(parser, ^void(ardp_token_type type, const char *s, void *arg){
@@ -196,7 +215,7 @@ int main( int argc, char **argv ) {
     fprintf(stderr, "triples: %d\n", triples);
 
     // close
-    if ( isBzip ) {
+    if ( is_bzip ) {
         BZ2_bzclose(file);
     } else {
         if ( gzeof(file) is 0 ) {
