@@ -136,7 +136,7 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     skip_line := (any -- EOL)* (EOL @endLine) @{ fgoto main; };
 
     main := line* $err{
-        ardp_fprintf(stderr, ARDP_COLOR_RED, "[ERROR]:");
+        ardp_fprintf   (stderr, ARDP_COLOR_RED, "[ERROR]:");
         ardp_fprintf_ln(stderr, ARDP_COLOR_BOLD, " on line: %d\n", parser->line);
         fhold; fgoto skip_line;
     };

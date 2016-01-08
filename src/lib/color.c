@@ -70,7 +70,11 @@ int ardp_fprintf( FILE *fp, const char *color, const char *fmt, ... ) {
 	va_list args;
 	int r;
 	va_start(args, fmt);
-	r = ardp_vfprintf(fp, color, fmt, args, NULL);
+  if ( color_stdout_is_tty ) {
+	   r = ardp_vfprintf(fp, color, fmt, args, NULL);
+  } else {
+     r = vfprintf(fp, fmt, args);
+  }
 	va_end(args);
 	return r;
 }
@@ -79,7 +83,12 @@ int ardp_fprintf_ln( FILE *fp, const char *color, const char *fmt, ... ) {
 	va_list args;
 	int r;
 	va_start(args, fmt);
-	r = ardp_vfprintf(fp, color, fmt, args, "\n");
+  if ( color_stdout_is_tty ) {
+	   r = ardp_vfprintf(fp, color, fmt, args, "\n");
+  } else {
+     r  = vfprintf(fp, fmt, args);
+     r += fprintf(fp, "\n");
+  }
 	va_end(args);
 	return r;
 }

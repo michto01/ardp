@@ -40,7 +40,7 @@
  * Generally the color code will lazily figure this out itself, but
  * this provides a mechanism for callers to override autodetection.
  */
-/*extern*/static int color_stdout_is_tty; 
+extern int color_stdout_is_tty; 
 
 /**
   * Print to stream with color Supported

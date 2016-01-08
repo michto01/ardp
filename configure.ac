@@ -33,12 +33,12 @@ dnl# Initialize autoconf and define the package name, version number and
 dnl# address for reporting bugs.
 
 
-AC_INIT(ardp,1.1.3,tomas.michalek.st@vsb.cz)
+AC_INIT(ardp,1.3.3,tomas.michalek.st@vsb.cz)
 
 
 
 ARDP_VERSION_MAJOR=1
-ARDP_VERSION_MINOR=1
+ARDP_VERSION_MINOR=3
 ARDP_VERSION_PATCH=3
 
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MAJOR], $ARDP_VERSION_MAJOR, [Major version of the ARDP API])
@@ -171,7 +171,7 @@ case $ardp_cv_platform_type in
     AC_SUBST(ARDP_ON_WIN32,[0])
     ;;
   Win32)
-    AC_DEFINE([ARDP_ON_WIN32],[1],[Define if this is Win32ish platform])
+    AC_DEFINE([ARDP_ON_WIN32],[1],[Define if this is Win32-ish platform])
     AC_SUBST(ARDP_ON_UNIX,[0])
     AC_SUBST(ARDP_ON_WIN32,[1])
     ;;
