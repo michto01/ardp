@@ -76,7 +76,7 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
             parser->finished = 1;
     }
 
-    action endTriple {
+    action endQuadruple {
         // TODO: call handler?
     }
 
@@ -125,13 +125,18 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     literal          = datatypeLiteral | langtagLiteral | simpleLiteral;
     iri              = IRIREF %endIRI;
     blankNode        = BLANK_NODE_LABEL %endBlankNode;
+
+    #Gramar objects
     subject          = iri | blankNode;
     predicate        = iri;
     object           = literal | iri | blankNode;
-    triple           = subject WS* predicate WS* object WS* :>> '.' WS* %endTriple;
+    graphLabel       = iri | blankNode;
+
+
+    statement        = subject WS* predicate WS* object WS* graphLabel? WS* :>> '.' WS* %endQuadruple;
 
     comment          = '#' (any -- EOL)*;
-    line             = WS* triple? comment? (EOL @endLine)+;
+    line             = WS* statement? comment? (EOL @endLine)+;
 
     skip_line := (any -- EOL)* (EOL @endLine) @{ fgoto main; };
 

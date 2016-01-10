@@ -187,12 +187,7 @@ dnl===-----------------------------------------------------------------------===
 
 dnl# Check for sufficiently modern version of Clang (we don't care about).
 dnl# These checks can be bypassed by passing a flag if necessary on a platform.
-dnl# We have to do these checks here so that we have the configuration
-dnl# of the standard C++ library finished.
-
-
-
-
+dnl# We have to do these checks here so that we have the configuration.
 
 dnl# Remove the warning of order precedence
 AM_INIT_AUTOMAKE()
@@ -202,17 +197,20 @@ AM_INIT_AUTOMAKE()
 AC_PROG_CC(clang)
 #AC_PROG_LIBTOOL
 AC_PROG_RANLIB
-
+AC_PROG_AWK
+AC_PROG_INSTALL
+AC_PROG_MKDIR_P
 
 
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for libraries.
-#AC_CHECK_LIB(zlib, zlib)
-#AC_CHECK_LIB(bzlib, bzlib)
+AC_CHECK_LIB([bz2], [BZ2_bzRead])
+AC_CHECK_LIB([z], [gzopen])
+
 
 # Checks for header files.
-AC_CHECK_HEADERS([stdint.h stdlib.h string.h iso646.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h iso646.h inttypes.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -223,7 +221,7 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memmove memset])
+AC_CHECK_FUNCS([memmove memset strcasecmp])
 
 AC_CONFIG_FILES([Makefile
 									man/Makefile

@@ -42,6 +42,41 @@ typedef struct {
 
 
 
+
+typedef enum {
+    COMMENT,
+    BASE,
+    PREFIX,
+    SPARQL_BASE,
+    SPARQL_PREFIX,
+    BLANK_NODE,
+    IRIREF,
+    PNAME_LN,
+    PNAME_NS,
+    COMMA,
+    SEMICOLON,
+    START_BLANKNODE_LIST,
+    CLOSE_BLANKNODE_LIST,
+    START_COLLECTION,
+    CLOSE_COLLECTION,
+    TYPED_LITERAL_SEPARATOR,
+    RDF_TYPE,
+    DOT,
+    STRING_LITERAL, // Qouted, double Qouted
+    LANGTAG,
+    INTEGER,
+    DECIMAL,
+    DOUBLE,
+    TRUE,
+    FALSE,
+} turtle_tokens;
+
+int token( turtle_tokens_t token, cost char* value = NULL );
+
+token(DOT);
+token(NS_LOCAL, "content");
+
+
 /*
 parser_t* p = Parser();
 

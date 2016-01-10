@@ -41,6 +41,8 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     machine ntriples;
     include rdf_grammar_common "grammars/rdf.grammar.common.rl";
 
+    access parser->;
+
     alphtype unsigned char;
 
     action mark {
@@ -172,57 +174,66 @@ void ardp_parser_set_handler( ardp_parser *parser, ardp_handler handler, void *h
     parser->handler_arg = handler_arg;
 }
 
-//typedef unsigned char uchar;
+void ardp_parser_init( ardp_parser * _Nonnull parser ) {
+    %% write init;
+}
 
-int ardp_parser_parse( ardp_parser *parser ) {
-    if ( parser->reader is NULL or parser->handler is NULL )
+void ardp_parser_parse_block( ardp_parser * _Nonnull  parser,
+                              uint8_t     * _Nullable p,
+                              size_t        len,
+                              uint8_t     * _Nullable mark,
+                              bool          is_eof ) {
+    /* pe points to 1 byte beyond the end of this block of data */
+    const uint8_t *pe  = p + len;
+    /* Indicates the end of all data, 0 if not in this block */
+    const uint8_t *eof = (is_eof) ? pe : ((uint8_t*) 0);
+    %% write exec;
+}
+
+int ardp_parser_parse( ardp_parser * _Nonnull parser ) {
+
+    if( parser->reader is NULL )
         return 0;
 
-    int cs;
+    ardp_parser_init( parser );
 
-    %% write init;
+    int status = 1;
 
-    uint8_t buf[BUFSIZE];
-    uint8_t *mark = 0;
-
-    int have = 0;
-    int res  = 1;
-
-    ardp_reader reader = parser->reader;
+    uint8_t    buf[BUFSIZE];
+    size_t     have = 0;
+    uint8_t   *mark = NULL;
+    bool       eof  = false;
 
     while ( not parser->finished ) {
-        uint8_t *pe;
-        uint8_t *p   = buf + have;
-        uint8_t *eof = 0;
+        uint8_t *p = buf + have;
 
-        int space = BUFSIZE - have;
-        if ( space is 0 ) {
-            // out of buffer space
-            res = 0;
-            break;
+        size_t space = BUFSIZE - have;
+        if ( space <= 0 ) {
+            /* Out of buffer space */
+            status = 0;
+            break; /* goto exit */
         }
 
-        int len = reader( p, space, parser->reader_arg );
-        pe = p + len;
+        int len = parser->reader( p, space, parser->reader_arg );
 
         if ( len < space ) {
-            eof = pe;
+            eof = true;
             parser->finished = 1;
         }
 
-        %% write exec;
+        ardp_parser_parse_block( parser, p, len, mark, eof );
 
-        if ( cs is ntriples_error ) {
-            res = 0;
-            break;
-        } else if (mark) {
-            have = pe - mark;
-            memmove( buf, mark, have );
-            mark = buf;
+        if ( parser->cs is ntriples_error ) {
+              status = 0;
+              break; /* goto exit */
+        } else if ( mark ) {
+              have = (p + len) - mark;
+              memmove( buf, mark, have );
+              mark = buf;
         } else {
-            have = 0;
+              have = 0;
         }
     }
 
-    return res;
+    return status;
 }

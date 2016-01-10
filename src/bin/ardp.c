@@ -3,17 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-#ifdef HAVE_STDINT
- #include <stdint.h>
-#endif
-
 #include <unistd.h>
 #include <getopt.h>
 #include <zlib.h>
 #include <bzlib.h>
+#include <stdint.h>
 
-//#include <libdispatch.h>
+//#include <curl/curl.h> // to be integrated as direct url read
 
 #include <ardp/parser.h>
 #include <ardp/string.h>
@@ -32,55 +28,65 @@ int triples = 0;
 
 int color_stdout_is_tty = -1;
 
-//Specifying the expected options
-static struct option long_options[] = {
-    { "version",   no_argument,       0,  'v' },
-    { "help",      no_argument,       0,  'h' },
-    { "usage",     no_argument,       0,  'u' },
-    { "use-bzip",  no_argument,       0,  'b' },
-    { "color",     required_argument, 0,  'c' },
-    { "syntax",    required_argument, 0,  's' },
-    { "file",      required_argument, 0,  'f' },
-    { 0,           0,                 0,   0  }
-};
-
 static const char ardp_usage_string[] = "usage: " PACKAGE
 	" [-v | --version] [-h | --help] [-u | --usage] [-f | --file <path>]"    "\n"
 	"            [-b | --use-bzip] [-c | --color auto:none:always]"          "\n"
-	"            [-s | --syntax tutle:nt:nq:guess]"                          "\n";
+	"            [-s | --syntax tutle:nt:nq:guess]";
 
 static void help_option_ln( FILE *fs , const char* option, const char *desc ) {
-  fprintf(fs, "\t");
-  ardp_fprintf(fs, ARDP_COLOR_BOLD, "%s", option);
-  fprintf(fs, "\t\t");
-  ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, "%s", desc);
+            fprintf(fs, "\t");
+       ardp_fprintf(fs, ARDP_COLOR_BOLD, "%s", option);
+            fprintf(fs, "\t\t");
+    ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, "%s", desc);
 }
 
+/**
+  * Help info dump
+  *
+  * Prints the usage help with explanation of each option.
+  *
+  * @param[in,out] fs File pointer/stream to dump the info to.
+  */
 static void help( FILE *fs ) {
-  ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, PACKAGE_STRING);
-  help_option_ln(fs, "-v --version",  "Display version string");
-  help_option_ln(fs, "-h --help",     "Print this help");
-  help_option_ln(fs, "-u --usage",    "Print compact help");
-  help_option_ln(fs, "-f --file",     "File or archive to be processed");
-  help_option_ln(fs, "-s --syntax",   "Process file with selected syntax parser [guess, turtle, nt, nq]");
-  help_option_ln(fs, "-b --use-bzip", "Use BZip library to read file/archive");
-  fprintf(fs, "\n");
-  help_option_ln(fs, "-c --color",    "Change the coloring of the output");
+    ardp_fprintf_ln(fs, ARDP_COLOR_NORMAL, PACKAGE_STRING);
+     help_option_ln(fs, "-v --version",  "Display version string");
+     help_option_ln(fs, "-h --help",     "Print this help");
+     help_option_ln(fs, "-u --usage",    "Print compact help");
+     help_option_ln(fs, "-f --file",     "File or archive to be processed");
+     help_option_ln(fs, "-s --syntax",   "Process file with selected syntax parser [guess, turtle, nt, nq]");
+     help_option_ln(fs, "-b --use-bzip", "Use BZip library to read file/archive");
+     help_option_ln(fs, "", "");
+     help_option_ln(fs, "-c --color",    "Change the coloring of the output");
 }
 
-
-int read_gzip(unsigned char* p, unsigned int len, void *arg) {
+/**
+  * Read using GZIP method
+  *
+  * @note Used for reading of @c*.gz archives and normal @c*.nt files.
+  *
+  * @param[out] p     Pointer to block of memory to be read into.
+  * @param[in]  len   Length of the block to be read.
+  * @param[in]  arg   File desccriptors and info.
+  */
+int read_gzip( unsigned char* p, unsigned int len, void *arg ) {
     gzFile file = arg;
     return gzread(file, p, len);
 }
 
-int read_bzip(unsigned char* p, unsigned int len, void *arg) {
+/**
+  * Read using BZIP method
+  *
+  * @param[out] p     Pointer to block of memory to be read into.
+  * @param[in]  len   Length of the block to be read.
+  * @param[in]  arg   File desccriptors and info.
+  */
+int read_bzip( unsigned char* p, unsigned int len, void *arg ) {
     BZFILE *file = arg;
     return BZ2_bzread(file, p, len);
 }
 
-void handler(ardp_token_type type, utf8 s, void *arg) {
-    switch (state) {
+void handler( ardp_token_type type, utf8 s, void *arg ) {
+    switch ( state ) {
         case STATE_SUBJECT: {
             ardp_fprintf(stdout, ARDP_COLOR_CYAN, "%s ", s);
             state = STATE_PREDICATE;
@@ -123,20 +129,28 @@ void handler(ardp_token_type type, utf8 s, void *arg) {
 extern void test_string(void);
 
 int main( int argc, char **argv ) {
-
-    //test_string();
-
-    test_string();
-
     char *filename = NULL;
-    bool is_bzip    = false;
+    bool  is_bzip  = false;
 
     // auto detect color predispositions at start
     color_stdout_is_tty = ardp_want_color( -1 );
 
-    int long_index =0;
+
     // parse options
     int opt;
+    int long_index = 0;
+    //Specifying the expected options
+    static struct option long_options[] = {
+        { "version",   no_argument,       0,  'v' },
+        { "help",      no_argument,       0,  'h' },
+        { "usage",     no_argument,       0,  'u' },
+        { "use-bzip",  no_argument,       0,  'b' },
+        { "color",     required_argument, 0,  'c' },
+        { "syntax",    required_argument, 0,  's' },
+        { "file",      required_argument, 0,  'f' },
+        { 0,           0,                 0,   0  }
+    };
+
 
     // not enought arguments provided
     if ( argc < 2 ) {
@@ -157,7 +171,7 @@ int main( int argc, char **argv ) {
                 help(stdout);
                 return EXIT_SUCCESS;
             case 'u':
-                ardp_fprintf(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
+                ardp_fprintf_ln(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
                 return EXIT_SUCCESS;
             case 'v':
                 ardp_fprintf_ln(stdout, ARDP_COLOR_BOLD, PACKAGE_STRING);
@@ -181,9 +195,11 @@ int main( int argc, char **argv ) {
         }
     }
 
-    if ( not filename )
+    if ( not filename ) {
+        ardp_fprintf_ln(stderr, ARDP_COLOR_NORMAL, "File to process not provided, exiting...\n");
+        ardp_fprintf_ln(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
         return EXIT_FAILURE;
-
+    }
 
     // open
     void *file = ( is_bzip ? BZ2_bzopen(filename, "rb") : gzopen(filename, "rb") );
@@ -198,17 +214,6 @@ int main( int argc, char **argv ) {
     ardp_parser_set_reader  (parser, (ardp_reader) (is_bzip ? read_bzip : read_gzip), file);
     ardp_parser_set_handler (parser, handler, NULL);
 
-//    ardp_parser_set_handler(parser, ^void(ardp_token_type type, const char *s, void *arg){
-//        switch ( type ) {
-//            case STATE_SUBJECT:
-//                printf("Hello");
-//                break;
-//
-//            default:
-//                break;
-//        }
-//    }, NULL);
-
     ardp_parser_parse (parser);
     ardp_free_parser  (parser);
 
@@ -218,9 +223,9 @@ int main( int argc, char **argv ) {
     if ( is_bzip ) {
         BZ2_bzclose(file);
     } else {
-        if ( gzeof(file) is 0 ) {
+        if ( gzeof( file ) is 0 ) {
             int err;
-            const char *error_string = gzerror(file, &err);
+            const char *error_string = gzerror( file, &err );
             if ( err ) {
                 fprintf(stderr, "gzip error: %s.\n", error_string);
                 return EXIT_FAILURE;

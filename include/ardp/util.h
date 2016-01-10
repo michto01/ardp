@@ -32,4 +32,7 @@ typedef void* var;
 #define likely(x)       __builtin_expect(!!(x), 1)
 #define unlikely(x)     __builtin_expect(!!(x), 0)
 
+
+static const int nullptr = 0;
+
 #endif /* __ARDP_UTIL_H__ */
