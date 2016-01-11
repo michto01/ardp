@@ -37,29 +37,21 @@ ardp_error_message(int level, const char* domain, const char *desc);
 // ardp_error_msg(WARNING, "LEXER", "Not enought space");
 */
 
-static inline void ardp_error_msg( int lvl, const char * _Nullable domain, const char * _Nonnull desc) {
-    int color = ARDP_COLOR_NORMAL;
-    switch( lvl ) {
-        case INFO:
-          color = ARDP_COLOR_GREEN;
-          break;
-        case WARNING:
-          color = ARDP_COLOR_YELLOW;
-          break;
-        case MESSAGE:
-          color = ARDP_COLOR_BLUE;
-          break
-        case ERROR:
-          color = ARDP_COLOR_RED;
-          break
-        default:
-          break;
-    }
+static inline void
+    ardp_error_msg( int lvl, const char *_Nullable domain, const char *_Nonnull desc ) {
+        int color = ARDP_COLOR_NORMAL;
+        switch ( lvl ) {
+                case INFO: color    = ARDP_COLOR_GREEN; break;
+                case WARNING: color = ARDP_COLOR_YELLOW; break;
+                case MESSAGE: color = ARDP_COLOR_BLUE; break;
+                case ERROR: color   = ARDP_COLOR_RED; break;
+                default: break;
+        }
 
-    if ( domain )
-        ardp_fprintf(stderr, color, "[%s]: ", domain);
+        if ( domain )
+                ardp_fprintf( stderr, color, "[%s]: ", domain );
 
-    ardp_fprintf(stderr, ARDP_COLOR_NORMAL, "%s\n", desc);
+        ardp_fprintf( stderr, ARDP_COLOR_NORMAL, "%s\n", desc );
 }
 
 

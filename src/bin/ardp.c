@@ -154,8 +154,8 @@ int main( int argc, char **argv ) {
 
     // not enought arguments provided
     if ( argc < 2 ) {
-      ardp_fprintf(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
-      return EXIT_FAILURE;
+        ardp_fprintf(stderr, ARDP_COLOR_NORMAL, ardp_usage_string);
+        return EXIT_FAILURE;
     }
 
     while ( (opt = getopt_long(argc, argv,"bhuvc:f:s:",
@@ -214,8 +214,8 @@ int main( int argc, char **argv ) {
     ardp_parser_set_reader  (parser, (ardp_reader) (is_bzip ? read_bzip : read_gzip), file);
     ardp_parser_set_handler (parser, handler, NULL);
 
-    ardp_parser_parse (parser);
-    ardp_free_parser  (parser);
+    ardp_parser_parse(parser);
+    ardp_free_parser(parser);
 
     fprintf(stderr, "triples: %d\n", triples);
 
