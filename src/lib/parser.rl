@@ -39,7 +39,6 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
   */
 /* clang-format off */
 %%{
-/* clang-format on */
     machine ntriples;
     include rdf_grammar_common "grammars/rdf.grammar.common.rl";
 
@@ -109,7 +108,7 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     action endBlankNode       { emit(parser, ARDP_BLANK_NODE); }
 
     PN_CHARS_BASE    = UNICODE $putChar;
-    PN_CHARS_U       = PN_CHARS_BASE | ('_' | ':') $putChar;
+    PN_CHARS_U       = PN_CHARS_BASE | [_:] $putChar;
     PN_CHARS         = PN_CHARS_U    | ( _PN_CHARS ) $putChar;
     ECHAR            = _ECHAR >mark %unescape_char;
     UCHAR            = _UCHAR >mark %unescape;
@@ -137,9 +136,11 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     comment          = '#' (any -- EOL)*;
     line             = WS* triple? comment? (EOL @endLine)+;
 
-    skip_line := (any -- EOL)* (EOL @endLine) @{ fgoto main; };
+    skip_line := (any -- EOL)* (EOL @endLine) @{
+      fgoto main;
+    };
 
-    main : = line * $err {
+    main := line * $err {
             ardp_fprintf( stderr, ARDP_COLOR_RED, "[ERROR]:" );
             ardp_fprintf_ln( stderr, ARDP_COLOR_BOLD, " on line: %d\n", parser->line );
             fhold;
@@ -148,7 +149,6 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
 
     write data;
 
-/* clang-format off */
 }%%
 /* clang-format on */
 

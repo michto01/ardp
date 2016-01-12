@@ -9,7 +9,6 @@
 #define MAX_PREALLOC ( 1024 * 1024 )
 #define INITIAL_CAPACITY 8
 
-#define string_hdr( ptr ) &( ( string_header_t * )ptr )[-1]
 
 /*
  * Length of the string.

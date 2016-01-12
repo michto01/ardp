@@ -36,7 +36,16 @@ static inline void string_push( utf8 s, char c ) {
 }
 
 /**
+  * Helper function to shift the string to header position
+  */
+static inline struct string_header *string_hdr( utf8 str ) {
+        return &( ( string_header_t * )str )[-1];
+}
+
+/**
   * Length of the fat-pointer string
+  *
+  * @param[in] str  String for measurement.
   *
   * @return Return the length of the string.
   */
@@ -84,17 +93,17 @@ bool string_append_utf8( utf8 *str, int cp );
 
 /**
   * Close finish the string.
-	*
-	* In the 'C' the string needs to be NULL-terminated with '\0' and this function
-	* provides just that.
-	*
-	* @note we regard this function as safe 'cause the string has preallocated
-	*			  the space to 'allways' accomodate the NUL terminator
-	*
-	* @param[in,out] str String being manipulated.
-	*
-	* @return True if the string was finished corretly, false otherwise.
-	*/
+  *
+  * In the 'C' the string needs to be NULL-terminated with '\0' and this function
+  * provides just that.
+  *
+  * @note we regard this function as safe 'cause the string has preallocated
+  *			  the space to 'allways' accomodate the NUL terminator
+  *
+  * @param[in,out] str String being manipulated.
+  *
+  * @return True if the string was finished corretly, false otherwise.
+  */
 void string_finish( utf8 str );
 
 /**

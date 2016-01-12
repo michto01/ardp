@@ -22,14 +22,7 @@
 
   ANON     = '[' WS* ']'                         #[162s]	ANON	::=	'[' WS* ']'
 
-  ECHAR    = '\\' . (   't'
-                      | 'b'
-                      | 'n'
-                      | 'r'
-                      | 'f'
-                      | '"'
-                      | '\''
-                      | '\\' );                 #[159s]	 ECHAR	::=	'\' [tbnrf"'\]
+  ECHAR    = '\\' . [tbnrf"'\];                  #[159s]	 ECHAR	::=	'\' [tbnrf"'\]
 
   UCHAR         = '\\' . ( ('u' HEX{4}) | ('U' HEX{8}) ); #[26]	  UCHAR
 
@@ -111,23 +104,12 @@
 
 
   LANGTAG = '@' ALPHA+ ('-' (ALPHA | DIGIT)+)*;  #[144s]	LANGTAG	::=	'@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)*
-  BLANK_NODE_LABEL = ('_'.':') (PN_CHARS_U | DIGIT) ((PN_CHARS | '.')* PN_CHARS)?; #[141s]	BLANK_NODE_LABEL	::=	'_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)?
+  BLANK_NODE_LABEL = ('_:') (PN_CHARS_U | DIGIT) ((PN_CHARS | '.')* PN_CHARS)?; #[141s]	BLANK_NODE_LABEL	::=	'_:' (PN_CHARS_U | [0-9]) ((PN_CHARS | '.')* PN_CHARS)?
 
   PNAME_NS = PN_PREFIX? ':';    #[139s]	PNAME_NS	::=	PN_PREFIX? ':'
   PNAME_LN = PNAME_NS PN_LOCAL; #[140s]	PNAME_LN	::=	PNAME_NS PN_LOCAL
 
   IRIREF_VALUE     = (^(0x00 .. 0x20 | '<' | '>' | '"' | '{' | '}' | '|' | '^' | '`' | '\\') | UCHAR)*;
   IRIREF           = '<' IRIREF_VALUE '>';
-
-}%%
-
-%%{
-  machine rdf.grammar.turtle.terminals;
-
-  ####
-  #####
-  ######  TERMINALS
-  #####
-  ####
 
 }%%

@@ -18,8 +18,7 @@ int lexer_set_grammar( enum grammar );
 int lexer_set_handler( ( void * )fc );
 int lexer_set_handler( error );
 
-enum {
-       READY,
+enum { READY,
        PAUSED,
        TOKENIZING,
        CREATED,
