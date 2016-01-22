@@ -9,13 +9,15 @@
                | '-'
                ;
 
+      #:> [154s]	EXPONENT ::= [eE] [+-]? [0-9]+
       EXPONENT = ('e' | 'E') SIGN? DIGIT+
-               ; #[154s]	EXPONENT	::=	[eE] [+-]? [0-9]+
+               ;
 
+      #:> [171s]	HEX	::=	[0-9] | [A-F] | [a-f]
       HEX      = DIGIT
                | 'a' .. 'f'
                | 'A' .. 'F'
-               ;    #[171s]	HEX	::=	[0-9] | [A-F] | [a-f]
+               ;
 
 
       ALPHA    = 'a' .. 'z'
@@ -26,12 +28,13 @@
                | '\n'
                ;
 
-
+      #:> [161s]	WS	::=	#x20 | #x9 | #xD | #xA /* #x20=space #x9=character tabulation #xD=carriage return #xA=new line */
       WS       = ' '
                | '\t'
                | EOL
-               ;   #[161s]	WS	::=	#x20 | #x9 | #xD | #xA /* #x20=space #x9=character tabulation #xD=carriage return #xA=new line */
+               ;
 
+      #:> [163s,157s]	PN_CHARS_BASE
       # The RDF specifies Unicode codepoints,
       # but files are encoded (and parsed) as UTF-8:
       UNICODE  = ALPHA
@@ -78,7 +81,7 @@
                | 0xF3 0xAF 0x00 0x00..0xFF
                | 0xF3 0xAF 0x01..0xBE 0x00..0xFF
                | 0xF3 0xAF 0xBF 0x00..0xBF
-               ; #[163s,157s]	PN_CHARS_BASE
+               ;
 
       _PN_CHARS = '-'
                 | DIGIT

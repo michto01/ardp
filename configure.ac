@@ -33,13 +33,13 @@ dnl# Initialize autoconf and define the package name, version number and
 dnl# address for reporting bugs.
 
 
-AC_INIT(ardp,1.3.3,tomas.michalek.st@vsb.cz)
+AC_INIT(ardp,1.4.5,tomas.michalek.st@vsb.cz)
 
 
 
 ARDP_VERSION_MAJOR=1
-ARDP_VERSION_MINOR=3
-ARDP_VERSION_PATCH=3
+ARDP_VERSION_MINOR=4
+ARDP_VERSION_PATCH=5
 
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MAJOR], $ARDP_VERSION_MAJOR, [Major version of the ARDP API])
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MINOR], $ARDP_VERSION_MINOR, [Minor version of the ARDP API])

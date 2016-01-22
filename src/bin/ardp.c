@@ -16,6 +16,7 @@
 #include <ardp/color.h>
 #include <ardp/util.h>
 
+
 typedef enum { STATE_SUBJECT, STATE_PREDICATE, STATE_OBJECT, STATE_EXTRA } parser_state;
 
 parser_state state = STATE_SUBJECT;
@@ -140,7 +141,6 @@ int main( int argc, char **argv ) {
 
         /* auto detect color predispositions at start */
         color_stdout_is_tty = ardp_want_color( -1 );
-
 
         /* parse options */
         int opt;

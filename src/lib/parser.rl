@@ -121,7 +121,7 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     BLANK_NODE_LABEL = '_:' >startString (PN_CHARS_U | DIGIT $putChar) ((PN_CHARS | '.' $putChar)* PN_CHARS)?;
     LANGTAG_VALUE    = ALPHA+ $putChar >startString ('-' $putChar ((ALPHA | DIGIT) $putChar)+)*;
 
-    datatypeLiteral  = '"' STRING_VALUE '"' '^^' >datatypeLiteral     IRIREF    %endDatatypeLiteral;
+    datatypeLiteral  = '"' STRING_VALUE '"' '^^' >datatypeLiteral IRIREF        %endDatatypeLiteral;
     langtagLiteral   = '"' STRING_VALUE '"' '@'  >langtagLiteral  LANGTAG_VALUE %endLangtagLiteral;
     simpleLiteral    = '"' STRING_VALUE '"' %endSimpleLiteral;
 
