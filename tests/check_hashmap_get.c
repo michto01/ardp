@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+//#include <check.h>
+
 #include <ardp/util.h>
 #include <ardp/hashmap.h>
 
@@ -26,6 +28,8 @@ int main( int argc, char **argv ) {
         }
 
         status = strcmp( ( char * )data, "value" );
+        // ck_assert( strcmp( ( char * )data, "value" ) == 0 );
+
         if ( status == 0 ) {
                 return 0; // Alles gutte
         } else {

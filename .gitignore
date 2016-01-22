@@ -70,7 +70,6 @@ examples/Makefile
 Status API Training Shop Blog About Pricing
 
 ## VIM
-
 [._]*.s[a-w][a-z]
 [._]s[a-w][a-z]
 *.un~
