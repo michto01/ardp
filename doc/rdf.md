@@ -54,7 +54,7 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 ```
 
 ###1.3.2 RDF/JSON
-Based on format which drives `Web 2.0`, `JSON` notation was specified for javaScript objects ( hence the name JSON - JavaScript Object Notation). It gained popularity in recent years and therefore it should not be supprise to anyone that it's used as alternative to more verbose `RDF/XML` syntax
+Based on format which drives `Web 2.0`. `JSON` notation was specified for javaScript objects ( hence the name JSON - JavaScript Object Notation). It gained popularity in recent years and therefore it should not be supprise to anyone that it's used as alternative to more verbose `RDF/XML` syntax
 
 ```json
 {
