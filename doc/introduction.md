@@ -6,6 +6,8 @@ It helps with extracting and processing information from web by human but also m
 
 Probably most important goal of the semantic web is to describe relationships between individual data sources. For this exact purpose as one of the pillars of the semantic web `Resource Description Framework` - `(RDF)` exists. The RDF denotes those relationships as `triples` which then form vast graphs.
 
-Primary format for description of triples in RDF become `XML/RDF`. Due to it's markup based syntax of XML it's easy for the machines to extrapolate the data from it using already available tools and libraries. The cons of this format are huge file sizes because of the markup overhead and the XML syntax is not optimalized for human readability. This predicament gave birth to other formats how to improve the description of the triples. Those formats are usually not compatible between each other and present different solution to the problems.
+Primary format for description of triples in RDF become `XML/RDF`. Due to it's markup based syntax of XML it's easy for the machines to extrapolate the data from it using already available tools and libraries. The cons of this format are huge file sizes because of the markup overhead and the XML syntax is not optimized for human readability. This predicament gave birth to other formats how to improve the description of the triples. Those formats are usually not compatible between each other and present different solution to the problems.
 
 One of the most know formats is `RDF/Turtle` which is a subset of larger and more powerful syntax Notation-3 usually denoted as simply `N3`.
+
+This thesis focuses exactly on this format and it's simpler subset `N-Triples`. The goal of the implementation if to create memory-efficient, high performance parser to allow fast readout of the triples from files.
