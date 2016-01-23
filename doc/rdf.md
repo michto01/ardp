@@ -27,7 +27,7 @@ The nodes can be of following types:
 
 ##1.3	RDF serialization formats
 
-For exchanging the RDF metadata there are numerous file formats in use. The main focus of this thesis in on the  `Notation 3` and particularly it's subset: `Turtle`, `N-Triples` and `N-Quads`. Other well known formats are: `RDF/XML`, `RDF/JSON`, `TriG`. For the following discussion about each format the following example metadata will be used:
+For exchanging the `RDF metadata` there are numerous file formats in use. The main focus of this thesis in on the  `Notation 3` and particularly it's subset: `Turtle`, `N-Triples` and `N-Quads`. Other well known formats are: `RDF/XML`, `RDF/JSON`, `TriG`. For the following discussion about each format the following example metadata will be used:
 
 | OBJECT | PERDICAMENT | SUBJECT |
 | -- | -- | -- |
@@ -36,6 +36,7 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 | ex:Student | ex:teaches | ex:Profesor |
 
 ###1.3.1 RDF/XML
+Primary format for the data specified in `W3C` documents in 1999 for semantic web RDF description.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF
