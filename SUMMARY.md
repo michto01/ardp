@@ -2,5 +2,5 @@
 
 * [Introduction](README.md)
 * [RDF](doc/rdf.md)
-* Gnu Make
+* [GNU Autotools](doc/gnu-make.md)
 
