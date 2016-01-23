@@ -12,14 +12,14 @@ The other rather interesting property of RDF is ability to deduce additional inf
 
 Semantic web is all about the data. On the internet there are large quantities of the data available in different forms. The most dominant forms are still texts, images and tables. Those are easy to understand for human, as he draws his own logical conclusions about the data and links them together.
 
-Machines do not possess such ability to do logical deductions, so how it can then recognize relationships between information? This exact problem is challenged by Semantic Web. 
+Machines do not possess such ability to do logical deductions, so how it can then recognize relationships between information? This exact problem is challenged by `Semantic Web`. 
 
 The basic principle is to complement the in human readable form (text, image ...) by metadata. And from the metadata the machine will determine relationships between objects. 
 
-The semantic web development is driven by the World Wide Web Consortium and it's technologies specifications contains specification for RDF and OWL.
+The semantic web development is driven by the World Wide Web Consortium and it's technologies specifications contains specification for `RDF` and `OWL`.
 
 ##1.2	RDF as a graph
-At the data represented in RDF metadata we can look as on oriented graph. The root node is represented by subject, edge is predicament and the result node is object.
+At the data represented in `RDF metadata` we can look as on oriented graph. The root node is represented by subject, edge is predicament and the result node is object.
 The nodes can be of following types:
     * Entities (has its own definition in dictionary, has its own URI)
     * Literals
@@ -54,6 +54,7 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 ```
 
 ###1.3.2 RDF/JSON
+Based on format which drives `Web 2.0`, `JSON` notation was specified for javaScript objects ( hence the name JSON - JavaScript Object Notation). It gained popularity in recent years and therefore it should not be supprise to anyone that it's used as alternative to more verbose `RDF/XML` syntax
 
 ```json
 {
@@ -85,7 +86,9 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 }
 ```
 
-###1.3.3 Turtle (Notation 3)
+###1.3.3 Turtle
+Subset of the `Notation 3` syntax omitting some less common construction such as implication (`=>`). Currently most common alternative to the `RDF/XML` syntax.
+
 ```ruby
 @prefix ns0: <http://example.com/#> .
 
@@ -97,6 +100,8 @@ For exchanging the RDF metadata there are numerous file formats in use. The main
 ```
 
 ###1.3.3 N-Triples
+The subset of the `Turtle` notation simplifying it's syntax and omitting more complex construction in favor of very simple triple syntax.
+
 ```xml
 <http://example.com/Student> <http://example.com/#studiesAt> "http://example.com/schools#VSB" .
 <http://example.com/Student> <http://example.com/#login> "xyz123" .
