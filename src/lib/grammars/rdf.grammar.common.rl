@@ -10,7 +10,20 @@
                ;
 
       #:> [154s]	EXPONENT ::= [eE] [+-]? [0-9]+
-      EXPONENT = ('e' | 'E') SIGN? DIGIT+
+      EXPONENT = [eE] SIGN? DIGIT+
+               ;
+
+      INTEGER  = SIGN? DIGIT+
+               ;
+
+      DECIMAL  = SIGN? DIGIT* '.' DIGIT+
+               ;
+
+      DOUBLE   = SIGN? (
+                      ( DIGIT+ '.' DIGIT* EXPONENT )
+                    | (        '.' DIGIT+ EXPONENT )
+                    | (            DIGIT+ EXPONENT )
+               )
                ;
 
       #:> [171s]	HEX	::=	[0-9] | [A-F] | [a-f]
@@ -19,6 +32,13 @@
                | 'A' .. 'F'
                ;
 
+
+      PERCENT  = '%' HEX{2}
+               ;
+
+      ##
+      ### Production for `string` terminals
+      ##
 
       ALPHA    = 'a' .. 'z'
                | 'A' .. 'Z'
@@ -32,6 +52,10 @@
       WS       = ' '
                | '\t'
                | EOL
+               ;
+
+      #:> [162s]
+      ANON     = '[' WS* ']'
                ;
 
       #:> [163s,157s]	PN_CHARS_BASE
@@ -94,5 +118,8 @@
               ;
 
       _ECHAR  = '\\' . ('t' | 'b' | 'n' | 'r' | 'f' | '"' | '\'' | '\\')
+              ;
+
+      LANGTAG = '@' ALPHA+ ( '-' ( ALPHA | DIGIT )+ )*
               ;
 }%%

@@ -1,6 +1,14 @@
 #ifndef __ARDP_PARSER_H__
 #define __ARDP_PARSER_H__
 
+
+#if __has_feature( nullability )
+#else
+#define _Nullable
+#define _Nonnull
+#define _Null_unspecified
+#endif
+
 #include <ardp/string.h>
 
 /*

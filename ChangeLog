@@ -5,6 +5,15 @@ releases are sorted from youngest to oldest.
 
 - competed switch to autoconf
 
+@version 1.4.5:
+- bumping up version
+- separating `parser` and `lexer` to allow parsing of recursive list
+
+@version 1.3.3:
+
+- Autotool integration continuation
+- Enabling CUnit testing
+- Exploring the <check.h>
 
 @version 1.0.1:
 
