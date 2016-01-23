@@ -18,7 +18,6 @@ int ardp_config_colorbool( const char *val ) {
                 if ( strcasecmp( val, "never" ) is 0 )
                         return ARDP_COLOR_NEVER;
         }
-        //
         return ARDP_COLOR_AUTO;
 }
 

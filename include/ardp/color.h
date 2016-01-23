@@ -3,6 +3,13 @@
 
 #include <stdio.h>
 
+#if __has_feature( nullability )
+#else
+#define _Nullable
+#define _Nonnull
+#define _Null_unspecified
+#endif
+
 #define ARDP_COLOR_NORMAL ""
 #define ARDP_COLOR_RESET "\033[0m" // \033[m
 #define ARDP_COLOR_BOLD "\x1b[1m"
@@ -36,25 +43,38 @@
 #define ARDP_COLOR_ALWAYS 1
 #define ARDP_COLOR_AUTO 2
 
-/*
- * Generally the color code will lazily figure this out itself, but
- * this provides a mechanism for callers to override autodetection.
- */
+/**
+  * Generally the color code will lazily figure this out itself, but
+  * this provides a mechanism for callers to override autodetection.
+  */
 extern int color_stdout_is_tty;
 
 /**
   * Print to stream with color Supported
   *
-  * @param[in,out] fp File pointer ( usually STDERR, STDOUT)
-  * @param[in] color  Color to be used for printing the message with;
-  * @param[in] fmt    Formatting string
-  * @param     ...    Aditional variadic parameters
+  * @param[out]  fp     File pointer ( usually STDERR, STDOUT)
+  * @param[in]   color  Color to be used for printing the message with;
+  * @param[in]   fmt    Formatting string
+  * @param       ...    Aditional variadic parameters
   *
-  * @returns 0 is success, value if otherwise.
+  * @returns If successful, the total number of characters written is returned otherwise, a negative
+  *          number is returned.
   */
-int ardp_fprintf( FILE *fp, const char *color, const char *fmt, ... )
+int ardp_fprintf( FILE *_Nonnull fp, const char *_Nonnull color, const char *_Nullable fmt, ... )
     __attribute__( ( __format__( __printf__, 3, 4 ) ) );
-int ardp_fprintf_ln( FILE *fp, const char *color, const char *fmt, ... )
+
+/**
+  * Print line to stream with color Supported
+  *
+  * @param[out]  fp     File pointer ( usually STDERR, STDOUT)
+  * @param[in]   color  Color to be used for printing the message with;
+  * @param[in]   fmt    Formatting string
+  * @param       ...    Aditional variadic parameters
+  *
+  * @returns If successful, the total number of characters written is returned otherwise, a negative
+  *          number is returned.
+  */
+int ardp_fprintf_ln( FILE *_Nonnull fp, const char *_Nonnull color, const char *_Nullable fmt, ... )
     __attribute__( ( __format__( __printf__, 3, 4 ) ) );
 
 
@@ -62,12 +82,24 @@ int ardp_fprintf_ln( FILE *fp, const char *color, const char *fmt, ... )
  * Set the color buffer to the raw color bytes; this is useful for initializing
  * default color variables.
  */
-void ardp_color_set( char *dst, const char *color_bytes );
+void ardp_color_set( char *_Nullable dst, const char *_Nullable color_bytes );
 
-int ardp_config_colorbool( const char *val );
+/**
+  * Converts string value to predefined color settings flag
+  *
+  * @param[in] val String to be eveluated for color directives
+  *
+  * @return `ARDP_COLOR_AUTO` if the evaluates the nil or unknown value, ARDP_COLOR_* otherwise.
+  */
+int ardp_config_colorbool( const char *_Nullable val );
+
+/**
+  * Probe environment to see if colored output is supported
+  *
+  * @param[in] var Overwrite for the probed value.
+  *
+  * @return Color directive depending on actual environment.
+  */
 int ardp_want_color( int var );
-
-
-// void ardp_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
 #endif /* __ARDP_COLOR_H__ */
