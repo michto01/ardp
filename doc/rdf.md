@@ -88,7 +88,7 @@ Based on format which drives `Web 2.0`. `JSON` notation was specified for javaSc
 ```
 
 ###1.3.3 Turtle
-Subset of the `Notation 3` syntax omitting some less common construction such as implication (`=>`). Currently most common alternative to the `RDF/XML` syntax.
+Subset of the `Notation 3` syntax omitting some less common construction such as implication (`=>`) and keywords such as `has`. Currently most common alternative to the `RDF/XML` syntax.
 
 ```ruby
 @prefix ns0: <http://example.com/#> .
