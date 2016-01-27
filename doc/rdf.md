@@ -110,3 +110,5 @@ The subset of the `Turtle` notation simplifying it's syntax and omitting more co
 ```
 
 As is seen from those examples, the `N3` based examples are much easier to read to human.
+
+![Rdf syntax comparison](n3-venn.png)
