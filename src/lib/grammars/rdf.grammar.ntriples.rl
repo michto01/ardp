@@ -1,7 +1,7 @@
 %%{
 
-    machine rdf.grammar.ntriples;
+    machine rdf_grammar_ntriples;
 
-    
+
 
 }%%

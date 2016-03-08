@@ -110,8 +110,119 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     PN_CHARS_BASE    = UNICODE $putChar;
     PN_CHARS_U       = PN_CHARS_BASE | [_:] $putChar;
     PN_CHARS         = PN_CHARS_U    | ( _PN_CHARS ) $putChar;
+    PN_LOCAL         = (PN_CHARS_U | ":" | DIGIT | _PLX) ((PN_CHARS | '.' | ':' | _PLX)* (PN_CHARS | ':' | _PLX))?;
+    PN_PREFIX        = PN_CHARS_BASE ((PN_CHARS | '.')* PN_CHARS)?;
+
     ECHAR            = _ECHAR >mark %unescape_char;
     UCHAR            = _UCHAR >mark %unescape;
+
+    PNAME_NS  = PN_PREFIX? ':';
+    PNAME_LN  = PNAME_NS PN_LOCAL;
+
+    BLANK_NODE_LABEL = '_:' (PN_CHARS_U | DIGIT) ((PN_CHARS | '.')* PN_CHARS)?;
+    IRIREF = '<' (PN_CHARS | '.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* '>';
+
+
+
+    PrefixedName   = PNAME_LN
+                   | PNAME_NS
+                   ;
+
+    BooleanLiteral = 'true'
+                   | 'false'
+                   ;
+
+    BlankNode      = ANON
+                   | BLANK_NODE_LABEL
+                   ;
+
+    iri            = IRIREF
+                   | PrefixedName
+                   ;
+
+    String         = STRING_LITERAL_QUOTE
+                   | STRING_LITERAL_SINGLE_QUOTE
+                   | STRING_LITERAL_LONG_SINGLE_QUOTE
+                   | STRING_LITERAL_LONG_QUOTE
+                   ;
+
+    rdfLiteral     = String (LANGTAG | '^^' . iri)?
+
+    NumericLiteral = INTEGER
+                   | DECIMAL
+                   | DOUBLE
+                   ;
+
+    literal        = rdfLiteral
+                   | NumericLiteral
+                   | BooleanLiteral
+                   ;
+
+    object         = iri
+                   | BlankNode
+                   | collection
+                   | blankNodePropertyList
+                   | literal
+                   ;
+
+    blankNodePropertyList = '[' predicateObjectList ']';
+    collection            = '(' object* ')';
+
+    predicate      = iri
+                   ;
+
+    subject        = iri
+                   | BlankNode
+                   | collection
+                   ;
+
+    verb           = predicate
+                   | 'a'
+                   ;
+
+    objectList     = object (',' object)*
+                   ;
+
+    predicateObjectList = verb objectList (';' (verb objectList)?)*;
+
+    triples       = subject predicateObjectList
+                  | blankNodePropertyList predicateObjectList?
+                  ;
+
+                turtleDoc
+                 = statement*
+                 ;
+
+              statement
+                 = directive
+                 | triples '.'
+                 ;
+
+              directive
+                 = prefixID
+                 | base
+                 | sparqlPrefix
+                 | sparqlBase
+                 ;
+
+              prefixID
+                 = '@prefix' PNAME_NS IRIREF '.'
+                 ;
+
+              base
+                 = '@base' IRIREF '.'
+                 ;
+
+              sparqlBase
+                 = 'BASE' IRIREF
+                 ;
+
+              sparqlPrefix
+                 = 'PREFIX' PNAME_NS IRIREF
+                 ;
+
+    # > following is the old syntax supporting only N-Triples
+    #TODO:Revise
 
 
     scheme           = (ALPHA (ALPHA | DIGIT | '+' | '-' | '.')*) $putChar;
@@ -130,6 +241,10 @@ static void emit( ardp_parser *parser, ardp_token_type type ) {
     blankNode        = BLANK_NODE_LABEL %endBlankNode;
     subject          = iri | blankNode;
     predicate        = iri;
+
+
+
+
     object           = literal | iri | blankNode;
     triple           = subject WS* predicate WS* object WS* :>> '.' WS* %endTriple;
 

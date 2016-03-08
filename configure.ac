@@ -35,8 +35,6 @@ dnl# address for reporting bugs.
 
 AC_INIT(ardp,1.4.5,tomas.michalek.st@vsb.cz)
 
-
-
 ARDP_VERSION_MAJOR=1
 ARDP_VERSION_MINOR=4
 ARDP_VERSION_PATCH=5
@@ -195,6 +193,7 @@ AM_INIT_AUTOMAKE()
 
 # Checks for programs.
 AC_PROG_CC(clang)
+AC_PROG_CXX(clang++)
 #AC_PROG_LIBTOOL
 AC_PROG_RANLIB
 AC_PROG_AWK

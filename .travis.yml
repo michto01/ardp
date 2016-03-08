@@ -24,7 +24,7 @@ matrix:
       before_install:
         - ./autogen.sh
         - pip install --user codecov
-        - sudo apt-get install ragel
+        - sudo apt-get install ragel libdispatch-dev
 
       after_success:
         - codecov

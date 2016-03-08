@@ -11,4 +11,4 @@ ardp_LDADD   = ../lib/libardp.a       \
                $(AM_LDFLAGS)          \
                -lz -lz -lbz2
 
-ardp_LDFLAGS = -coverage
+ardp_LDFLAGS = --coverage
