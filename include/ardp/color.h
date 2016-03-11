@@ -61,7 +61,7 @@ extern int color_stdout_is_tty;
   *          number is returned.
   */
 int ardp_fprintf( FILE *_Nonnull fp, const char *_Nonnull color, const char *_Nullable fmt, ... )
-    __attribute__( ( __format__( __printf__, 3, 4 ) ) );
+        __attribute__( ( __format__( __printf__, 3, 4 ) ) );
 
 /**
   * Print line to stream with color Supported
@@ -75,7 +75,7 @@ int ardp_fprintf( FILE *_Nonnull fp, const char *_Nonnull color, const char *_Nu
   *          number is returned.
   */
 int ardp_fprintf_ln( FILE *_Nonnull fp, const char *_Nonnull color, const char *_Nullable fmt, ... )
-    __attribute__( ( __format__( __printf__, 3, 4 ) ) );
+        __attribute__( ( __format__( __printf__, 3, 4 ) ) );
 
 
 /*

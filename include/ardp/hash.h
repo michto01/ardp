@@ -1,5 +1,13 @@
-#ifndef __ARDP_HASH_H__
-#define __ARDP_HASH_H__
+/** @file hash.h
+  *
+  * Hashing function to choose from in hashmap.
+  *
+  * @author  Tomas Michalek <tomas.michalek.st@vsb.cz>
+  * @version 1.0.2
+  * @date    2015
+  */
+
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,6 +106,3 @@ unsigned int hash_crc( char *str );
 #ifdef __cplusplus
 }
 #endif /* C++ */
-
-
-#endif /* __ARDP_HASH_H__ */

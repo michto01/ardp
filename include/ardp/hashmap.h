@@ -1,22 +1,47 @@
-#ifndef __ARDP_HASHMAP_H__
-#define __ARDP_HASHMAP_H__
+/** @file hash.h
+ *
+ * Hashing function to choose from in hashmap.
+ *
+ * @author  Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @version 1.0.2
+ * @date    2015
+ */
 
+#pragma once
+
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 
 #include <ardp/util.h>
 #include <ardp/hash.h>
 
-static const int ARDP_MAP_USED    = -4;
-static const int ARDP_MAP_MISSING = -3; /* No such element in map */
-static const int ARDP_MAP_FULL    = -2; /* HashMap is full */
-static const int ARDP_MAP_OUTMEM  = -1; /* Out of memory */
-static const int ARDP_MAP_OK      = 0;  /* OK */
+/*!
+ *  Key used in the map.
+ */
+static const int ARDP_MAP_USED    = (-4);
+/*!
+ *  No such element in map.
+ */
+static const int ARDP_MAP_MISSING = (-3);
+/*!
+ *  HashMap is full.
+ */
+static const int ARDP_MAP_FULL    = (-2);
+/*!
+ *  Out of memory.
+ */
+static const int ARDP_MAP_OUTMEM  = (-1);
+/*!
+ *  OK - operation was performend correctly.
+ */
+static const int ARDP_MAP_OK      = ( 0);
 
 
 /**
   * Pointer to function that can take two var arguments and return an integer.
   *
-  * @parma[in] a  Argument A
+  * @param[in] a  Argument A
   * @param[in] b  Argument B
   *
   * @return Returns status code.
@@ -119,22 +144,28 @@ int map_get_one( map_t in, var *arg, int remove );
 /**
   * Free the map
   *
-  * @param[in] Map to be unallocated.
+  * @param[in] in Map to be unallocated.
   */
 void map_free( map_t in );
 
 /**
   * Get the current size of a hashmap.
   *
-  * @param[in] Map to be unallocated.
+  * @param[in] in Map to be probed.
   *
   * @return Size of the hashmap.
   */
 size_t map_size( map_t in );
+    
+/**
+  * Get current capacity of the hashmap.
+  *
+  * @param[in] in Map to be probed.
+  *
+  * return Capacity of the hashmap.
+  */
 size_t map_capacity( map_t in );
 
 #ifdef __cplusplus
 }
 #endif /* C++ */
-
-#endif /* __ARDP_HASHMAP_H__ */
