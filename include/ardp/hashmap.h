@@ -156,7 +156,7 @@ void map_free( map_t in );
   * @return Size of the hashmap.
   */
 size_t map_size( map_t in );
-    
+
 /**
   * Get current capacity of the hashmap.
   *

@@ -30,7 +30,7 @@ OBJECT = ARDP_IRI
 
 */
 
-typedef enum __attribute__( ( flag_enum ) ) {
+typedef enum {
         ARDP_IRI,
         ARDP_BLANK_NODE,
         ARDP_SIMPLE_LITERAL_VALUE,

@@ -12,6 +12,9 @@
 
 #pragma once /* Header guarde for C11 */
 
+#include <stdlib.h>
+#include <errno.h>
+
 #define is ==
 #define isnt !=
 
@@ -20,6 +23,14 @@
 #define and &&
 #define not !
 #endif /* _ISO646_H_ *//* clang-format on */
+
+
+#if __has_feature( nullability )
+#else
+#define _Nullable
+#define _Nonnull
+#define _Null_unspecified
+#endif
 
 //#define ARDP_SUCCESS true
 //#define ARDP_FAILURE false
@@ -41,8 +52,10 @@ static const int nullptr = 0;
 typedef enum _ardp_status_t {
     /*!
      * Operation finished sucessfully.
+     *
+     * @note The success value is denoted as '0' in the spirit of *nix-ness.
      */
-    ARDP_SUCCESS,
+    ARDP_SUCCESS = 0,
     /*!
      * Operation didn't finish correctly.
      */
@@ -52,6 +65,18 @@ typedef enum _ardp_status_t {
      */
     ARDP_UNKNOWN
 } ardp_status_t;
+
+/*!
+ * Helper function to kill the program on unrecoverable error.
+ */
+
+static 
+inline void _Noreturn die(const char* message) {
+	if (message)
+		fprintf(stderr, "%s", message);
+	exit(EXIT_FAILURE);
+}
+
 
 /* Brach prediction optimalizations */
 

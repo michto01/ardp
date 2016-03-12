@@ -13,8 +13,17 @@ extern "C" {
 
 typedef uint8_t *utf8;
 
+/**
+  * Header to use with the string, holding the string informations.
+  */
 typedef struct __attribute__( ( __packed__ ) ) string_header {
+        /*!
+         * Current pre-allocated capacity of the string.
+         */
         size_t capacity;
+        /*!
+         * Actual lenght of the string ( # of characters in buffer ).
+         */
         size_t length;
 } string_header_t;
 

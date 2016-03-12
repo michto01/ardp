@@ -92,6 +92,14 @@ int read_bzip( unsigned char *p, unsigned int len, void *arg ) {
         return BZ2_bzread( file, p, len );
 }
 
+void parser( ardp_token_type token, utf8 value, void *ard) 
+{
+	switch(state) {
+		case STATE_SUBJECT:
+			ardp_fprintf( stdout, kARDPColorCyan, "%s", value);
+	}
+}
+
 void handler( ardp_token_type type, utf8 s, void *arg ) {
         switch ( state ) {
                 case STATE_SUBJECT: {

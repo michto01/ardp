@@ -1,12 +1,34 @@
-#ifndef __ARDP_LEXER_TURTLE_H__
-#define __ARDP_LEXER_TURTLE_H__
+/*! @file lexer.turtle.h
+ *
+ * Define the formal interface for the ARDP lexer (tokenizer) as well as defines
+ * the tokens for the turtle (and N-triples) grammar.
+ *
+ * @author Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @date   2015
+ *
+ * @bug    Internal dispatch queue code needs to be cleaned up and locks need to be
+ *         set properly (currently not working as designed).
+ */
+#pragma once
+
+/* System/Global headers */
+#include <stdbool.h>
+#include <dispatch/dispatch.h>
+
+/* Project headers */
+#include <ardp/util.h>
+
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* C++ */
 
-#include <dispatch/dispatch.h>
-
+/*!
+ * @enum  turtle_token_type
+ * @brief Enumerates token types to explicit values for the turtle parsing.
+ */
+/* enum(turtle_token_type) {{{*/
 enum turtle_token_type {
         A = 201,
         HAT,
@@ -40,10 +62,13 @@ enum turtle_token_type {
         BOOLEAN_LITERAL,
 
         INVALID
-};
+}; /*}}}*/
 
-enum { ARDP_SUCCESS = 0, ARDP_FAILURE, ARDP_UNKNOWN };
 
+/*!
+ * @enum  lexer_status
+ * @brief Internal state of the lexer used to guard against restricted memory access.
+ */
 enum lexer_status {
         ARDP_LEXER_TURTLE_STATUS_UNKNOWN,
         ARDP_LEXER_TURTLE_STATUS_CREATED,
@@ -51,6 +76,10 @@ enum lexer_status {
         ARDP_LEXER_TURTLE_STATUS_READY
 };
 
+/*!
+ * @enum lexer_error
+ * @brief Set of errors, which can be encountered at the runtime of the lexer
+ */
 enum lexer_error {
         ARDP_ERROR_LEXER_INIT_PREREQUISITE = 101,
         ARDP_ERROR_LEXER_MALLOC,
@@ -61,43 +90,130 @@ enum lexer_error {
         ARDP_LEXER_OMEM
 };
 
-struct ardp_lexer_turtle_config {
+enum lexer_log_level {
+        ALERT   = 1,    /*!< Should be corrected immediately  */
+        CRITICAL,       /*!< Critical conditions */
+        ERROR,          /*!< Error conditions */
+        WARNING,        /*!< May indicate that an error will occur if action is not taken.  */
+        NOTICE,         /*!< Events that are unusual, but not error conditions. */
+        INFO,           /*!< Normal operational messages that require no action. */
+        DEBUG           /*!< Information useful to developers for debugging the application. */
 };
 
+
+/*!
+ * @deprecated No longer in use.
+ */
+struct ardp_lexer_turtle_config {};
+
+
+/*!
+ * @fn    lexer_reader
+ * @brief Callback shorthand for the data reader (file - sequential read).
+ *
+ * @param[in] buffer    Buffer of incoming data.
+ * @param[in] len       Length of the buffer.
+ * @param[in] arg       Additional arguments of the reader.
+ *
+ * @return State of the read.
+ */
 typedef int ( *_Nullable lexer_reader )( unsigned char *_Nonnull buffer,
                                          unsigned len,
                                          void *_Nullable arg );
 
+/*!
+ * @struct token
+ * @brief  Holds the single lexical unit and its value.
+ *
+ * @FIXME: Geared to be Turtle token type - needs to be generalized.
+ */
 struct token {
-        enum turtle_token_type type;
-        char *_Nullable lexem;
+        enum turtle_token_type type; /*!< Enumerated token type */
+        char *_Nullable lexem;       /*!< Actual value of the token (optional) */
 };
 
-struct lexer {
 
+/*!
+ * @struct lexer
+ * @brief  Hold informations about the lexer as well as the its internal state.
+ *
+ * @note   The current implementation hides this structure from the user by declaring
+ *         global variable shared_lexer. This is used for convenience as user don't
+ *         need to type the lexer in the function call. Future version(s) should
+ *         include the option to allow user to specify this on their own if they want
+ *         to overload this for eg.
+ */
+struct lexer {
+        /*!
+         * Queue (~thread) to run lexer at.
+         */
         dispatch_queue_t _Null_unspecified lexer_queue;
+        /*!
+         * Queue (~thread) for events dispatching.
+         */
         dispatch_queue_t _Null_unspecified event_queue;
 
+        /*!
+         * Internal state of the lexer.
+         */
         enum lexer_status state;
 
+        /*!
+         * Current line count in scanned file/block.
+         */
         off_t line;
+
+        /*!
+         * Denotes if the lexer is still running (used only in file processing)
+         *
+         * @note Should be moved to callback pointer argument.
+         */
         int finished;
 
+        /*!
+         * Lexer environment setup used in Ragel.
+         *
+         * These variables are required by Ragel to work properly.
+         */
         struct {
-                int cs;
-                int act;
+                int cs;         /*!< Current state */
+                int act;        /*!< Actual state */
 
-                uint8_t *_Nullable ts;
-                uint8_t *_Nullable te;
+                uint8_t *_Nullable ts; /*!< Token start */
+                uint8_t *_Nullable te; /*!< Token end */
         } env;
 
+        /*!
+         * Debugger and logger helper and level.
+         */
         struct {
+                /*!
+                 * How verbose is the output
+                 */
                 int level;
-                int ( *_Nullable eprintf )( const char *_Nullable str );
+
+                /*!
+                 * Log function to call for the level
+                 */
+                int ( *_Nullable eprintf )( int level,  const char *_Nullable str );
         } log;
 
+        /*!
+         * Callback used in the lexer
+         *
+         * @note This section was reduced due to rewrite of the lexer states.
+         */
         struct {
-                int ( ^_Nullable token )( enum turtle_token_type type, const char *_Nullable str );
+                /*!
+                 * Function which emits the token to the parent object(s).
+                 *
+                 * @param[in] type  Type of the token.
+                 * @param[in] value Optional value of the token.
+                 *
+                 * @FIXME: Should take arbitrary token type not only the turtle enum.
+                 */
+                int ( ^_Nullable token )( enum turtle_token_type type,
+                                          const char *_Nullable  value );
         } cb;
 };
 
@@ -111,7 +227,9 @@ typedef void ( ^_Nullable completation_block )( int success );
 int ardp_lexer_turtle_create( void );
 
 /**
-  * Preinitialize lexer with defaults values and prepare it for initalisation.
+  * Preinitialize lexer with defaults values and prepare it for initialization.
+  *
+  * @param[in] handler Completion block to be used to denote end of the configuration.
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
@@ -120,7 +238,8 @@ void ardp_lexer_turtle_defaults( completation_block handler );
 /**
   * Inject configuration into the lexer.
   *
-  * @param[in]  cfg Configuration for the lexer internals.
+  * @param[in]  cfg     Configuration for the lexer internals.
+  * @param[in]  handler Block to be run at completion of the function.
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
@@ -151,7 +270,7 @@ int ardp_lexer_turtle_state( void );
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-int ardp_lexer_turtle_is_ready( void );
+bool ardp_lexer_turtle_is_ready( void );
 
 /**
   * Lex the block of data.
@@ -172,7 +291,7 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable p,
                                       completation_block handler );
 
 /**
-  * Process reader until the input is exhousted.
+  * Process reader until the input is exhausted.
   *
   * Continually process the blocks of data until the reader data stops providing
   * new data to feed the underlying `ardp_lexer_turtle_process_block`.
@@ -190,4 +309,3 @@ void ardp_lexer_turtle_process_reader( lexer_reader reader,
 }
 #endif /* C++ */
 
-#endif /* __ARDP_LEXER_TURTLE_H__ */

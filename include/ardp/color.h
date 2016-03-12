@@ -1,14 +1,43 @@
-#ifndef __ARDP_COLOR_H__
-#define __ARDP_COLOR_H__
+/** @file color.h
+ *
+ * Color TTY
+ *
+ * @author  Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @version 1.0.2
+ * @date    2015
+ */
+
+#pragma once
 
 #include <stdio.h>
+#include "util.h"
 
-#if __has_feature( nullability )
-#else
-#define _Nullable
-#define _Nonnull
-#define _Null_unspecified
-#endif
+extern const char *_Nonnull const kARDPColorNormal;
+extern const char *_Nonnull const kARDPColorReset;
+extern const char *_Nonnull const kARDPColorBold;
+
+extern const char *_Nonnull const kARDPColorRed;
+extern const char *_Nonnull const kARDPColorGreen;
+extern const char *_Nonnull const kARDPColorYellow;
+extern const char *_Nonnull const kARDPColorBlue;
+extern const char *_Nonnull const kARDPColorMagenta;
+extern const char *_Nonnull const kARDPColorCyan;
+extern const char *_Nonnull const kARDPColorWhite;
+
+extern const char *_Nonnull const kARDPColorBoldRed;
+extern const char *_Nonnull const kARDPColorBoldGreen;
+extern const char *_Nonnull const kARDPColorBoldYellow;
+extern const char *_Nonnull const kARDPColorBoldBlue;
+extern const char *_Nonnull const kARDPColorBoldMagenta;
+extern const char *_Nonnull const kARDPColorBoldCyan;
+
+extern const char *_Nonnull const kARDPColorBackgroundRed;
+extern const char *_Nonnull const kARDPColorBackgroundGreen;
+extern const char *_Nonnull const kARDPColorBackgroundYellow;
+extern const char *_Nonnull const kARDPColorBackgroundBlue;
+extern const char *_Nonnull const kARDPColorBackgroundMagenta;
+extern const char *_Nonnull const kARDPColorBackgroundCyan;
+
 
 #define ARDP_COLOR_NORMAL ""
 #define ARDP_COLOR_RESET "\033[0m" // \033[m
@@ -38,16 +67,20 @@
 
 
 /* Coloring of the output */
-#define ARDP_COLOR_UNKNOWN -1
-#define ARDP_COLOR_NEVER 0
-#define ARDP_COLOR_ALWAYS 1
-#define ARDP_COLOR_AUTO 2
+#define ARDP_COLOR_UNKNOWN (-1)
+#define ARDP_COLOR_NEVER    (0)
+#define ARDP_COLOR_ALWAYS   (1)
+#define ARDP_COLOR_AUTO     (2)
 
 /**
   * Generally the color code will lazily figure this out itself, but
   * this provides a mechanism for callers to override autodetection.
   */
 extern int color_stdout_is_tty;
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* C++ */
 
 /**
   * Print to stream with color Supported
@@ -102,4 +135,6 @@ int ardp_config_colorbool( const char *_Nullable val );
   */
 int ardp_want_color( int var );
 
-#endif /* __ARDP_COLOR_H__ */
+#ifdef __cplusplus
+}
+#endif /* C++ */
