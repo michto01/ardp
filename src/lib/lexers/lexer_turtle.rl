@@ -2,11 +2,6 @@
 
 // HEADERS {{{ --------------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-
 #include <errno.h>              /* Included for 'stderr' */
 #include <iso646.h>             /* verbose || and && */
 #include <string.h>             /* C buffer manipulation functions */
@@ -135,17 +130,19 @@ static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable st
 {
         assert( shared_lexer ); /* sanity check */
 
-        dispatch_async( shared_lexer->event_queue, ^{
-            char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
-            assert(p_str); /* Sanity check for the malloc() */
+        if (shared_lexer->cb.token) {
+            dispatch_async( shared_lexer->event_queue, ^{
+                char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
+                assert(p_str); /* Sanity check for the malloc() */
 
-            p_str[0] = '\0';
-            strncat( p_str, ( const char * )str, len );
+                p_str[0] = '\0';
+                strncat( p_str, ( const char * )str, len );
 
-            shared_lexer->cb.token( type, p_str );
-            if (shared_lexer->log.level < NOTICE)
-                log( DEBUG, "Token emmitted" );
-        });
+                shared_lexer->cb.token( type, p_str );
+                if (shared_lexer->log.level < NOTICE)
+                    log( DEBUG, "Token emmitted" );
+            });
+        }
 }
 /*}}}*/
 /* lexer_emit_token_const() {{{ */
@@ -153,30 +150,30 @@ static void lexer_emit_token_const( enum turtle_token_type type )
 {
         assert( shared_lexer ); /* sanity check */
 
-        dispatch_async( shared_lexer->event_queue, ^{
-            shared_lexer->cb.token( type, NULL );
+        if ( shared_lexer->cb.token ) {
+            dispatch_async( shared_lexer->event_queue, ^{
+                shared_lexer->cb.token( type, NULL );
 
-            if (shared_lexer->log.level < NOTICE)
-                log( DEBUG, "Token emmitted");
-        });
+                if (shared_lexer->log.level < NOTICE)
+                    log( DEBUG, "Token emmitted");
+            });
+        }
 }
 /*}}}*/
 /* ardp_lexer_turtle_debug() {{{ */
 void ardp_lexer_turtle_debug( void )
 {
-        printf( "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
-
         const char states[][15] = {"created", "initialized", "ready", "unknown"};
-
+        printf( "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
         printf( "It's state is: %s\n", states[shared_lexer->state] );
 }
 /*}}}*/
 /* ardp_lexer_turtle_create() {{{ */
-int ardp_lexer_turtle_create(void)
+int ardp_lexer_create(void)
 {
-        if ( shared_lexer isnt NULL ) {
+        if ( unlikely(shared_lexer isnt NULL) ) {
             log( WARNING, "The lexer did already exist. Destroying it." );
-            ardp_lexer_turtle_destroy();
+            ardp_lexer_destroy();
         }
 
         shared_lexer = malloc(sizeof(struct lexer));
@@ -201,9 +198,9 @@ int ardp_lexer_turtle_create(void)
 }
 /*}}}*/
 /* ardp_lexer_turtle_defaults() {{{ */
-int ardp_lexer_turtle_defaults_s(void)
+int ardp_lexer_defaults(void)
 {
-    switch(ardp_lexer_turtle_state()) {
+    switch(ardp_lexer_state()) {
     case ARDP_LEXER_TURTLE_STATUS_CREATED:
     {
         struct lexer *this = shared_lexer;
@@ -218,30 +215,21 @@ int ardp_lexer_turtle_defaults_s(void)
         return ARDP_FAILURE;
     }
 }
-void ardp_lexer_turtle_defaults( completation_block handler )
-{
-        if ( ardp_lexer_turtle_state() is ARDP_LEXER_TURTLE_STATUS_CREATED ) {
-                struct lexer *this = shared_lexer;
-                this->state        = ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED;
-                this->line         = 0;
-                /* ... */
-
-                handler( ARDP_SUCCESS );
-        } else {
-                printf( "Wrong state: %d state\n", shared_lexer->state );
-                handler( ARDP_FAILURE );
-        }
-}
 /*}}}*/
 /* ardp_lexer_turtle_init() {{{*/
-int ardp_lexer_turtle_init_s( struct ardp_lexer_turtle_config *_Nullable cfg)
+int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
 {
-    switch( ardp_lexer_turtle_state() ) {
+    switch( ardp_lexer_state() ) {
     case ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED:
     case ARDP_LEXER_TURTLE_STATUS_READY:
         /* clang-format off */
         %% write init;
         /* clang-format on */
+        shared_lexer->cb.token    = cfg->cb.token;
+        shared_lexer->cb.stoken   = cfg->cb.stoken;
+        shared_lexer->log.eprintf = cfg->logging.eprintf;
+        shared_lexer->log.level   = cfg->logging.level;
+
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_READY;
         log( INFO, "Shared lexer initialized." );
         return ARDP_SUCCESS;
@@ -251,28 +239,9 @@ int ardp_lexer_turtle_init_s( struct ardp_lexer_turtle_config *_Nullable cfg)
         return ARDP_FAILURE;
     }
 }
-void ardp_lexer_trutle_init( struct ardp_lexer_turtle_config *_Nullable cfg,
-                             completation_block handler )
-{
-        if ( ardp_lexer_turtle_state() < ARDP_LEXER_TURTLE_STATUS_CREATED ) {
-                handler( ARDP_ERROR_LEXER_INIT_PREREQUISITE );
-                return;
-        }
-
-        /* clang-format off */
-          %% write init;
-        /* clang-format on */
-
-        //  shared_lexer->cb     = cfg.cb;
-        //  shared_lexer->log    = cfg.log;
-        //  shared_lexer->env    = cfg.env;
-        shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_READY;
-
-        handler( ARDP_SUCCESS );
-}
 /*}}}*/
 /* ardp_lexer_turtle_destroy() {{{ */
-void ardp_lexer_turtle_destroy()
+void ardp_lexer_destroy()
 {
         if ( shared_lexer isnt NULL ) {
                 free( shared_lexer );
@@ -280,7 +249,7 @@ void ardp_lexer_turtle_destroy()
         }
 }
 
-int ardp_lexer_turtle_state()
+int ardp_lexer_state()
 {
         if ( shared_lexer is NULL ) {
                 return ARDP_LEXER_TURTLE_STATUS_UNKNOWN;
@@ -292,25 +261,26 @@ int ardp_lexer_turtle_state()
 }
 /*}}}*/
 /* ardp_lexer_turtle_is_ready() {{{ */
-bool ardp_lexer_turtle_is_ready()
+bool ardp_lexer_is_ready()
 {
-        return ( ardp_lexer_turtle_state() is ARDP_LEXER_TURTLE_STATUS_READY );
+        return ( ardp_lexer_state() is ARDP_LEXER_TURTLE_STATUS_READY );
 }
 /*}}}*/
+
 /* ardp_lexer_turtle_process_block() {{{ */
-int ardp_lexer_turtle_process_block_s( uint8_t *_Nullable v,
+int ardp_lexer_process_block( uint8_t *_Nullable v,
                                      size_t             len,
                                      uint8_t *_Nullable mark,
                                      bool               is_eof)
 {
-    if ( not ardp_lexer_turtle_is_ready() ) {
+    if ( not ardp_lexer_is_ready() ) {
         log (ERROR, "Shared lexer is note yet ready to process the data.");
         return ARDP_FAILURE;
     }
 
     __block uint8_t *_Nullable p  = v; /* Indirection to allow the GCD */
     const   uint8_t *_Nullable pe = p + len; /* Points to fist byte beyond the data */
-    const   uint8_t *_Nullable eof= (is_eof) ? pe : nullptr; /* Indicated end of all data*/
+    const   uint8_t *_Nullable eof= (is_eof) ? pe : NULL; /* Indicated end of all data*/
 
     /* clang-format off */
     %% write exec;
@@ -325,7 +295,7 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
                                       bool               is_eof,
                                       completation_block handler )
 {
-        if ( !ardp_lexer_turtle_is_ready() ) {
+        if ( !ardp_lexer_is_ready() ) {
                 handler( ARDP_FAILURE );
                 return;
         }
@@ -348,11 +318,17 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
 }
 /*}}}*/
 /* ardp_lexer_turtle_reader() {{{ */
-void ardp_lexer_turtle_process_reader( lexer_reader reader,
+int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
+{
+    assert(0); // Not implemented yet;
+    return -1;
+}
+
+void ardp_lexer_process_reader_old( lexer_reader reader,
                                        void *_Nullable reader_args,
                                        completation_block handler )
 {
-        if ( ardp_lexer_turtle_is_ready() ) {
+        if ( ardp_lexer_is_ready() ) {
                 handler( ARDP_LEXER_ERROR );
                 return;
         }
@@ -366,7 +342,7 @@ void ardp_lexer_turtle_process_reader( lexer_reader reader,
 
         uint8_t buf[BUFSIZE];
         size_t have   = 0;
-        uint8_t *mark = nullptr;
+        uint8_t *mark = NULL; //nullptr;
         bool eof      = false;
 
         int status = 0;
@@ -408,81 +384,3 @@ void ardp_lexer_turtle_process_reader( lexer_reader reader,
 }
 /*}}}*/
 
-int main( int argc, char **argv )
-{
-          if ( ardp_lexer_turtle_create() isnt ARDP_SUCCESS ) {
-                  die( "[PANIC] Couldn't create lexer instance!" );
-          }
-
-          int status = ARDP_UNKNOWN;
-
-          status = ardp_lexer_turtle_defaults_s();
-
-          if ( status isnt ARDP_SUCCESS ) {
-                die( "Defaults error!\n" );
-          }
-
-          ardp_lexer_turtle_debug();
-
-          ardp_lexer_trutle_init( NULL, ^( int success ) {
-            if ( success isnt ARDP_SUCCESS )
-                    die( "Initialization error!\n" );
-          } );
-
-          shared_lexer->cb.token = ^int( enum turtle_token_type type, const char *_Nullable str ) {
-            printf( "%d - %s\n", type, str );
-            return 0;
-          };
-
-
-          uint8_t *mark;
-          /*__block*/
-          uint8_t *str = ( uint8_t * )
-
-                  "  @base <http://example.org/> .\n"
-                  "  @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
-                  "  @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
-                  "  @prefix foaf: <http://xmlns.com/foaf/0.1/> .\n"
-                  "  @prefix rel: <http://www.perceive.net/schemas/relationship/> . \n"
-                  ""
-                  "  <#green-goblin>\n"
-                  "      rel:enemyOf <#spiderman> ;\n"
-                  "      a foaf:Person ;    # in the context of the Marvel universe\n"
-                  "      foaf:name \"Green Goblin\" .\n"
-                  ""
-                  "  <#spiderman>\n"
-                  "      rel:enemyOf <#green-goblin> ;\n"
-                  "      a foaf:Person ;\n"
-                  "     foaf:name \'Spiderman\' , \"Человек-паук\"@ru .\n"
-                  ""
-                  "@prefix : <http://example.org/stuff/1.0/> .\n"
-                  "(1 -2.0 -3E-1 true false) :p \"w\" ."
-                  ""
-                  ":a :b\n"
-                  "[ rdf:first \"apple\";\n"
-                  "rdf:rest [ rdf:first \"banana\";\n"
-                  "rdf:rest rdf:nil ]\n"
-                  "] .";
-
-
-          //"@base foaf: <http://example.org> .\n"
-          //                                    "@prefix foaf: <https://example.org>.\n\n\r"
-          //                                    "<subject> <predicate> <object> .\n"
-          //                                    "[ ] ( _b: ; a \"a\" <local>, <look>) .";
-
-
-          ardp_lexer_turtle_process_block( str, strlen( ( const char * )str ), mark, true,
-                                           ^( int success ) {
-                                             if ( success isnt ARDP_SUCCESS ) {
-                                                     printf( "Error while processing the block" );
-                                             }
-                                           } );
-
-        if ( shared_lexer->env.cs is turtle_error ) {
-                return 100;
-        }
-
-        for ( ;; )/* wait forever */;
-
-        return 0;
-}

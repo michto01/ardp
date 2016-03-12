@@ -12,6 +12,9 @@
 #pragma once
 
 /* System/Global headers */
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <dispatch/dispatch.h>
 
@@ -104,7 +107,18 @@ enum lexer_log_level {
 /*!
  * @deprecated No longer in use.
  */
-struct ardp_lexer_turtle_config {};
+struct token; /* forward declaration */
+struct ardp_lexer_config {
+        struct {
+                int level;
+                int ( *_Nullable eprintf )( int level,  const char *_Nullable str );
+        } logging;
+
+        struct {
+                int ( ^_Nullable stoken )( struct token tok);
+                int ( ^_Nullable token  )( int type, const char *_Nullable  value );
+        } cb;
+};
 
 
 /*!
@@ -128,8 +142,8 @@ typedef int ( *_Nullable lexer_reader )( unsigned char *_Nonnull buffer,
  * @FIXME: Geared to be Turtle token type - needs to be generalized.
  */
 struct token {
-        enum turtle_token_type type; /*!< Enumerated token type */
-        char *_Nullable lexem;       /*!< Actual value of the token (optional) */
+        int type;              /*!< Enumerated token type */
+        char *_Nullable lexem; /*!< Actual value of the token (optional) */
 };
 
 
@@ -212,11 +226,12 @@ struct lexer {
                  *
                  * @FIXME: Should take arbitrary token type not only the turtle enum.
                  */
-                int ( ^_Nullable token )( enum turtle_token_type type,
-                                          const char *_Nullable  value );
+                int ( ^_Nullable stoken )( struct token token);
+                int ( ^_Nullable token  )( int type, const char *_Nullable  value );
         } cb;
 };
 
+//FIXME: remove ( depreciated to conform to C converions functions )
 typedef void ( ^_Nullable completation_block )( int success );
 
 /**
@@ -224,27 +239,23 @@ typedef void ( ^_Nullable completation_block )( int success );
   *
   * @return Status of operation. Non-null value if error, zero otherwise.
   */
-int ardp_lexer_turtle_create( void );
+int ardp_lexer_create( void );
 
-/**
-  * Preinitialize lexer with defaults values and prepare it for initialization.
-  *
-  * @param[in] handler Completion block to be used to denote end of the configuration.
-  *
-  * @return Status of operation. Non-null if error, zero otherwise.
-  */
-void ardp_lexer_turtle_defaults( completation_block handler );
+/*!
+ * @fn     ardp_lexer_defaults();
+ * @brief  Preinitialize lexer with defaults values and prepare it for initialization.
+ * @return Status of operation. Non-null if error, zero otherwise.
+ */
+int ardp_lexer_defaults();
 
-/**
-  * Inject configuration into the lexer.
-  *
-  * @param[in]  cfg     Configuration for the lexer internals.
-  * @param[in]  handler Block to be run at completion of the function.
-  *
-  * @return Status of operation. Non-null if error, zero otherwise.
-  */
-void ardp_lexer_trutle_init( struct ardp_lexer_turtle_config *_Nullable cfg,
-                             completation_block handler );
+/*!
+ * @fn     ardp_lexer_init
+ * @brief  Inject configuration into the lexer.
+ *
+ * @param[in]  cfg     Configuration for the lexer internals.*
+ * @return    Status of operation. Non-null if error, zero otherwise.
+ */
+int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg );
 
 /**
   * Destroy the shared instance of the lexer.
@@ -253,14 +264,14 @@ void ardp_lexer_trutle_init( struct ardp_lexer_turtle_config *_Nullable cfg,
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-void ardp_lexer_turtle_destroy( void );
+void ardp_lexer_destroy( void );
 
 /**
   * Get state of the lexer.
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-int ardp_lexer_turtle_state( void );
+int ardp_lexer_state( void );
 
 /**
   * Check ready state of the lexer.
@@ -270,7 +281,7 @@ int ardp_lexer_turtle_state( void );
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-bool ardp_lexer_turtle_is_ready( void );
+bool ardp_lexer_is_ready( void );
 
 /**
   * Lex the block of data.
@@ -284,11 +295,7 @@ bool ardp_lexer_turtle_is_ready( void );
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-void ardp_lexer_turtle_process_block( uint8_t *_Nullable p,
-                                      size_t len,
-                                      uint8_t *_Nullable mark,
-                                      bool is_eof,
-                                      completation_block handler );
+int ardp_lexer_process_block( uint8_t *_Nullable p, size_t len, uint8_t *_Nullable mark, bool is_eof);
 
 /**
   * Process reader until the input is exhausted.
@@ -301,9 +308,7 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable p,
   *
   * @return Status of operation. Non-null if error, zero otherwise.
   */
-void ardp_lexer_turtle_process_reader( lexer_reader reader,
-                                       void *_Nullable reader_args,
-                                       completation_block handler );
+int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args);
 
 #ifdef __cplusplus
 }
