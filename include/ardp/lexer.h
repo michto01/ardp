@@ -1,4 +1,4 @@
-/*! @file lexer.turtle.h
+/*! @file lexer.h
  *
  * Define the formal interface for the ARDP lexer (tokenizer) as well as defines
  * the tokens for the turtle (and N-triples) grammar.
@@ -26,47 +26,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif /* C++ */
-
-/*!
- * @enum  turtle_token_type
- * @brief Enumerates token types to explicit values for the turtle parsing.
- */
-/* enum(turtle_token_type) {{{*/
-enum turtle_token_type {
-        A = 201,
-        HAT,
-        DOT,
-        COMMA,
-        SEMICOLON,
-
-        L_SQUARE,
-        R_SQUARE,
-        L_ROUND,
-        R_ROUND,
-        L_CURLY,
-        R_CURLY,
-
-        PREFIX,
-        BASE,
-        SPARQL_PREFIX,
-        SPARQL_BASE,
-
-        STRING_LITERAL,
-        BLANK_LITERAL,
-        QNAME_LITERAL,
-        URI_LITERAL,
-
-        IDENTIFIER,
-        LANGTAG,
-
-        INTEGER_LITERAL,
-        DECIMAL_LITERAL,
-        DOUBLE_LITERAL,
-        BOOLEAN_LITERAL,
-
-        INVALID
-}; /*}}}*/
-
 
 /*!
  * @enum  lexer_status

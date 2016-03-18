@@ -1,3 +1,12 @@
+/*! @file turtle.rl
+ *
+ *  Base file for the `Ragel's` preprocessor. It builds up on the lexer.h abstract
+ *  interface.
+ *
+ *  @author Tomas Michalek <tomas.michalek.st@vsb.cz>
+ *  @date   2015
+ */
+
 /* vim: set ts=8 sw=4 tw=0 noet : set foldmethod=marker */
 
 // HEADERS {{{ --------------------------------------------------------------------
@@ -8,19 +17,21 @@
 #include <assert.h>             /* Asserts in the code */
 #include <dispatch/dispatch.h>  /* Clang GCD dispatch_* functions */
 
-#include <ardp/lexer.h>
+#include <ardp/lexer.h>		/* Generic lexer */
+#include <ardp/lexer.turtle.h>  /* Turtle specific lexer constants */
+
 #include <ardp/util.h>
 #include <ardp/color.h>
 
 //#include "config.h"
 
-//-------------------------------------------------------------------------------}}}
+//------------------------------------------------------------------------------}}}
 
 #define BUFSIZE ( 0x10000 )
 
-/**
-  * Global variable holding the shared lexer;
-  */
+/*!
+ * Global variable holding the shared lexer;
+ */
 static struct lexer *_Nullable shared_lexer;
 
 /*!
@@ -47,6 +58,11 @@ static struct lexer *_Nullable shared_lexer;
 
         QNAME => {
               lexer_emit_token(QNAME_LITERAL, var(ts), var(te) - var(ts));
+        };
+
+        BLANK_NODE_LABEL => {
+              # '_:' . VALUE
+              lexer_emit_token(BLANK_LITERAL, var(ts) +2, var(te) - (var(ts) +2));
         };
 
         IRIREF => {
@@ -77,7 +93,8 @@ static struct lexer *_Nullable shared_lexer;
               lexer_emit_token_const(HAT);
         };
         LANGTAG => {
-              lexer_emit_token(LANGTAG,var(ts), var(te) - var(ts));
+              # '@'. VALUE
+              lexer_emit_token(LANGTAG, var(ts)+1, var(te) - (var(ts)+1));
         };
 
         A         => { lexer_emit_token_const(A); };
@@ -109,11 +126,10 @@ static struct lexer *_Nullable shared_lexer;
 /* }}} */
 /* clang-format on */
 
-
-void format( void )
-{ /* formating bug off clang-format 3.7 (will be fixed in next release)*/
-}
-
+/*--------------------------------------------------------------------------------*/
+// LOCAL FUNCTIONS, HELPERS, SHORTHANDS
+/*--------------------------------------------------------------------------------*/
+/* log() {{{ */
 static void log(int level, const char* message)
 {
     if (shared_lexer->log.level < level )
@@ -122,9 +138,7 @@ static void log(int level, const char* message)
                 shared_lexer->log.eprintf(level, message);
             });
 }
-
-/* Local function declaration for the internals of lexer object */
-
+/*}}}*/
 /* lexer_emit_token() {{{ */
 static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable str, size_t len )
 {
@@ -168,7 +182,12 @@ void ardp_lexer_turtle_debug( void )
         printf( "It's state is: %s\n", states[shared_lexer->state] );
 }
 /*}}}*/
-/* ardp_lexer_turtle_create() {{{ */
+
+
+/*--------------------------------------------------------------------------------*/
+// EXTERN FUNCTIONS
+/*--------------------------------------------------------------------------------*/
+/* ardp_lexer_create() {{{ */
 int ardp_lexer_create(void)
 {
         if ( unlikely(shared_lexer isnt NULL) ) {
@@ -197,7 +216,7 @@ int ardp_lexer_create(void)
         return ARDP_SUCCESS;
 }
 /*}}}*/
-/* ardp_lexer_turtle_defaults() {{{ */
+/* ardp_lexer_defaults() {{{ */
 int ardp_lexer_defaults(void)
 {
     switch(ardp_lexer_state()) {
@@ -216,7 +235,7 @@ int ardp_lexer_defaults(void)
     }
 }
 /*}}}*/
-/* ardp_lexer_turtle_init() {{{*/
+/* ardp_lexer_init() {{{*/
 int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
 {
     switch( ardp_lexer_state() ) {
@@ -240,7 +259,7 @@ int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
     }
 }
 /*}}}*/
-/* ardp_lexer_turtle_destroy() {{{ */
+/* ardp_lexer_destroy() {{{ */
 void ardp_lexer_destroy()
 {
         if ( shared_lexer isnt NULL ) {
@@ -260,14 +279,14 @@ int ardp_lexer_state()
         }
 }
 /*}}}*/
-/* ardp_lexer_turtle_is_ready() {{{ */
+/* ardp_lexer_is_ready() {{{ */
 bool ardp_lexer_is_ready()
 {
         return ( ardp_lexer_state() is ARDP_LEXER_TURTLE_STATUS_READY );
 }
 /*}}}*/
 
-/* ardp_lexer_turtle_process_block() {{{ */
+/* ardp_lexer_process_block() {{{ */
 int ardp_lexer_process_block( uint8_t *_Nullable v,
                                      size_t             len,
                                      uint8_t *_Nullable mark,
@@ -317,7 +336,7 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
         handler( ARDP_SUCCESS );
 }
 /*}}}*/
-/* ardp_lexer_turtle_reader() {{{ */
+/* ardp_lexer_process_reader() {{{ */
 int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
 {
     assert(0); // Not implemented yet;
