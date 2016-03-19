@@ -31,8 +31,8 @@ struct rdf_term* rdf_term_from_uri(utf8 uri)
 struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype)
 {
         //FIXME: empty language error
-        //if (lang /*&& !*lang*/)
-        //        return NULL;
+        if (lang && !*lang)
+                return NULL;
 
         if (lang && datatype)
                 return NULL;
@@ -217,10 +217,10 @@ int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b)
         int r = 0;
 
         if (!a || !b) {
-               if(!a && !b)
+                if(!a && !b)
                        return 0; /* Both are equal */
 
-               return a ? 1 : (-1);
+                return a ? 1 : (-1);
         }
 
         if (a->type != b->type)
@@ -234,7 +234,7 @@ int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b)
         case RDF_TERM_BLANK:
                 break;
 
-        base RDF_TERM_LITERAL:
+        case RDF_TERM_LITERAL:
                 break;
 
         case RDF_TERM_UNKNOWN:

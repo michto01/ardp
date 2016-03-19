@@ -152,23 +152,70 @@ sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
   offset = (grow_at_front ? capacity - seq->capacity: 0) + seq->head;
 }
 
+/* RDF_TERM {{{ */
+/*!
+ * @fn    rdf_term_from_uri
+ * @brief Create new term from URI.
+ *
+ * @param[in] uri URI to process.
+ *
+ * @return Term, NULL if error.
+ *
+ * @note URI Should be prepared beforehand.
+ */
+struct rdf_term* rdf_term_from_uri(utf8 uri);
 
+/*!
+ * @fn    rdf_term_from_blank
+ * @brief Create new term from BLANK node.
+ *
+ * @param[in] blank BlankNode to expand or to generate new id.
+ *
+ * @return Term, NULL if error.
+ */
+struct rdf_term* rdf_term_from_blank(utf8 blank);
 
-struct rdf_statement* rdf_statement_create(void);
+/*!
+ * @fn    rdf_term_from_literal
+ * @brief Create new term from Literal.
+ *
+ * @param[in] literal  String representing the literal.
+ * @param[in] lang     Optional language specifier.
+ * @param[in] datatype Optional data type.
+ *
+ * @return Term representing the literal, NULL if error.
+ */
+struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype);
 
-///BOGUS forward declaration
+/*!
+ * @fn    rdf_term_copy
+ * @brief Create new copy of the term.
+ *
+ */
+struct rdf_term* rdf_term_copy(struct rdf_term* t);
+
 void rdf_term_free(struct rdf_term* t);
 int rdf_term_equals(const struct rdf_term* a, const struct rdf_term* b);
 int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b);
-
-struct rdf_term* rdf_term_copy(struct rdf_term* t);
-
-
-
+/*}}}*/
 /* RDF_STATEMENT {{{ */
+
+/*! @fn    rdf_statement_create
+ *  @brief Create new empty RDF statement.
+ *
+ *  @return Statement, NULL on error.
+ */
+struct rdf_statement* rdf_statement_create(void);
 
 /*! @fn    rdf_statement_with_nodes
  *  @brief Creates the RDF statement with specified quadruple.
+ *
+ *  @param[in] subject    Subject part of the triple.
+ *  @param[in] predicate  Predicate part of the triple.
+ *  @param[in] object     Object part of the triple.
+ *  @param[in] graph      TriG graph component (not in TURTLE),
+ *
+ *  @return Statement, NULL on error.
  *
  *  @note  All fields of statement are optional.
  */
@@ -214,7 +261,8 @@ void rdf_statement_free(struct rdf_statement* s);
  *
  * @param[in] a Base structure.
  * @param[in] b Structure to be compared against base structure.
- * return <0 if a is before b, 0 if equal, >0 if a is after b<Paste>
+ *
+ * @return <0 if a is before b, 0 if equal, >0 if a is after b<Paste>
  */
 int rdf_statement_compare(struct rdf_statement* a, struct rdf_statement* b);
 
