@@ -90,13 +90,13 @@ struct rdf_statement {
 };
 
 //// SEQUENCE
-
+/* SEQUENCE {{{ */
 struct sequence {
         size_t size;
         size_t capacity;
 
         // replaced off_t or int with uint
-        uint64_t  head; // start
+        size_t  head; // start
 
         void  **items;
 
@@ -234,7 +234,20 @@ void* sequence_delete_at(struct sequence* seq, int idx)
         return data;
 }
 
+void* sequence_pop(struct sequence* seq)
+{
+        if(!seq || !seq->size)
+                return NULL;
 
+        seq->size--;
+
+        size_t i = seq->head + seq->size;
+        void* data = seq->items[i];
+
+        seq->items[i] = NULL;
+
+        return data;
+}
 
 int sequence_push(struct sequence* s, void* data)
 {
@@ -277,7 +290,19 @@ int sequence_shift(struct sequence* seq, void *data)
 }
 
 
+void* sequence_unshift(struct sequence* seq)
+{
+        if(!seq || !seq->size)
+                return NULL;
 
+        size_t i = seq->head++;
+        void* data = seq->items[i];
+        seq->size--;
+        seq->items[i] = NULL;
+
+        return data;
+}
+/*}}}*/
 
 /* RDF_TERM {{{ */
 /*!
