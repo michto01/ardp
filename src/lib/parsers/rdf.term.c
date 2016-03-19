@@ -4,6 +4,7 @@
  *
  */
 #include "rdf.h"
+#include <stdlib.h>
 #include <ardp/util.h>
 #include <ardp/string.h>
 #include "../../../include/ardp/string.h"
@@ -67,4 +68,112 @@ struct rdf_term* rdf_term_from_blank( utf8 blank )
         return t;
 }
 
+struct rdf_term* rdf_term_copy(struct rdf_term* t)
+{
+        if (!t)
+                return NULL;
 
+        struct rdf_term* c = calloc(1, sizeof(*c));
+
+        if (!c)
+                return NULL;
+
+
+        c->type = t->type;
+
+        switch(c->type) {
+                case RDF_TERM_BLANK:
+                        c->value.blank = string_copy(t->value.blank);
+                        break;
+
+                case RDF_TERM_LITERAL:
+                        c->value.literal.string = string_copy(t->value.literal.string);
+                        if (t->value.literal.datatype)
+                                c->value.literal.datatype
+                                        = string_copy(t->value.literal.datatype);
+                        if (t->value.literal.language)
+                                c->value.literal.language
+                                        = string_copy(t->value.literal.language);
+                        break;
+
+                case RDF_TERM_URI:
+                        c->value.uri = string_copy(c->value.uri);
+                        break;
+
+                case RDF_TERM_UNKNOWN:
+                default:
+                        break;
+        }
+
+        return c;
+}
+
+void rdf_term_free(struct rdf_term* t)
+{
+        if(!t)
+                return;
+
+        switch(t->type) {
+                case RDF_TERM_URI:
+                        string_dealloc(t->value.uri);
+                        t->value.uri = NULL;
+                        break;
+
+
+                case RDF_TERM_BLANK:
+                        string_dealloc(t->value.blank);
+                        t->value.blank = NULL;
+                        break;
+
+                case RDF_TERM_LITERAL:
+                        string_dealloc(t->value.literal.string);
+                        string_dealloc(t->value.literal.datatype);
+                        string_dealloc(t->value.literal.language);
+                        t->value.literal.string   = NULL;
+                        t->value.literal.language = NULL;
+                        t->value.literal.datatype = NULL;
+                        break;
+
+                case RDF_TERM_UNKNOWN:
+                default:
+                        break;
+        }
+
+        free(t);
+}
+
+int rdf_term_equals(struct rdf_term* a, struct rdf_term* b)
+{
+        int ret = 0;
+
+        if (!a || !b)
+                return 0;
+
+        if (a->type != b->type)
+                return 0;
+
+        if (a == b)
+                return 1;
+
+        switch (a->type) {
+        case RDF_TERM_URI:
+                if (string_strlen(a->value.uri) != string_strlen(b->value.uri))
+                        break;
+                ret = !string_generic_cmp(a->value.uri, b->value.uri, (int)string_strlen(b->value.uri) );
+                break;
+
+        case RDF_TERM_BLANK:
+                if (string_strlen(a->value.blank) != string_strlen(b->value.blank))
+                        break;
+                ret = !string_generic_cmp(a->value.blank, a->value.blank, string_strlen(a->value.blank));
+                break;
+
+        case RDF_TERM_LITERAL:
+
+        case RDF_TERM_UNKNOWN:
+        default:
+                break;
+        }
+
+        return 0;
+}

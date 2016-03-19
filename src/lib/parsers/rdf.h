@@ -22,13 +22,15 @@
 #endif
 #include <stdarg.h>
 
+#include "../../../include/ardp/string.h"
 
+/*
 struct _utf8 {
         size_t   len;
         uint8_t* value;
 };
 typedef struct _utf8* utf8; // forward declaration of string struct.
-
+*/
 
 /*!
  * @enum  rdf_term_type
@@ -155,7 +157,7 @@ sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
 struct rdf_statement* rdf_statement_create(void);
 
 ///BOGUS forward declaration
-void rdf_term_free(void* generic);
+void rdf_term_free(struct rdf_term* t);
 int rdf_term_equals(struct rdf_term* a, struct rdf_term* b);
 int rdf_term_compare(struct rdf_term* a, struct rdf_term* b);
 

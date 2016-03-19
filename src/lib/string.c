@@ -137,3 +137,78 @@ void string_finish( utf8 str ) {
         string_header_t *hdr = string_hdr( str );
         *( str + hdr->length ) = '\0';
 }
+
+// http://mgronhol.github.io/fast-strcmp/
+int string_generic_cmp(const uint8_t* a, const uint8_t* b, int len)
+{
+/*        int fast    = len/sizeof(size_t) + 1;
+        int offset  = (fast - 1)*sizeof(size_t);
+        int current = 0;
+
+        if (len <= sizeof(size_t))
+                fast = 0;
+
+        size_t *la = (size_t*)a;
+        size_t *lb = (size_t*)b;
+
+        while (current < fast) {
+                if ( (la[current] ^ lb[current]) ) {
+                        int pos;
+                        for(pos = current*sizeof(size_t); pos < len; ++pos) {
+                                if (  (a[pos] ^ b[pos])
+                                   || (la[pos] == 0)
+                                   || (b[pos] == 0) ) {
+                                        return (int)((uint8_t)a[pos] - (uint8_t)b[pos]);
+                                }
+                        }
+                }
+                ++current;
+        }
+
+        while ( len > offset ) {
+                if ( (a[offset] ^ b[offset])) {
+                        return (int)((uint8_t)a[offset] - (uint8_t)b[offset]);
+                }
+                ++offset;
+        }
+
+        return 0;
+*/
+        const char* ptr0 = (const char*)a;
+        const char* ptr1 = (const char*)b;
+
+        int fast    = len/sizeof(size_t) + 1;
+        int offset  = (fast - 1) * sizeof(size_t);
+        int current = 0;
+
+        if ( len <= sizeof(size_t) )
+                fast = 0;
+
+        size_t *la = (size_t*)ptr0;
+        size_t *lb = (size_t*)ptr1;
+
+        while (current < fast) {
+                if( (la[current] ^ lb[current] ) ){
+                        int pos;
+                        for(pos = current*sizeof(size_t); pos < len ; ++pos ){
+                                if( (ptr0[pos] ^ ptr1[pos]) || (ptr0[pos] == 0) || (ptr1[pos] == 0)  ){
+                                        return  (int)((unsigned char)ptr0[pos] - (unsigned char)ptr1[pos]);
+
+                                }
+
+                        }
+
+                }
+                    ++current;
+
+        }
+        while( len > offset  ){
+                if( (ptr0[offset] ^ ptr1[offset] ) ){
+                return (int)((unsigned char)ptr0[offset] - (unsigned char)ptr1[offset]);
+                      }
+                    ++offset;
+
+        }
+        return 0;
+
+}
