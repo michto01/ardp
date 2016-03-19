@@ -129,8 +129,7 @@ struct sequence* sequence_create()
 
 #define SEQUENCE_MIN_CAPACITY 8
 
-static int
-sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
+static int sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
 {
         //FIXME: grow_at_front should be moved to use boolean
 
@@ -156,7 +155,127 @@ sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
         seq->head     = offset;
         seq->items    = new_seq;
         seq->capacity = capacity;
+
+        return 0;
 }
+
+int64_t sequence_size(struct sequence* seq)
+{
+        if (!seq)
+                return 0;
+        return seq->size;
+}
+
+int sequence_set_at(struct sequence* seq, int idx, void *data)
+{
+        if (!seq)
+                return 1;
+
+        /* Cannot provide a negative index */
+        if (idx < 0) {
+                if (data) {
+                        free(data);
+                }
+                //else if (seq->context_free_handler); free->handler
+
+                return 1;
+        }
+
+        size_t  need_capacity = seq->head + idx + 1;
+        if (need_capacity > seq->capacity) {
+                if (seq->capacity * 2 > need_capacity)
+                        need_capacity = seq->capacity * 2;
+
+                if (sequence_ensure(seq, need_capacity, 0)) {
+                        if (data) {
+                                free(data);
+                        }
+
+                        return 1;
+                }
+        }
+
+        if (idx < seq->size) {
+                /* delete old data */
+                if (seq->items[seq->head + idx])
+                        free(seq->items[seq->head + idx]);
+                /* size remains the same */
+        } else {
+                /*
+                 * In case that there is no old data, increase size.
+                 * There should be seq-size # items in seq starting at seq->head.
+                 */
+                seq->size = idx + 1;
+        }
+
+        seq->items[seq->head + idx] = data;
+        return 0;
+}
+
+void* sequence_get_at(struct sequence* seq, int idx)
+{
+        if (!seq)
+                return NULL;
+
+        return (idx < 0 || idx > seq->size - 1) ? NULL : seq->items[seq->head+ idx];
+}
+
+
+void* sequence_delete_at(struct sequence* seq, int idx)
+{
+        if(!seq)
+                return NULL;
+        if(idx < 0 || idx > seq->size - 1)
+                return NULL;
+
+        void* data = seq->items[seq->head + idx];
+        seq->items[seq->head + idx] = NULL;
+
+        return data;
+}
+
+
+
+int sequence_push(struct sequence* s, void* data)
+{
+        if ( !s )
+                return 1;
+
+        if(s->head + s->size == s->capacity) {
+                if(sequence_ensure(s, s->capacity * 2, 0)) {
+                        if(data) {
+                                free(data);
+                        }
+                        return 1;
+                }
+        }
+
+        s->items[s->head + s->size] = data;
+        s->size++;
+
+          return 0;
+}
+
+int sequence_shift(struct sequence* seq, void *data)
+{
+        if(!seq)
+                return 1;
+
+        if(!seq->head) {
+                if(sequence_ensure(seq, seq->capacity * 2, 1)) {
+                        if(data) {
+                                free(data);
+                        }
+                        return 1;
+                }
+        }
+
+        seq->items[--seq->head] = data;
+        seq->size++;
+
+        return 0;
+}
+
 
 
 
