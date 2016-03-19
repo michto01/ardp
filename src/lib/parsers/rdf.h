@@ -100,7 +100,7 @@ struct sequence {
 
         void  **items;
 
-        void *handler_context;
+        void *context;
 
         void (*print)();
         void (*error)();
@@ -132,25 +132,33 @@ struct sequence* sequence_create()
 static int
 sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
 {
-  //grow_at_front should be moved to use boolean
-  void **new_seq;
-  uint64_t offset;
+        //FIXME: grow_at_front should be moved to use boolean
 
-  assert(seq); // Sanity check should be expanded to allow null-checking
+        assert(seq); // Sanity check should be expanded to allow null-checking
 
-  if (capacity && seq->capacity >= capacity)
-          return 0;
+        if (capacity && seq->capacity >= capacity)
+                return 0;
 
-  /* Sanity check for minimum size */
-  if (capacity < SEQUENCE_MIN_CAPACITY)
-          capacity = SEQUENCE_MIN_CAPACITY;
+        /* Sanity check for minimum size */
+        if (capacity < SEQUENCE_MIN_CAPACITY)
+                capacity = SEQUENCE_MIN_CAPACITY;
 
-  new_seq = calloc(capacity, sizeof(void*));
-  if (!new_seq)
-          return 1;
+        void** new_seq = calloc(capacity, sizeof(void*));
+        if (!new_seq)
+                return 1;
 
-  offset = (grow_at_front ? capacity - seq->capacity: 0) + seq->head;
+        uint64_t offset = (grow_at_front ? capacity - seq->capacity: 0) + seq->head;
+        if (seq->size) {
+                memcpy(&new_seq[offset], &seq->items[seq->head], sizeof(void*) *seq->size );
+                free(seq->items);
+        }
+
+        seq->head     = offset;
+        seq->items    = new_seq;
+        seq->capacity = capacity;
 }
+
+
 
 /* RDF_TERM {{{ */
 /*!
