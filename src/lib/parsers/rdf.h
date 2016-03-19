@@ -191,11 +191,40 @@ struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype);
  * @fn    rdf_term_copy
  * @brief Create new copy of the term.
  *
+ * @param[in] t Root term to copy.
+ *
+ * @return Pointer to new copy, NULL on error.
  */
 struct rdf_term* rdf_term_copy(struct rdf_term* t);
 
+/*!
+ * @fn    rdf_term_free
+ * @brief Free allocated memory.
+ *
+ * @param[in] t Term to free.
+ */
 void rdf_term_free(struct rdf_term* t);
+
+/*!
+ * @fn    rdf_term_equals
+ * @brief Comparison of two terms.
+ *
+ * @param[in] a First term for comparison.
+ * @param[in] b Second term for comparison.
+ *
+ * @return 1 iff true, 0 otherwise.
+ */
 int rdf_term_equals(const struct rdf_term* a, const struct rdf_term* b);
+
+/*!
+ * @fn    rdf_term_compare
+ * @brief Compare two terms.
+ *
+ * @param[in] a First term for comparison.
+ * @param[in] b Second term for comparison.
+ *
+ * @return a </> b
+ */
 int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b);
 /*}}}*/
 /* RDF_STATEMENT {{{ */
