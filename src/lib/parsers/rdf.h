@@ -158,8 +158,8 @@ struct rdf_statement* rdf_statement_create(void);
 
 ///BOGUS forward declaration
 void rdf_term_free(struct rdf_term* t);
-int rdf_term_equals(struct rdf_term* a, struct rdf_term* b);
-int rdf_term_compare(struct rdf_term* a, struct rdf_term* b);
+int rdf_term_equals(const struct rdf_term* a, const struct rdf_term* b);
+int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b);
 
 struct rdf_term* rdf_term_copy(struct rdf_term* t);
 
