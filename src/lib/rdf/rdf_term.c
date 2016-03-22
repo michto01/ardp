@@ -3,15 +3,12 @@
  * Implements the `rdf term`
  *
  */
-#include "rdf.h"
+#include <ardp/rdf.h>
 #include <stdlib.h>
 #include <ardp/util.h>
 #include <ardp/string.h>
-#include "../../../include/ardp/string.h"
 
 extern utf8 string_copy(utf8 s);
-extern utf8 generate_bnode_id();
-
 
 struct rdf_term* rdf_term_from_uri(utf8 uri)
 {
@@ -30,7 +27,6 @@ struct rdf_term* rdf_term_from_uri(utf8 uri)
 
 struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype)
 {
-        //FIXME: empty language error
         if (lang && !*lang)
                 return NULL;
 
@@ -60,9 +56,9 @@ struct rdf_term* rdf_term_from_blank( utf8 blank )
         t->type = RDF_TERM_BLANK;
 
         if (blank) {
-                t->value.blank = string_copy(blank);
+                //t->value.blank = string_copy(blank);
         } else {
-                t->value.blank = generate_bnode_id();
+                //t->value.blank = generate_bnode_id();
         }
 
         return t;
@@ -80,7 +76,7 @@ struct rdf_term* rdf_term_copy(struct rdf_term* t)
 
 
         c->type = t->type;
-
+        fprintf(stderr, "Type of the term is: %d", c->type);
         switch(c->type) {
                 case RDF_TERM_BLANK:
                         c->value.blank = string_copy(t->value.blank);
@@ -97,7 +93,7 @@ struct rdf_term* rdf_term_copy(struct rdf_term* t)
                         break;
 
                 case RDF_TERM_URI:
-                        c->value.uri = string_copy(c->value.uri);
+                        c->value.uri = string_copy(t->value.uri);
                         break;
 
                 case RDF_TERM_UNKNOWN:

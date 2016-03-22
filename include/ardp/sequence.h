@@ -17,26 +17,61 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "util.h"
 
 
 #define SEQUENCE_MIN_CAPACITY 8
 
+/*! @struct sequence
+ *  @brief  Memory container for generic data storage of sequential data.
+ *
+ *  @verbatim
+ * Sequence:
+ *     0            <-- N consecutive items -->         C - 1
+ * -----------------------------------------------------------
+ * |      |      | data1 |  .....     data N |  ...  |       |
+ * -----------------------------------------------------------
+ * ------ O -----> offset of first data item
+ *
+ *  head = 0
+ *  size = N
+ *  cap. = C
+ *  @endverbatim
+ *
+ *
+ */
 struct sequence {
+        /*!
+         * Current number of the items in the sequence.
+         */
         size_t size;
+
+        /*!
+         * Actual length of the pre-allocated array of items.
+         */
         size_t capacity;
 
-        // replaced off_t or int with uint
-        size_t  head; // start
+        /*!
+         * Offset of the first item of the data in sequence.
+         */
+        size_t  head;
 
+        /*!
+         * Array of size 'capacity' pointing to the data.
+         */
         void  **items;
 
+        /*!
+         * @section not used currently {
+         */
         void *context;
 
         void (*print)();
         void (*error)();
         void (*free)();
+        /*! } @endsection */
 };
 
 /* Gem from K&R old function definition, no argument type check!!
@@ -65,13 +100,80 @@ struct sequence* sequence_create();
 size_t sequence_size(struct sequence* seq);
 
 /*! @fn    sequence_set_at
+ *  @brief Put item at index.
+ *
+ *  @param[in] seq  Sequence of interest.
+ *  @param[in] idx  Index of the item.
+ *  @param[in] data Data to be inserted into sequence.
+ *
+ *  @return 0 iff no error occurred, 1 otherwise
  */
 int sequence_set_at(struct sequence* seq, int idx, void *data);
 
+
+/*! @fn    sequence_get_at
+ *  @brief Get object from sequence at given index.
+ *
+ *  @param[in] seq Sequence to be probed.
+ *  @param[in] idx Index of the item.
+ *
+ *  @return Generic pointer to object ( should be casted  ).
+ */
 void* sequence_get_at(struct sequence* seq, int idx);
+
+/*! @fn    sequence_delete_at
+ *  @brief Pop out from sequence and delete the item.
+ *
+ *  @param[in] seq Sequence of interest.
+ *  @param[in] idx Index of selected item.
+ *
+ *  @return Deleted item.
+ */
 void* sequence_delete_at(struct sequence* seq, int idx);
+
+/*! @fn    sequence_pop
+ *  @brief Pop out the top-most item from sequence.
+ *
+ *  @param[in] seq Sequence of interest.
+ *
+ *  @return Top-most item
+ */
 void* sequence_pop(struct sequence* seq);
+
+/*! @fn    sequence_push
+ *  @brief Push item to the top of the sequence.
+ *
+ *  @param[in] s Sequence of interest.
+ *  @param[in] data Data to be pushed into the sequence.
+ *
+ *  @return 0 iff no error, 1 otherwise.
+ */
 int sequence_push(struct sequence* s, void* data);
+
+/*! @fn    sequence_shift
+ *  @brief Push item to the Front-most position in the sequence.
+ *
+ *  @param[in] seq  Sequence of interest.
+ *  @param[in] data Data to be inserted.
+ *
+ *  @return 0 if successful, 1 otherwise.
+ */
 int sequence_shift(struct sequence* seq, void *data);
+
+/*! @fn    sequence_shift
+ *  @brief Retrieve item at the beginning of the sequence.
+ *
+ *  @param[in] seq Sequence of interest.
+ *
+ *  @return Object or NULL if the sequence is empty.
+ */
 void* sequence_unshift(struct sequence* seq);
 
+/*! @fn    sequence_free
+ *  @breif Destroy sequence.
+ *
+ *  @param[in] seq Sequence to destroy.
+ *
+ *  @note Performs NULL-checking.
+ */
+void sequence_free(struct sequence* seq);

@@ -1,3 +1,11 @@
+/*! @file string.c
+ *
+ * Implements the 'fat-pointer' string interface.
+ *
+ * @author Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @date   2015
+ */
+
 #include <ardp/string.h>
 #include <ardp/color.h>
 
@@ -44,6 +52,45 @@ utf8 string_alloc( size_t len ) {
         hdr->capacity = len;
         hdr->length = 0;
         return ( utf8 )( &hdr[1] ); //((utf8) hdr) + sizeof(string_header_t);
+}
+
+utf8 string_create_n(const uint8_t* s, size_t n)
+{
+        struct string_header *hdr = calloc(1, sizeof(*hdr)  + (n + 1));
+        if ( !hdr )
+                return NULL;
+
+        hdr->capacity = n;
+        hdr->length   = n;
+
+        utf8 tmp = (utf8)(&hdr[1]);
+        tmp[n+1] = '\0';
+
+        memcpy(tmp, s, n);
+
+        return (utf8) tmp;
+}
+
+utf8 string_create(const uint8_t* s)
+{
+        size_t len = strlen(s);
+
+        return string_create_n(s,len);
+}
+
+void string_append(utf8 src, const uint8_t* mod)
+{
+        assert(0); // Not implemented yet
+}
+
+utf8 string_copy(utf8 src)
+{
+        struct string_header *hdr = string_hdr(src);
+        struct string_header *cpy = calloc(1, (sizeof(*cpy) + hdr->capacity));
+
+        memcpy(cpy, hdr, sizeof(*hdr) + hdr->capacity);
+
+        return (utf8)(&cpy[1]);
 }
 
 /*

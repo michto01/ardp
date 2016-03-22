@@ -6,6 +6,7 @@
 #include <inttypes.h> // uint8_t
 
 #include "util.h"
+#include "color.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -150,15 +151,15 @@ void string_dealloc( utf8 self );
 void string_debug( utf8 str );
 
 /**
- *  Optimalized compare algorithm yealding little faster string comparison
- *  then build-in `strcmp` function.
- *
- *  @param[in] a   First string
- *  @param[in] b   Second string
- *  @param[in] len Length to compare.
- *
- *  @return 1 iff string are the same, 0 otherwise.
- */
+  *  Optimalized compare algorithm yealding little faster string comparison
+  *  then build-in `strcmp` function.
+  *
+  *  @param[in] a   First string
+  *  @param[in] b   Second string
+  *  @param[in] len Length to compare.
+  *
+  *  @return 1 iff string are the same, 0 otherwise.
+  */
 int string_generic_cmp( const uint8_t* a, const uint8_t* b, int len );
 
 #ifdef __cplusplus

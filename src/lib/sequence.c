@@ -62,6 +62,29 @@ size_t sequence_size(struct sequence* seq)
         return seq->size;
 }
 /*}}}*/
+void sequence_free( struct sequence* seq )
+{
+        int i;
+        int j;
+        /* TODO: imporove deallocating of the items */
+        if(!seq)
+                return;
+
+        if(seq->free) {
+                for(i = seq->head, j = seq->head + seq->size; i < j; i++)
+                        if(seq->items[i])
+                                seq->free(seq->items[i]);
+        } else if(seq->context) {
+                for(i = seq->head, j = seq->head + seq->size; i < j; i++)
+                        if(seq->items[i])
+                                 ;//seq->context(seq->context, seq->items[i]);
+        }
+
+        if(seq->items)
+                free(seq->items);
+
+        free(seq);
+}
 
 /* sequence_set_at() {{{ */
 int sequence_set_at(struct sequence* seq, int idx, void *data)

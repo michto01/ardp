@@ -1,6 +1,6 @@
 /** @file util.h
   *
-  * Utilites for the ARDP programme. It includes some guard defitions for 
+  * Utilites for the ARDP programme. It includes some guard defitions for
   * non-standard C extensions used in code. As well status codes and format
   * definitions.
   *
@@ -12,6 +12,7 @@
 
 #pragma once /* Header guarde for C11 */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 
@@ -70,7 +71,7 @@ typedef enum _ardp_status_t {
  * Helper function to kill the program on unrecoverable error.
  */
 
-static 
+static
 inline void _Noreturn die(const char* message) {
 	if (message)
 		fprintf(stderr, "%s", message);

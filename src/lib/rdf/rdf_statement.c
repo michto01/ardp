@@ -6,7 +6,7 @@
  * @date   2016
  */
 
-#include "rdf.h"
+#include <ardp/rdf.h>
 
 /* rdf_statement_create() {{{ */
 struct rdf_statement* rdf_statement_create(void)
@@ -97,10 +97,22 @@ int rdf_statement_compare(struct rdf_statement* a, struct rdf_statement* b)
                 return (pd > 0) - (pd < 0); // return 'sign'
         }
 
-        ((ret = rdf_term_compare(a->subject, b->subject))) ? goto exit : (
-                (ret = rdf_term_compare(a->predicate,b->predicate)) ? goto exit :
-                        ((ret = rdf_term_compare(a->object, b->object)) ? goto exit :
-                                ((ret = rdf_term_compare(a->graph,b->graph)))));
+        ret = rdf_term_compare(a->subject,b->subject);
+
+        if(ret)
+                goto exit;
+
+        ret = rdf_term_compare(a->predicate,b->predicate);
+
+        if (ret)
+                goto exit;
+
+        ret = rdf_term_compare(a->object, b->object);
+
+        if (ret)
+                goto exit;
+
+        ret = rdf_term_compare(a->graph, b->graph);
 
 exit:
         return ret;
@@ -111,8 +123,17 @@ int rdf_statement_equals(struct rdf_statement* a, struct rdf_statement* b)
         if ( !a || !b )
                 return 0;
 
-        (!rdf_term_equals(a->subject, b->subject)) ? return 0 :
-                (!rdf_term_equals(a->predicate, b->predicate)) ? return 0 :
-                        (!rdf_term_equals(a->object, b->object)) ? return 0 :
-                                (!rdf_term_equals(a->graph, b->graph)) ? return 0 : return 1;
+        if(!rdf_term_equals(a->subject, b->subject))
+                return 0;
+
+        if (!rdf_term_equals(a->predicate, b->predicate))
+                return 0;
+
+        if (!rdf_term_equals(a->object, b->object))
+                return 0;
+
+        if (!rdf_term_equals(a->graph, b->graph))
+                return 0;
+
+        return 1;
 } /*}}}*/

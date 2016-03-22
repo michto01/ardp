@@ -8,6 +8,8 @@
 //extern int ParserParse(void*, int, const char*);
 //extern void ParserFree(void*);
 
+#include <ardp/string.h>
+
 void* shared_parser;
 
 /*!
@@ -57,31 +59,34 @@ void ardp_parser_destroy(void)
         ParseFree(shared_parser, free);
 }
 
+int color_stdout_is_tty = -1;
+
 int main ( int argc, char **argv )
 {
         fprintf(stderr, "Starting parser...\n");
         ardp_parser_create();
-        //ParseTrace(stdout, "@parser: ");
+
+        ParseTrace(stdout, "@parser: ");
 
         ardp_parser_exec( PREFIX, 0);
         ardp_parser_exec( COLON,  0);
         ardp_parser_exec( IRIREF, "http://google.com");
         ardp_parser_exec( DOT,    0);
 
-        ardp_parser_exec( PREFIX, 0);
+        //ardp_parser_exec( PREFIX, 0);
 
         ardp_parser_exec( SPARQL_PREFIX, 0);
         ardp_parser_exec( QNAME,         "foaf:manga");
         ardp_parser_exec( IRIREF,        "http://google.com");
 
-        ardp_parser_exec( IRIREF,         "http://grog.com#subject");
+        ardp_parser_exec( IRIREF,         string_create("http://grog.com#subject"));
         ardp_parser_exec( A,              0);
-        ardp_parser_exec( STRING_LITERAL, "2.0");
+        ardp_parser_exec( STRING_LITERAL, string_create("2.0"));
         ardp_parser_exec( DOT,            0);
 
-        ardp_parser_exec( BLANK_LITERAL,  "chelsee");
-        ardp_parser_exec( QNAME,          "foaf:Mamlas");
-        ardp_parser_exec( STRING_LITERAL, "Random string to see");
+        ardp_parser_exec( BLANK_LITERAL,  string_create("chelsee"));
+        ardp_parser_exec( QNAME,          string_create("foaf:Mamlas"));
+        ardp_parser_exec( STRING_LITERAL, string_create("Random string to see"));
         ardp_parser_exec( DOT,            0);
 
         ardp_parser_finish();
