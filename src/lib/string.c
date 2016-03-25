@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
 #include <assert.h>
 #include <errno.h>
 
@@ -64,7 +65,6 @@ utf8 string_create_n(const uint8_t* s, size_t n)
         hdr->length   = n;
 
         utf8 tmp = (utf8)(&hdr[1]);
-        tmp[n+1] = '\0';
 
         memcpy(tmp, s, n);
 
@@ -78,9 +78,86 @@ utf8 string_create(const uint8_t* s)
         return string_create_n(s,len);
 }
 
-void string_append(utf8 src, const uint8_t* mod)
+//
+// String JOIN manipulation
+//
+
+/*! @fn    string_append
+ *  @brief Append C string to ardp string container.
+ *
+ *  Appends c string buffer to string. The string is resized if necessary. The
+ *  string buffer being appended needs to be NULL terminated.
+ *
+ *  @param[in,out] src Pointer to string pointer. (indirection)
+ *  @param[in]     mod C string buffer to be appended.
+ *
+ *  @return 0 on success, non-zero value if there is error.
+ */
+int string_append(utf8 *src, const uint8_t* mod)
 {
-        assert(0); // Not implemented yet
+        int len = strlen(mod);
+
+        struct string_header *str = string_hdr(*src);
+        struct string_header *s;
+
+        size_t strlen = (str->length + len + 1);
+        if ( str->capacity < strlen ) {
+                s = realloc(str, sizeof(*s) + strlen);
+                if (s == NULL)
+                        return 1;
+
+                s->capacity = strlen;
+                *src = (utf8)(&s[1]);
+        }
+
+        memcpy(*src + *src->length, mod, len);
+        *src->length = strlen;
+        return 0;
+}
+
+/*! @fn    string_prepend
+ *  @brief Append the C string buffer to the beginning of the ARDP string.
+ *
+ *
+ *  This function creates new string with the content of the C string buffer
+ *  and then appends the rest using the `string_append` function. As the
+ *  new string already has space for the new string, it doesn't require second
+ *  realloc.
+ *
+ *  @param[in,out] src Source string to be appended to.
+ *  @param[in]     str C string buffer to be prepended.
+ *
+ *  @return 0 on success, non-zero value otherwise.
+ *
+ *  @note err=1 - couldn't create new string.
+ *  @note err=2 - couldn't append the string.
+ */
+int string_prepend(utf8 *src, const uint8_t* str)
+{
+        struct string_header *s = string_header(*src);
+
+        size_t len = strlen(str);
+        site_t req = len + s->length + 1;
+
+        struct string_header *n = string_create_n(str, req);
+        if (!n)
+                return 1;
+
+        if (!string_append_str(n, *src)) {
+                string_dealloc(*src);
+                *src = NULL;
+                return 2;
+        }
+
+        string_dealloc(*src);
+        *src = n;
+
+        return 0;
+}
+
+int string_append_str(utf8 src, utf8 bck)
+{
+        assert(0);
 }
 
 utf8 string_copy(utf8 src)

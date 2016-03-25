@@ -1,6 +1,8 @@
-#ifndef __ARDP_PARSER_H__
-#define __ARDP_PARSER_H__
-
+/*! @file parser.h
+ *
+ * Interface for the parser, with the interface for the turtle parser.
+ */
+#pragma once
 
 #if __has_feature( nullability )
 #else
@@ -10,6 +12,128 @@
 #endif
 
 #include <ardp/string.h>
+#include <ardp/rdf.h>
+#include <ardp/hashmap.h>
+/*! @struct parser
+ *
+ *
+ */
+struct parser {
+
+        /*!
+         * Keeps track of the last blank-node id.
+         */
+        uint64_t n_bnode;
+
+
+        /*!
+         * Bese uri for the <#somthing> URIs.
+         */
+        utf8 base;
+
+        /*!
+         * Namespaces map.
+         */
+        map_t  namespaces;
+
+        struct {
+                size_t n_triples;
+                size_t n_directives;
+                size_t n_errors;
+        } stats;
+
+        struct {
+                int (*rebase)(utf8 base);
+                int (*add_namespace)(utf8 qname, utf8 iri);
+                int (*statement)(struct rdf_statement* s);
+
+                utf8 (*generate_bnode)();
+        } cb;
+};
+
+/*!
+ * @fn ardp_parser_create
+ * @brief Create and initialize all prerequisites for shared_parser.
+ */
+int ardp_parser_create(void);
+
+/*!
+ * @fn    ardp_parser_exec
+ * @brief Call internal parer to process the token.
+ *
+ * @param[in] type  Numeric categorization of the token.
+ * @param[in] value Token actual value.
+ *
+ * @note Pre `Lemon` specification, the parser accepts values in void* format,
+ *       to allow opaque value handling inside the parser.
+ */
+void ardp_parser_exec(int type, void* value);
+
+/*!
+ * @fn    ardp_parser_finish
+ * @brief Flush parser to end one parsing unit.
+ *
+ * Signals to parser that we reached end of input (EOF, ...) and that it is
+ * supposed to flush all data in buffer.
+ *
+ * @note Equivalent of calling ardp_parser_exec(0,0);
+ */
+void ardp_parser_finish(void);
+
+
+/*!
+ * @fn    ardp_parser_add_namespace
+ * @brief Add the prefix to the parser stack.
+ *
+ * If the qname already exists the iri is overwritten.
+ */
+int ardp_parser_add_namespace(utf8 qname, utf8 iri);
+
+/*!
+ * @fn    ardp_parser_rebase
+ * @brief
+ */
+
+/*
+struct _ardp_turtle_parser {
+
+                uint64_t    n_bnode;
+
+                uint8_t*    baseURI;
+                map_t       namespaces;
+                struct pair bnodeLabels;
+
+                int         error;
+                size_t      n_triples;
+                size_t      n_directives;
+                size_t      n_errors;
+
+        } ardp_turtle_parser;
+
+
+
+        static bool changeBase( const char* base )
+        {
+                assert( shared_parser_internals );
+
+                struct ardp_turtle_parser* this = shared_parser_internals;
+
+                if(this->baseURI);
+                        free(this->baseURI);
+
+                this->baseURI = base;
+                return true; // Error checking should be employed
+        }
+
+        static bool addNamespace( const char* qname, const char* iri)
+        {
+                assert( shared_parser_internals );
+                struct ardp_turtle_parser* this = shared_parser_internals;
+                if( is_prefix_qname(qname) )
+                        if ( iri )
+                                map_push( qname, iri );
+        }
+*/
 
 /*
 
@@ -65,6 +189,3 @@ void ardp_parser_set_reader( ardp_parser *_Nonnull parser,
 void ardp_parser_set_handler( ardp_parser *_Nonnull parser,
                               ardp_handler handler,
                               void *_Nullable handler_arg );
-
-
-#endif /* __ARDP_PARSER_H__ */

@@ -76,7 +76,7 @@ struct rdf_term* rdf_term_copy(struct rdf_term* t)
 
 
         c->type = t->type;
-        fprintf(stderr, "Type of the term is: %d", c->type);
+        /* fprintf(stderr, "Type of the term is: %d", c->type); */
         switch(c->type) {
                 case RDF_TERM_BLANK:
                         c->value.blank = string_copy(t->value.blank);

@@ -1,5 +1,4 @@
 let SessionLoad = 1
-if &cp | set nocp | endif
 let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
 let v:this_session=expand("<sfile>:p")
 silent only
@@ -8,22 +7,21 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
   let s:wipebuf = bufnr('%')
 endif
 set shortmess=aoO
-badd +161 rdf.h
-badd +214 rdf.term.c
-badd +162 /Developer/school/ardp/include/ardp/string.h
-badd +179 /Developer/school/ardp/src/lib/string.c
+badd +660 turtle_parser.y
+badd +54 parser.c
+badd +51 test_lemon.c
+badd +63 /Developer/school/ardp/include/ardp/parser.h
+badd +0 /Developer/school/ardp/src/lib/string.c
 argglobal
 silent! argdel *
-argadd rdf.h
-argadd rdf.term.c
-edit rdf.term.c
+argadd turtle_parser.y
+edit /Developer/school/ardp/src/lib/string.c
 set splitbelow splitright
 set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
 argglobal
-edit rdf.term.c
 setlocal fdm=marker
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -32,14 +30,14 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 231 - ((24 * winheight(0) + 23) / 47)
+let s:l = 109 - ((52 * winheight(0) + 27) / 55)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-231
-normal! 022|
+109
+normal! 016|
 tabnext 1
-if exists('s:wipebuf')
+if exists('s:wipebuf') && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
 endif
 unlet! s:wipebuf
