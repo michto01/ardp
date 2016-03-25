@@ -108,10 +108,11 @@ int string_append(utf8 *src, const uint8_t* mod)
 
                 s->capacity = strlen;
                 *src = (utf8)(&s[1]);
+                str = s;
         }
 
-        memcpy(*src + *src->length, mod, len);
-        *src->length = strlen;
+        memcpy(*src + str->length, mod, len);
+        str->length = strlen - 1; // remove length of the terminator.
         return 0;
 }
 
@@ -134,30 +135,65 @@ int string_append(utf8 *src, const uint8_t* mod)
  */
 int string_prepend(utf8 *src, const uint8_t* str)
 {
-        struct string_header *s = string_header(*src);
+        struct string_header *s = string_hdr(*src);
 
         size_t len = strlen(str);
-        site_t req = len + s->length + 1;
+        size_t req = len + s->length + 1;
 
-        struct string_header *n = string_create_n(str, req);
+        struct string_header *n = string_hdr(string_create_n(str, req));
         if (!n)
                 return 1;
 
-        if (!string_append_str(n, *src)) {
+        utf8 x = (utf8)(&n[1]);
+
+        if (!string_append_str(x, *src)) {
                 string_dealloc(*src);
                 *src = NULL;
                 return 2;
         }
 
         string_dealloc(*src);
-        *src = n;
+        *src = x;
 
         return 0;
 }
 
-int string_append_str(utf8 src, utf8 bck)
+/*! @fn    string_append_str
+ *  @brief Append one string to another.
+ *
+ *  Appending one string to another. The another string is being freed. If the string
+ *  has capacity to take in the new string, no reallocation will occur.
+ *
+ *  @param[in,out] src String to be appended to.
+ *  @param[in]     apd String to append.
+ *
+ *  @return 0 if successful, non-zero value otherwise.
+ *
+ *  @warning Function will deallocate the `apd` string.
+ */
+int string_append_str(utf8 *src, utf8 apd)
 {
-        assert(0);
+        struct string_header *a = string_hdr(*src);
+        struct string_header *b = string_hdr(apd);
+
+        const size_t len = a->length + b->length + 1;
+
+        if (a->capacity < len) {
+                struct string_header *s = realloc(a, sizeof(*a) + len);
+                if (s == NULL)
+                        return 1;
+
+                s->capacity = len;
+                *src = (utf8)(&s[1]);
+                a = s; // switch pointer
+        }
+
+        memcpy(*src + a->length +1, b, b->length);
+        a->length += b->length;
+
+        string_dealloc(apd);
+
+        return 0;
 }
 
 utf8 string_copy(utf8 src)

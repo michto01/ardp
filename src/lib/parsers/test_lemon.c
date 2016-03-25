@@ -46,7 +46,7 @@ int transform_uri(struct parser* p, struct rdf_term* t)
         if (loc == 0) {
                 /* This is the empty prefix: ":somthing" */
                 void* value;
-                int r = map_get(p->namespaces, delim, value);
+                int r = map_get(p->namespaces, ":", value);
 
                 if (r == ARDP_MAP_OK && value)
                         return string_prepend(t->value.uri, (utf8) value);

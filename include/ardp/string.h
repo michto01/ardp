@@ -162,6 +162,62 @@ void string_debug( utf8 str );
   */
 int string_generic_cmp( const uint8_t* a, const uint8_t* b, int len );
 
+/*! @fn    string_prepend
+ *  @brief Append the C string buffer to the beginning of the ARDP string.
+ *
+ *
+ *  This function creates new string with the content of the C string buffer
+ *  and then appends the rest using the `string_append` function. As the
+ *  new string already has space for the new string, it doesn't require second
+ *  realloc.
+ *
+ *  @param[in,out] src Source string to be appended to.
+ *  @param[in]     str C string buffer to be prepended.
+ *
+ *  @return 0 on success, non-zero value otherwise.
+ *
+ *  @note err=1 - couldn't create new string.
+ *  @note err=2 - couldn't append the string.
+ */
+int string_prepend(utf8 *src, const uint8_t* str);
+
+/*! @fn    string_append
+ *  @brief Append C string to ardp string container.
+ *
+ *  Appends c string buffer to string. The string is resized if necessary. The
+ *  string buffer being appended needs to be NULL terminated.
+ *
+ *  @param[in,out] src Pointer to string pointer. (indirection)
+ *  @param[in]     mod C string buffer to be appended.
+ *
+ *  @return 0 on success, non-zero value if there is error.
+ */
+int string_append(utf8 *src, const uint8_t* mod);
+
+/*! @fn    string_append_str
+ *  @brief Append one string to another.
+ *
+ *  Appending one string to another. The another string is being freed. If the string
+ *  has capacity to take in the new string, no reallocation will occur.
+ *
+ *  @param[in,out] src String to be appended to.
+ *  @param[in]     apd String to append.
+ *
+ *  @return 0 if successful, non-zero value otherwise.
+ *
+ *  @warning Function will deallocate the `apd` string.
+ */
+int string_append_str(utf8 *src, utf8 apd);
+
+/*! @fn    string_copy
+ *  @brief Returns new copy of the specified string.
+ *
+ *  @param[in] src String to be copied.
+ *
+ *  @return Copy of the string.
+ */
+utf8 string_copy(utf8 src);
+
 #ifdef __cplusplus
 }
 #endif
