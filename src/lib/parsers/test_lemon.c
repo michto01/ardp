@@ -49,7 +49,7 @@ int transform_uri(struct parser* p, struct rdf_term* t)
                 int r = map_get(p->namespaces, ":", value);
 
                 if (r == ARDP_MAP_OK && value)
-                        return string_prepend(t->value.uri, (utf8) value);
+                        return string_prepend(&t->value.uri, (utf8) value);
                 else
                         return 14; // Empty prefix not found.
 
@@ -64,12 +64,12 @@ int transform_uri(struct parser* p, struct rdf_term* t)
 
                 memcpy(prefix, t->value.uri, loc); // Check if it is correct
                 void *value;
-                int r = map_get(p->namespaces, delim, value);
+                int r = map_get(p->namespaces, prefix, value);
 
                 if (r == ARDP_MAP_OK && value) {
-                        int s = string_prepend(t->value.uri, (utf8) value);
+                        int s = string_prepend(&t->value.uri, (utf8) value);
                         if (!s)
-                                return string_prepend(t->value.uri, search + 1);
+                                return string_prepend(&t->value.uri, search + 1);
                         else
                                 return s; // Error return
                 } else {
@@ -120,6 +120,8 @@ static struct parser* ardp_parser_create_internal(void)
                 return NULL;
 
         p->namespaces = map_create(8);
+
+        return p;
 }
 
 /*!

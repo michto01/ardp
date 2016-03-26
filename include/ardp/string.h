@@ -34,8 +34,8 @@ typedef struct __attribute__( ( __packed__ ) ) string_header {
   *
   * The helper pushing the raw character to the string.
   *
-  * @note			This function is unsafe and should be allways used with the proper
-  *						bounds check.
+  * @note This function is unsafe and should be allways used with the proper
+  *	  bounds check.
   *
   * @param[in,out] s String being manipulated.
   * @param[in]		 c Character to be appended to string.
@@ -46,7 +46,11 @@ static inline void string_push( utf8 s, char c ) {
 }
 
 /**
-  * Helper function to shift the string to header position
+  * Helper function to shift the string to header positio
+  *
+  * @param[in] str String to access.
+  *
+  * @return Returns the hidden star of the string.
   */
 static inline struct string_header *string_hdr( utf8 str ) {
         return &( ( string_header_t * )str )[-1];
@@ -149,6 +153,27 @@ void string_dealloc( utf8 self );
   * @param[in] str	String being investigated.
   */
 void string_debug( utf8 str );
+
+/*! @fn    string_create_n
+ *  @brief Create new string from content of the buffer of specified length.
+ *
+ *  @param[in] s String buffer to be placed in the new string.
+ *  @param[in] n Length of the buffer.
+ *
+ *  @return New string on success, NULL otherwise.
+ *
+ *  @note Doesn't check the memory, copies with for `n`.
+ */
+utf8 string_create_n(const uint8_t* s, size_t n);
+
+/*! @fn    string_create
+ *  @brief Create new string from string buffer.
+ *
+ *  @param[in] s String buffer to be place in the buffer.
+ *
+ *  @return Pointer to a new string.
+ */
+utf8 string_create(const uint8_t* s);
 
 /**
   *  Optimalized compare algorithm yealding little faster string comparison

@@ -20,6 +20,7 @@
         #include <errno.h>
 
         #include <ardp/rdf.h>
+        #include <ardp/string.h>
         #include <ardp/sequence.h>
 
         #include <ardp/lexer.h>
@@ -41,9 +42,9 @@
 static uint8_t* generate_bnodeid(void* parser, uint8_t* bnode) {
         return "hello";
 }
-extern utf8     string_create(const uint8_t* s);
-extern utf8     string_append(utf8 a, utf8 b);
-extern utf8     string_append_s(utf8 a, const uint8_t* b);
+//extern utf8     string_create(const uint8_t* s);
+//extern utf8     string_append(utf8 a, utf8 b);
+//extern utf8     string_append_s(utf8 a, const uint8_t* b);
 
 
 static struct rdf_statement* generate_turtle_statement(void* x, void* s)

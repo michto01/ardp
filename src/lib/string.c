@@ -146,7 +146,7 @@ int string_prepend(utf8 *src, const uint8_t* str)
 
         utf8 x = (utf8)(&n[1]);
 
-        if (!string_append_str(x, *src)) {
+        if (!string_append_str(&x, *src)) {
                 string_dealloc(*src);
                 *src = NULL;
                 return 2;
