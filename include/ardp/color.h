@@ -6,11 +6,10 @@
  * @version 1.0.2
  * @date    2015
  */
-
 #pragma once
 
-#include <stdio.h>
 #include "util.h"
+#include <stdio.h>
 
 extern const char *_Nonnull const kARDPColorNormal;
 extern const char *_Nonnull const kARDPColorReset;
@@ -67,10 +66,10 @@ extern const char *_Nonnull const kARDPColorBackgroundCyan;
 
 
 /* Coloring of the output */
-#define ARDP_COLOR_UNKNOWN (-1)
-#define ARDP_COLOR_NEVER    (0)
-#define ARDP_COLOR_ALWAYS   (1)
-#define ARDP_COLOR_AUTO     (2)
+#define ARDP_COLOR_UNKNOWN ( -1 )
+#define ARDP_COLOR_NEVER ( 0 )
+#define ARDP_COLOR_ALWAYS ( 1 )
+#define ARDP_COLOR_AUTO ( 2 )
 
 /**
   * Generally the color code will lazily figure this out itself, but

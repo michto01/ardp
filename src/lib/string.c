@@ -55,18 +55,18 @@ utf8 string_alloc( size_t len ) {
         return ( utf8 )( &hdr[1] ); //((utf8) hdr) + sizeof(string_header_t);
 }
 
-utf8 string_create_n(const uint8_t* s, size_t n)
+utf8 string_create_n(const uint8_t* s, size_t len,  size_t n)
 {
         struct string_header *hdr = calloc(1, sizeof(*hdr)  + (n + 1));
         if ( !hdr )
                 return NULL;
 
         hdr->capacity = n;
-        hdr->length   = n;
+        hdr->length   = len;
 
         utf8 tmp = (utf8)(&hdr[1]);
 
-        memcpy(tmp, s, n);
+        memcpy(tmp, s, len);
 
         return (utf8) tmp;
 }
@@ -75,7 +75,7 @@ utf8 string_create(const uint8_t* s)
 {
         size_t len = strlen(s);
 
-        return string_create_n(s,len);
+        return string_create_n(s,len,len);
 }
 
 //
@@ -140,21 +140,21 @@ int string_prepend(utf8 *src, const uint8_t* str)
         size_t len = strlen(str);
         size_t req = len + s->length + 1;
 
-        struct string_header *n = string_hdr(string_create_n(str, req));
+        struct string_header *n = string_hdr(string_create_n(str, len,req));
         if (!n)
                 return 1;
 
         utf8 x = (utf8)(&n[1]);
 
-        if (!string_append_str(&x, *src)) {
-                string_dealloc(*src);
-                *src = NULL;
+        if (string_append_str(&x, *src)) {
+                string_dealloc(x);
                 return 2;
         }
 
-        string_dealloc(*src);
+        utf8 to_free = *src;
         *src = x;
 
+        string_dealloc(to_free);
         return 0;
 }
 
@@ -178,20 +178,19 @@ int string_append_str(utf8 *src, utf8 apd)
 
         const size_t len = a->length + b->length + 1;
 
-        if (a->capacity < len) {
+        if (a->capacity <= len) {
                 struct string_header *s = realloc(a, sizeof(*a) + len);
                 if (s == NULL)
                         return 1;
 
-                s->capacity = len;
+                s->capacity = len - 1;
+
                 *src = (utf8)(&s[1]);
                 a = s; // switch pointer
         }
 
-        memcpy(*src + a->length +1, b, b->length);
+        memcpy(*src + a->length, apd, b->length);
         a->length += b->length;
-
-        string_dealloc(apd);
 
         return 0;
 }
@@ -301,39 +300,6 @@ void string_finish( utf8 str ) {
 // http://mgronhol.github.io/fast-strcmp/
 int string_generic_cmp(const uint8_t* a, const uint8_t* b, int len)
 {
-/*        int fast    = len/sizeof(size_t) + 1;
-        int offset  = (fast - 1)*sizeof(size_t);
-        int current = 0;
-
-        if (len <= sizeof(size_t))
-                fast = 0;
-
-        size_t *la = (size_t*)a;
-        size_t *lb = (size_t*)b;
-
-        while (current < fast) {
-                if ( (la[current] ^ lb[current]) ) {
-                        int pos;
-                        for(pos = current*sizeof(size_t); pos < len; ++pos) {
-                                if (  (a[pos] ^ b[pos])
-                                   || (la[pos] == 0)
-                                   || (b[pos] == 0) ) {
-                                        return (int)((uint8_t)a[pos] - (uint8_t)b[pos]);
-                                }
-                        }
-                }
-                ++current;
-        }
-
-        while ( len > offset ) {
-                if ( (a[offset] ^ b[offset])) {
-                        return (int)((uint8_t)a[offset] - (uint8_t)b[offset]);
-                }
-                ++offset;
-        }
-
-        return 0;
-*/
         const char* ptr0 = (const char*)a;
         const char* ptr1 = (const char*)b;
 

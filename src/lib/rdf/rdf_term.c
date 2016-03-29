@@ -40,7 +40,7 @@ struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype)
                 return NULL;
 
         t->type = RDF_TERM_LITERAL;
-        t->value.literal.string = string_copy(literal); //FIXME: add checking for empty string?
+        t->value.literal.string   = string_copy(literal); //FIXME: add checking for empty string?
         t->value.literal.datatype = (!datatype) ? NULL : string_copy(datatype);
         t->value.literal.language = (!lang)     ? NULL : string_copy(lang);
 
@@ -55,11 +55,11 @@ struct rdf_term* rdf_term_from_blank( utf8 blank )
 
         t->type = RDF_TERM_BLANK;
 
-        if (blank) {
-                //t->value.blank = string_copy(blank);
-        } else {
-                //t->value.blank = generate_bnode_id();
-        }
+        if (blank)
+                t->value.blank = string_copy(blank);
+         else
+                return NULL;
+
 
         return t;
 }

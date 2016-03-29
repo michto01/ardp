@@ -169,7 +169,7 @@
 
     ##> String literals
 
-    COMMENT  = '#' (any - EOL) EOL;
+    COMMENT  = '#' (any - EOL)* EOL;
 
     STRING_LITERAL_QUOTE              =  '"' ( ^(0x27 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)* '"';
     STRING_LITERAL_SINGLE_QUOTE       =  '\'' ( ^(0x22 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)* '\'';

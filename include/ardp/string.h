@@ -157,14 +157,15 @@ void string_debug( utf8 str );
 /*! @fn    string_create_n
  *  @brief Create new string from content of the buffer of specified length.
  *
- *  @param[in] s String buffer to be placed in the new string.
- *  @param[in] n Length of the buffer.
+ *  @param[in] s   String buffer to be placed in the new string.
+ *  @param[in] len Length of the s buffer.
+ *  @param[in] n   Length to preallocate for buffer.
  *
  *  @return New string on success, NULL otherwise.
  *
  *  @note Doesn't check the memory, copies with for `n`.
  */
-utf8 string_create_n(const uint8_t* s, size_t n);
+utf8 string_create_n(const uint8_t* s, size_t len, size_t n);
 
 /*! @fn    string_create
  *  @brief Create new string from string buffer.

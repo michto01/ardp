@@ -14,6 +14,9 @@
 #include <ardp/util.h>
 #include <ardp/color.h>
 
+#include <zlib.h>
+#include <bzlib.h>
+
 static uint8_t *_Nullable const kLexerTestText= ( uint8_t * )
         "  @base <http://example.org/> .\n"
         "  @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
@@ -45,6 +48,13 @@ static int lexer_error(int level, const char *_Nullable str)
 {
         return fprintf(stderr, "[LEXER-%d]: %s",level, str);
 }
+
+int read_gzip( uint8_t *p, unsigned int len, void *arg )
+{
+        gzFile file = arg;
+        return gzread(file, p, len);
+}
+void dispatch_queue_isempty(dispatch_queue_t queue);
 
 int main( int argc, char** argv )
 {
@@ -80,18 +90,11 @@ int main( int argc, char** argv )
                         die("Initialization error!");
         }
 
-        uint8_t *mark = NULL;
+        printf("Hello \n");
+        void* file = gzopen( "../../../tests/nt/nt-syntax-subm-01.nt", "rb" );
 
-        status = ardp_lexer_process_block(kLexerTestText, strlen((const char*)kLexerTestText), mark, true);
-/*
-        ardp_lexer_turtle_process_block( kLexerTestText, strlen((const char*)kLexerTestText), mark, true, ^(int success){
-                                if(success isnt ARDP_SUCCESS)
-                                        printf("Error while lexing block!");
-                                else
-                                        ardp_lexer_tutle_finish();
-                        });
-*/
-        for (;;); // wait forever
+        ardp_lexer_process_reader(read_gzip, file);
 
         return EXIT_SUCCESS;
 }
+

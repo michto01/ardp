@@ -31,7 +31,7 @@ struct parser {
 
 
         /*!
-         * Bese uri for the <#somthing> URIs.
+         * Bese uri for the <#something> URIs.
          */
         utf8 _Nullable base;
 
@@ -109,6 +109,11 @@ struct parser {
                  */
                 utf8 _Nullable (*_Nullable generate_bnode)();
         } cb;
+
+        struct {
+                int expand_iri;
+                const char *_Nullable bprefix;
+        } extra;
 };
 
 /*!

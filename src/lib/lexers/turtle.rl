@@ -61,7 +61,7 @@ static struct lexer *_Nullable shared_lexer;
         };
 
         BLANK_NODE_LABEL => {
-              # '_:' . VALUE
+              // '_:' . VALUE
               lexer_emit_token(BLANK_LITERAL, var(ts) +2, var(te) - (var(ts) +2));
         };
 
@@ -93,7 +93,7 @@ static struct lexer *_Nullable shared_lexer;
               lexer_emit_token_const(HAT);
         };
         LANGTAG => {
-              # '@'. VALUE
+              // '@'. VALUE
               lexer_emit_token(LANGTAG, var(ts)+1, var(te) - (var(ts)+1));
         };
 
@@ -183,6 +183,27 @@ void ardp_lexer_turtle_debug( void )
 }
 /*}}}*/
 
+/* dispatch_queue_isempty() {{{ */
+bool dispatch_queue_isempty(dispatch_queue_t queue)
+{
+    dispatch_group_t group = dispatch_group_create();
+
+    dispatch_group_enter(group);
+    dispatch_async(queue, ^{
+        dispatch_group_leave(group);
+    });
+
+    int64_t maxWaitTime = 5 * NSEC_PER_SEC;
+    bool isReady = dispatch_group_wait(group, maxWaitTime) == 0;
+
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+        dispatch_release(group);
+    });
+
+    return isReady;
+}
+/*}}}*/
 
 /*--------------------------------------------------------------------------------*/
 // EXTERN FUNCTIONS
@@ -210,7 +231,7 @@ int ardp_lexer_create(void)
             dispatch_queue_create( "eu.cre8iv.ardp.LexerEvent", 0 );
 
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_CREATED;
-
+        shared_lexer->finished = 0;
         log ( INFO, "Created the shared lexer." );
 
         return ARDP_SUCCESS;
@@ -288,9 +309,9 @@ bool ardp_lexer_is_ready()
 
 /* ardp_lexer_process_block() {{{ */
 int ardp_lexer_process_block( uint8_t *_Nullable v,
-                                     size_t             len,
-                                     uint8_t *_Nullable mark,
-                                     bool               is_eof)
+                              size_t             len,
+                              uint8_t *_Nullable mark,
+                              bool               is_eof)
 {
     if ( not ardp_lexer_is_ready() ) {
         log (ERROR, "Shared lexer is note yet ready to process the data.");
@@ -339,8 +360,54 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
 /* ardp_lexer_process_reader() {{{ */
 int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
 {
-    assert(0); // Not implemented yet;
-    return -1;
+        if ( reader == NULL )
+                return 1;
+
+        int status = 0;
+
+        if ( !ardp_lexer_is_ready() )
+                return 2;
+
+        shared_lexer->finished = 0;
+
+        uint8_t buf[BUFSIZE];
+
+        size_t   have = 0;
+        uint8_t *mark = NULL;
+        bool     eof  = false;
+
+        while (!shared_lexer->finished) {
+               uint8_t *p = buf + have;
+
+               size_t space = BUFSIZE - have;
+               if (space <= 0) {
+                       status = ARDP_LEXER_OMEM; /* Out of the buffer space */
+                       break;                    /* goto exit; */
+               }
+
+               int len = reader(p, space, reader_args);
+               if (len < space) {
+                       eof = true;
+                       shared_lexer->finished = 1;
+               }
+
+               status = ardp_lexer_process_block( p, len, mark, eof );
+
+               if (shared_lexer->env.cs == turtle_error ) {
+                        status = ARDP_LEXER_GENERIC_ERROR;
+                        break;
+               } else if (mark) {
+                        have = ( p + len ) - mark;
+                        memmove( buf, mark, have );
+                        mark = buf;
+               } else {
+                        have = 0;
+               }
+        }
+        dispatch_queue_t *q = &shared_lexer->lexer_queue;
+        while(!dispatch_queue_isempty(*q));
+        while(!dispatch_queue_isempty(shared_lexer->event_queue));
+        return status;
 }
 
 void ardp_lexer_process_reader_old( lexer_reader reader,

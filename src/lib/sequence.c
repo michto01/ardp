@@ -5,6 +5,7 @@
  * @author Tomas Michalek <tomas.michalek.st@vsb.cz>
  * @date   2016
  *
+ * @bug sequence_free -> items freeing is causing the segfault. (free disabled for now.)
  */
 
 #include <ardp/sequence.h>
@@ -64,6 +65,9 @@ size_t sequence_size(struct sequence* seq)
 /*}}}*/
 void sequence_free( struct sequence* seq )
 {
+        //@FIXME: segfault on deallocating the items
+        return;
+
         int i;
         int j;
         /* TODO: imporove deallocating of the items */
@@ -181,9 +185,8 @@ int sequence_push(struct sequence* s, void* data)
 
         if(s->head + s->size == s->capacity) {
                 if(sequence_ensure(s, s->capacity * 2, 0)) {
-                        if(data) {
+                        if(data)
                                 free(data);
-                        }
                         return 1;
                 }
         }
@@ -191,7 +194,7 @@ int sequence_push(struct sequence* s, void* data)
         s->items[s->head + s->size] = data;
         s->size++;
 
-          return 0;
+        return 0;
 }
 /*}}}*/
 
@@ -203,9 +206,8 @@ int sequence_shift(struct sequence* seq, void *data)
 
         if(!seq->head) {
                 if(sequence_ensure(seq, seq->capacity * 2, 1)) {
-                        if(data) {
+                        if(data)
                                 free(data);
-                        }
                         return 1;
                 }
         }

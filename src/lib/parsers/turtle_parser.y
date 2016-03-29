@@ -10,7 +10,6 @@
 
 %extra_argument { struct parser* p }
 
-
 %include {
         #include <assert.h>
         #include <stdio.h>
@@ -24,14 +23,21 @@
         #include <ardp/sequence.h>
 
         #include <ardp/lexer.h>
-//        #include <ardp/lexer.turtle.h>    // Terminals specification
         #include <ardp/util.h>            // Various utilities
         #include <ardp/parser.h>          // Parser internals
 }
 
-%parse_failure { fprintf(stderr, "Parser failure\n"); /*parser->error.code = 1;*/ }
-%parse_accept  { fprintf(stderr, "Final parser statistics.\n"); }
-%syntax_error  { fprintf(stderr, "Syntax error\n"); /*parser->error.code = 2;*/ }
+%parse_failure {
+        fprintf(stderr, "Parser failure\n"); /*parser->error.code = 1;*/
+        fprintf(stderr, "\n\nFinal status: (%lu) t, (%lu) d, (%lu) e\n", p->stats.n_triples, p->stats.n_directives, p->stats.n_errors);
+}
+%parse_accept  {
+        fprintf(stderr, "\n\nFinal status: (%lu) t, (%lu) d, (%lu) e\n", p->stats.n_triples, p->stats.n_directives, p->stats.n_errors);
+}
+%syntax_error  {
+        p->stats.n_errors++;
+        fprintf(stderr, "Syntax error: %s\n", NULL); /*parser->error.code = 2;*/
+}
 
 %start_symbol turtleDoc
 
@@ -39,77 +45,29 @@
 
 #define YYERROR do { fprintf(stderr, "\n\nERROR\n\n");  }while(0)
 
-static uint8_t* generate_bnodeid(void* parser, uint8_t* bnode) {
-        return "hello";
-}
-//extern utf8     string_create(const uint8_t* s);
-//extern utf8     string_append(utf8 a, utf8 b);
-//extern utf8     string_append_s(utf8 a, const uint8_t* b);
-
 
 static struct rdf_statement* generate_turtle_statement(void* x, void* s)
 {
         return rdf_statement_from_nodes(NULL,NULL,NULL,NULL);
 }
 
+const uint8_t *const xsd_uri    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#";
+
+const uint8_t *const rdfNil     = (uint8_t *) "http://www.nil.org/";
+const uint8_t *const rdfFirst   = (uint8_t *) "http://www.w3.org/2001/XMLSchame#First";
+const uint8_t *const rdfRest    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#Rest";
+
 #define XSD "xsd:"
-uint8_t *const xsd_uri    = (uint8_t *) "http://www.w3.org/2001/XMLSchema";
+const uint8_t *const rdfBoolean = (uint8_t*) XSD"Boolean";
+const uint8_t *const rdfInt     = (uint8_t*) XSD"int";
+const uint8_t *const rdfFloat   = (uint8_t*) XSD"float";
+const uint8_t *const rdfDouble  = (uint8_t*) XSD"double";
+const uint8_t *const rdfLong    = (uint8_t*) XSD"long";
+const uint8_t *const rdfShort   = (uint8_t*) XSD"short";
+const uint8_t *const rdfInteger = (uint8_t*) XSD"integer";
+const uint8_t *const rdfDecimal = (uint8_t*) XSD"decimal";
+const uint8_t *const rdfString  = (uint8_t*) XSD"string";
 
-uint8_t *const rdfNil     = (uint8_t *) "http://www.nil.org/";
-uint8_t *const rdfFirst   = (uint8_t *) "http://www.w3.org/2001/XMLSchame#First";
-uint8_t *const rdfRest    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#Rest";
-
-uint8_t *const rdfBoolean = (uint8_t*) XSD"Boolean";
-uint8_t *const rdfInt     = (uint8_t*) XSD"int";
-uint8_t *const rdfFloat   = (uint8_t*) XSD"float";
-uint8_t *const rdfDouble  = (uint8_t*) XSD"double";
-uint8_t *const rdfLong    = (uint8_t*) XSD"long";
-uint8_t *const rdfShort   = (uint8_t*) XSD"short";
-uint8_t *const rdfInteger = (uint8_t*) XSD"integer";
-uint8_t *const rdfDecimal = (uint8_t*) XSD"decimal";
-uint8_t *const rdfString  = (uint8_t*) XSD"string";
-
-//{{{
-/*        struct _ardp_turtle_parser {
-
-                uint64_t    n_bnode;
-
-                uint8_t*    baseURI;
-                map_t       namespaces;
-                struct pair bnodeLabels;
-
-                int         error;
-                size_t      n_triples;
-                size_t      n_directives;
-                size_t      n_errors;
-
-        } ardp_turtle_parser;
-
-
-
-        static bool changeBase( const char* base )
-        {
-                assert( shared_parser_internals );
-
-                struct ardp_turtle_parser* this = shared_parser_internals;
-
-                if(this->baseURI);
-                        free(this->baseURI);
-
-                this->baseURI = base;
-                return true; // Error checking should be employed
-        }
-
-        static bool addNamespace( const char* qname, const char* iri)
-        {
-                assert( shared_parser_internals );
-                struct ardp_turtle_parser* this = shared_parser_internals;
-                if( is_prefix_qname(qname) )
-                        if ( iri )
-                                map_push( qname, iri );
-        }
-*/
-//}}}
 }
 
 /* [1] turleDoc ::= statement*  {{{ */
@@ -119,8 +77,9 @@ statements ::= statements statement.
 statements ::= .
 /*}}}*/
 /* [2] statement ::= directive | triples '.' {{{ */
-statement ::= directive.
+statement ::= directive.   { p->stats.n_directives++; }
 statement ::= triples DOT.
+//TODO:statement ::= error(B).    { fprintf(stderr, "Error %d", B); }
 /*}}}*/
 /* [3] directive ::= prefixID | base | sparqlPrefix | sparqlBase {{{ */
 directive ::= prefixID.
@@ -130,85 +89,79 @@ directive ::= sparqlBase.
 /*}}}*/
 /* [4] prefixID ::= '@prefix' PNAME_NS IRIREF '.' {{{ */
 prefixID ::= PREFIX COLON IRIREF(B) DOT. {
-                fprintf(stdout, "prefix for universal ':' for %s\n", B);
-           }
+        if(p->cb.add_namespace(":",B)) {
+                YYERROR;
+        }
+}
 prefixID ::= PREFIX QNAME(A) IRIREF(B) DOT. {
-                fprintf(stdout, "prefix for: %s, uri: %s\n", A, B);
-           }
+        if(p->cb.add_namespace(A,B)) {
+                YYERROR;
+        }
+}
 /*}}}*/
 /* [5] base ::= '@base' IRIREF DOT. {{{ */
 base ::= BASE IRIREF(A) DOT. {
-                fprintf(stdout, "base: %s", A);
-       }
+        if (p->cb.rebase(A))
+                YYERROR;
+}
 /*}}}*/
 /* [5s] sparqlBase ::= "BASE" IRIREF {{{ */
 sparqlBase ::= SPARQL_BASE IRIREF(A). {
-                fprintf(stdout, "BASE_SPARQL ::= %s\n", A);
-             }
+        if (p->cb.rebase(A))
+                YYERROR;
+}
 /*}}}*/
 /* [6s] sparqlPrefix ::= "PREFIX" PNAME_NS IRIREF {{{ */
 sparqlPrefix ::= SPARQL_PREFIX COLON IRIREF(B). {
-                        fprintf(stdout, "SPARQL prefix s: ':', uri: %s\n", B);
-                        // parser->addPrefix(":",B);
-               }
+        if (p->cb.add_namespace(string_create(":"), B)) {
+                YYERROR;
+        }
+}
 sparqlPrefix ::= SPARQL_PREFIX QNAME(A) IRIREF(B). {
-                        fprintf(stdout, "SPARQL prefix s: %s, uri: %s\n", A, B);
-                        // parser->addPrefix(A,B);
-               }
+        if (p->cb.add_namespace(A,B)) {
+                YYERROR;
+        }
+}
 /*}}}*/
 /* [6] triples ::= subject predicateObjectList | blankNodePropertyList predicateObjectList?  {{{ */
 triples ::= subject(A) predicateObjectList(B). {
-        size_t i;
 
         if (A && B) {
                 /* have subject and property list with items */
                 while ( sequence_size(B) ) {
-                        fprintf(stderr, "HEEEEEEELOOOOO\n\n");
                         struct rdf_statement* t = (struct rdf_statement*) sequence_unshift(B);
                         t->subject = rdf_term_copy(A);
-                        generate_turtle_statement(/*parser*/NULL, t);
+
+                        p->cb.statement(t);
                         rdf_statement_free(t);
                 }
-
-                //for (i = 0; i < sequence_size(B); i++) {
-                //        struct rdf_statement* t = (struct rdf_statement*) sequence_get_at(B, i);
-                //        t->subject = rdf_term_copy(A);
-                //}
-                //for (i = 0; i < sequence_size(B); i++) {
-                //        struct rdf_statement* t = (struct rdf_statement*) sequence_get_at(B, i);
-                //
-                //        generate_turtle_statement(NULL/*parser*/, t);
-                //}
         }
 
         if (B)
                 sequence_free(B);
-
         if (A)
                 rdf_term_free(A);
 }
-triples ::= blankNodePropertyList(A) predicateObjectList(B). {
-        size_t i;
+triples ::= blankNodePropertyList(A) predicateObjectList_astr(B). {
 
         if (A && B) {
-                /* have subject and property list with items */
-                for (i = 0; i < sequence_size(B); i++) {
-                        struct rdf_statement* t = (struct rdf_statement*) sequence_get_at(B, i);
-                        t->subject = rdf_term_copy(A);
-                }
-                for (i = 0; i < sequence_size(B); i++) {
-                        struct rdf_statement* t = (struct rdf_statement*) sequence_get_at(B, i);
-                        generate_turtle_statement(NULL/*parser*/, t);
+                while ( sequence_size(B) ) {
+                        struct rdf_statement* s = (struct rdf_statement*) sequence_unshift(B);
+                        s->subject = rdf_term_copy(A);
+
+                        p->cb.statement(s);
+                        rdf_statement_free(s);
                 }
         }
 
         if (B)
                 sequence_free(B);
-
         if (A)
                 rdf_term_free(A);
 }
-triples ::= blankNodePropertyList. // ???
+
+predicateObjectList_astr(A) ::= predicateObjectList(B).  { A = B; }
+predicateObjectList_astr(A) ::= . { A = NULL; }
 /*}}}*/
 /* [7] predicateObjectList ::= verb objectList (';' (verb objectList)?)* {{{ */
 predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
@@ -221,7 +174,6 @@ predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
                 }
                 /* @TODO: double copy -> should be optimalized */
                 if (D) {
-                        assert(0);
                         while ( sequence_size(D) ) {
                                 struct rdf_statement* t = (struct rdf_statement*)
                                                                 sequence_unshift(D);
@@ -343,7 +295,27 @@ literal(A) ::= numericalLiteral(B). { A = B; }
 literal(A) ::= booleanLiteral(B).   { A = B; }
 /*}}}*/
 /* [14] blankNodePropertyList ::= '[' predicateObjectList  ']' {{{ */
-blankNodePropertyList(A) ::= L_SQUARE predicateObjectList(B) R_SQUARE. { A = B; }
+blankNodePropertyList(A) ::= L_SQUARE predicateObjectList(B) R_SQUARE. {
+
+        A = rdf_term_from_blank(p->cb.generate_bnode());
+
+        if (!A) {
+                sequence_free(B);
+                A = NULL;
+                YYERROR;
+        } else {
+                if (B) {
+                        /* Handle non empty list */
+                        while(sequence_size(B)) {
+                                struct rdf_statement* s = (struct rdf_statement*) sequence_unshift(B);
+                                s->subject = rdf_term_copy(A);
+
+                                p->cb.statement(s);
+                                rdf_statement_free(s);
+                        }
+                }
+        }
+}
 /*}}}*/
 /* [15] collection ::= '(' object* ')' {{{ */
 collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
@@ -398,17 +370,15 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                         struct rdf_statement* t = (struct rdf_statement *)
                                                         sequence_get_at(B, i);
 
-                        uint8_t* bid = generate_bnodeid(NULL, NULL);
-                        utf8 s = string_create(bid);
-                        if (!bid || !s) {
+                        utf8 s = p->cb.generate_bnode();
+                        if (!s) {
                                 string_dealloc(s);
                                 error = 1;
                                 goto err;
                         }
 
-                        blank = rdf_term_from_blank(bid);
+                        blank = rdf_term_from_blank(s);
                         string_dealloc(s);
-                        free(bid);
 
                         if (!blank) {
                                 error = 1;
@@ -420,6 +390,7 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                                 t->predicate = first;
                                 /* t->object = already set */
 
+                                p->cb.statement(t);
                                 generate_turtle_statement(/*parser*/NULL, t);
                         }
                         { /* rdf:Rest */
@@ -428,6 +399,8 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                                 t->subject   = blank;
                                 t->predicate = rest;
                                 t->object    = object;
+
+                                p->cb.statement(t);
                                 generate_turtle_statement(/*parser*/NULL, t);
 
                           /* end */
@@ -552,6 +525,7 @@ iri(A) ::= IRIREF(B). {
 iri(A) ::= QNAME(B).  {
         if (B) {
                 //TODO: qname qualification
+
                 A = rdf_term_from_uri(B);
                 string_dealloc(B);
 
@@ -564,24 +538,15 @@ iri(A) ::= QNAME(B).  {
 /*}}}*/
 /* [137s] BlankNode ::= BLANK_NODE_LABEL | ANON {{{ */
 blankNode(A) ::= BLANK_LITERAL(B). {
-        uint8_t* z = generate_bnodeid(NULL, B);
-        utf8 id = string_create(B);
-
-        if (!id)
-                YYERROR;
-
-        A = rdf_term_from_blank(id);
-        string_dealloc(id);
-
+        if (!B)
+                A = rdf_term_from_blank(p->cb.generate_bnode());
+        else
+                A = rdf_term_from_blank(B);
         if (!A)
                 YYERROR;
 }
 blankNode(A) ::= anon. {
-        uint8_t* id = generate_bnodeid(NULL, NULL);
-        if (!id)
-                YYERROR;
-
-        A = rdf_term_from_blank(id);
+        A = rdf_term_from_blank(p->cb.generate_bnode());
 
         if (!A)
                 YYERROR;
@@ -590,13 +555,6 @@ blankNode(A) ::= anon. {
 /* ![162s] ANON ::= '[' WS* ']' {{{ */
 anon ::= L_SQUARE R_SQUARE.
 /*}}}*/
-
-/*
-ardp_status_t parser->push_prefix(utf8 string, utf8 iri);
-utf8 parser->expand_qname(utf8 qname);
-utf8 parser->base()
-utf8 parser->set_base(utf8 uri);
-*/
 
 %include {
 
