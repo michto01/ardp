@@ -20,6 +20,15 @@
   	  	   # comment line after whitespace
 # empty blank line, then one with spaces and tabs
 
+@prefix ref: <#hello> .
+
+ref:agro :hello :object .
+
+<http://text.com/test1> <http://value.org/text> """
+multiline
+text
+of 
+doom """ .
 
 <http://example.org/resource1> <http://example.org/property> <http://example.org/resource2> .
 _:anon <http://example.org/property> <http://example.org/resource2> .

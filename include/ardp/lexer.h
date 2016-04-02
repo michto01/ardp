@@ -20,7 +20,7 @@
 
 /* Project headers */
 #include <ardp/util.h>
-
+#include <ardp/string.h>
 
 
 #ifdef __cplusplus
@@ -135,6 +135,11 @@ struct lexer {
          * Current line count in scanned file/block.
          */
         off_t line;
+
+        /*!
+         * String buffer for the current parsing.
+         */
+        utf8 _Nullable  string;
 
         /*!
          * Denotes if the lexer is still running (used only in file processing)

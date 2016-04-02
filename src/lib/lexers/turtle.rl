@@ -11,13 +11,14 @@
 
 // HEADERS {{{ --------------------------------------------------------------------
 
+#include <unistd.h>             /* sleep() */
 #include <errno.h>              /* Included for 'stderr' */
 #include <iso646.h>             /* verbose || and && */
 #include <string.h>             /* C buffer manipulation functions */
 #include <assert.h>             /* Asserts in the code */
 #include <dispatch/dispatch.h>  /* Clang GCD dispatch_* functions */
 
-#include <ardp/lexer.h>		/* Generic lexer */
+#include <ardp/lexer.h>         /* Generic lexer */
 #include <ardp/lexer.turtle.h>  /* Turtle specific lexer constants */
 
 #include <ardp/util.h>
@@ -48,6 +49,26 @@ static struct lexer *_Nullable shared_lexer;
     alphtype unsigned char;
     access shared_lexer->env.;
 
+    action u8_create {
+            if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+
+            shared_lexer->string = string_new();
+            if (shared_lexer->string)
+                shared_lexer->finished = 1;
+    }
+
+    action mark {
+        mark = p;
+    }
+
+    action unescape {
+        uint32_t codepoint = hex(mark, p - mark);
+        mark = NULL;
+        if (!string_append_utf8(shared_lexer->string, codepoint))
+                shared_lexer->finished = 1;
+    }
+
     main := |*
 
         PREFIX        => { lexer_emit_token_const(PREFIX); };
@@ -56,36 +77,29 @@ static struct lexer *_Nullable shared_lexer;
         SPARQL_BASE   => { lexer_emit_token_const(SPARQL_BASE); };
 
 
-        QNAME => {
-              lexer_emit_token(QNAME_LITERAL, var(ts), var(te) - var(ts));
-        };
-
-        BLANK_NODE_LABEL => {
+        BLANK_NODE_LABEL {
               // '_:' . VALUE
               lexer_emit_token(BLANK_LITERAL, var(ts) +2, var(te) - (var(ts) +2));
         };
 
-        IRIREF => {
-              // '<' URI_LITERAL '>'
-              lexer_emit_token(URI_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
-        };
+        QNAME  { lexer_emit_token(QNAME, var(ts), var(te) - var(ts)); };
+        IRIREF { lexer_emit_token(IRIREF, var(ts) + 1, (var(te) - 1) - (var(ts) + 1)); };
 
-        INTEGER   => { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
-        DECIMAL   => { lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); };
-        DOUBLE    => { lexer_emit_token(DOUBLE_LITERAL,  var(ts), var(te) - var(ts)); };
-        BOOLEAN   => { lexer_emit_token(BOOLEAN_LITERAL, var(ts), var(te) - var(ts)); };
+        INTEGER { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
+        DECIMAL { lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); };
+        DOUBLE  { lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); };
+        BOOLEAN { lexer_emit_token(BOOLEAN_LITERAL, var(ts), var(te) - var(ts)); };
 
-
-        STRING_LITERAL_QUOTE => {
+        STRING_LITERAL_QUOTE {
               lexer_emit_token(STRING_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
         };
-        STRING_LITERAL_SINGLE_QUOTE => {
+        STRING_LITERAL_SINGLE_QUOTE {
               lexer_emit_token(STRING_LITERAL,  var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
         };
-        STRING_LITERAL_LONG_QUOTE => {
+        STRING_LITERAL_LONG_QUOTE {
               lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
         };
-        STRING_LITERAL_LONG_SINGLE_QUOTE => {
+        STRING_LITERAL_LONG_SINGLE_QUOTE {
               lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
         };
 
@@ -111,13 +125,11 @@ static struct lexer *_Nullable shared_lexer;
 
         EOL => {
               dispatch_async(shared_lexer->event_queue, ^{
-                shared_lexer->line++;
+                  shared_lexer->line++;
               });
         };
 
-        COMMENT;
-        WS*;
-
+        COMMENT | WS*;
         any; #invalids to be skiped
     *|;
 
@@ -328,7 +340,8 @@ int ardp_lexer_process_block( uint8_t *_Nullable v,
 
     return ARDP_SUCCESS;
 }
-
+/*}}}*/
+/* ardp_lexer_process_block() OLD using block {{{*/
 void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
                                       size_t             len,
                                       uint8_t *_Nullable mark,
@@ -404,9 +417,13 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
                         have = 0;
                }
         }
+
         dispatch_queue_t *q = &shared_lexer->lexer_queue;
-        while(!dispatch_queue_isempty(*q));
-        while(!dispatch_queue_isempty(shared_lexer->event_queue));
+
+        // Optimalization to free CPU operations
+        while(   !dispatch_queue_isempty(*q)
+              || !dispatch_queue_isempty(shared_lexer->event_queue))
+                usleep(5);
         return status;
 }
 

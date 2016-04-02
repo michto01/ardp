@@ -171,10 +171,15 @@
 
     COMMENT  = '#' (any - EOL)* EOL;
 
-    STRING_LITERAL_QUOTE              =  '"' ( ^(0x27 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)* '"';
-    STRING_LITERAL_SINGLE_QUOTE       =  '\'' ( ^(0x22 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)* '\'';
-    STRING_LITERAL_LONG_QUOTE         =  '"""' ( ('"' | '""')? ( ^('"' | '\\') | ECHAR | UCHAR) )* '"""';
-    STRING_LITERAL_LONG_SINGLE_QUOTE  =  "'''" ( ("'" | "''")? ( ^("'" | '\\') | ECHAR | UCHAR) )* "'''";
+    STRING_VALUE_QUOTE             = ( ^(0x27 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)*;
+    STRING_VALUE_SINGLE_QUOTE      = ( ^(0x22 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)*;
+    STRING_VALUE_LONG_QUOTE        = ( ('"' | '""')? ( ^('"' | '\\') | ECHAR | UCHAR) )*;
+    STRING_VALUE_LONG_SINGLE_QUOTE = ( ("'" | "''")? ( ^("'" | '\\') | ECHAR | UCHAR) )*; 
+
+    STRING_LITERAL_QUOTE              =  '"' STRING_VALUE_QUOTE  '"';
+    STRING_LITERAL_SINGLE_QUOTE       =  "'" STRING_VALUE_SINGLE_QUOTE "'";
+    STRING_LITERAL_LONG_QUOTE         =  '"""' STRING_VALUE_LONG_QUOTE '"""';
+    STRING_LITERAL_LONG_SINGLE_QUOTE  =  "'''" STRING_VALUE_LONG_SINGLE_QUOTE "'''";
 
     BLANK_NODE_LABEL = '_:' . (PN_CHARS_U | digit) ((PN_CHARS | '.')* PN_CHARS)?;
 }%%

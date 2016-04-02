@@ -1,5 +1,11 @@
-#ifndef __ARDP2_STRING_H__
-#define __ARDP2_STRING_H__
+/*! @file string.h
+ *
+ * The 'Fat-pointer' string library.
+ *
+ * @author Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @date   2015
+ */
+#pragma once
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -14,10 +20,10 @@ extern "C" {
 
 typedef uint8_t *utf8;
 
-/**
-  * Header to use with the string, holding the string informations.
-  */
-typedef struct __attribute__( ( __packed__ ) ) string_header {
+/*! @typedef string_header
+ *  @brief   Header to use with the string, holding the string informations.
+ */
+typedef struct __attribute__((__packed__)) string_header {
         /*!
          * Current pre-allocated capacity of the string.
          */
@@ -38,7 +44,7 @@ typedef struct __attribute__( ( __packed__ ) ) string_header {
   *	  bounds check.
   *
   * @param[in,out] s String being manipulated.
-  * @param[in]		 c Character to be appended to string.
+  * @param[in]     c Character to be appended to string.
   */
 static inline void string_push( utf8 s, char c ) {
         string_header_t *hdr = &( ( string_header_t * )s )[-1];
@@ -247,5 +253,3 @@ utf8 string_copy(utf8 src);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __ARDP2_STRING_H__ */
