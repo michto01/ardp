@@ -56,6 +56,8 @@ int read_gzip( uint8_t *p, unsigned int len, void *arg )
 }
 void dispatch_queue_isempty(dispatch_queue_t queue);
 
+int color_stdout_is_tty = -1;
+
 int main( int argc, char** argv )
 {
         int status = ARDP_UNKNOWN;
@@ -78,7 +80,7 @@ int main( int argc, char** argv )
                 cfg.logging.eprintf = &lexer_error;
 
                 __block int (^token)(int,const char *_Nullable) = ^int( int type, const char *_Nullable value){
-                        printf("[%d] == %s\n", type, value);
+                        //printf("( %d == %s )\n", type, value);
                         return ARDP_SUCCESS;
                 };
 
@@ -90,7 +92,6 @@ int main( int argc, char** argv )
                         die("Initialization error!");
         }
 
-        printf("Hello \n");
         void* file = gzopen( "../../../tests/nt/nt-syntax-subm-01.nt", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);

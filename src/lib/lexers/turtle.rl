@@ -5,6 +5,11 @@
  *
  *  @author Tomas Michalek <tomas.michalek.st@vsb.cz>
  *  @date   2015
+ *
+ *  @TODO change the interface to reflect new scheme of token data:
+ *              emit_token(type, value, line, column );
+ *
+ *  @TODO column guard
  */
 
 /* vim: set ts=8 sw=4 tw=0 noet : set foldmethod=marker */
@@ -23,6 +28,7 @@
 
 #include <ardp/util.h>
 #include <ardp/color.h>
+#include <ardp/string.h>
 
 //#include "config.h"
 
@@ -50,12 +56,21 @@ static struct lexer *_Nullable shared_lexer;
     access shared_lexer->env.;
 
     action u8_create {
-            if (shared_lexer->string != NULL)
-                string_dealloc(shared_lexer->string);
+        if (shared_lexer->string != NULL)
+                shared_lexer->string = string_new();
+    }
 
-            shared_lexer->string = string_new();
-            if (shared_lexer->string)
-                shared_lexer->finished = 1;
+    action u8_finish {
+            if (shared_lexer->string) {
+                string_finish(shared_lexer->string);
+            }
+    }
+
+    action u8_push {
+       // printf("%c", fc);
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, fc);
+            }
     }
 
     action mark {
@@ -69,6 +84,22 @@ static struct lexer *_Nullable shared_lexer;
                 shared_lexer->finished = 1;
     }
 
+    #unicode = UNICODE $u8_push;
+
+
+
+    STR_Q    = ( STRING_VALUE_QUOTE        >u8_create $u8_push %u8_finish );
+    STR_DQ   = ( STRING_VALUE_SINGLE_QUOTE >u8_create $u8_push %u8_finish );
+
+    STR_LQ   = ( STRING_VALUE_LONG_QUOTE        >u8_create $u8_push %u8_finish );
+    STR_LDQ  = ( STRING_VALUE_LONG_SINGLE_QUOTE >u8_create $u8_push %u8_finish );
+
+    STRING_LITERAL_QUOTE        = '"' STR_Q :>> '"';
+    STRING_LITERAL_SINGLE_QUOTE = "'" STR_DQ :>> "'";
+
+    STRING_LITERAL_LONG_QUOTE        = '"""' STR_LQ :> '"""';
+    STRING_LITERAL_LONG_SINGLE_QUOTE = "'''" STR_LDQ :> "'''";
+
     main := |*
 
         PREFIX        => { lexer_emit_token_const(PREFIX); };
@@ -76,31 +107,31 @@ static struct lexer *_Nullable shared_lexer;
         BASE          => { lexer_emit_token_const(BASE); };
         SPARQL_BASE   => { lexer_emit_token_const(SPARQL_BASE); };
 
-
-        BLANK_NODE_LABEL {
-              // '_:' . VALUE
-              lexer_emit_token(BLANK_LITERAL, var(ts) +2, var(te) - (var(ts) +2));
-        };
-
-        QNAME  { lexer_emit_token(QNAME, var(ts), var(te) - var(ts)); };
-        IRIREF { lexer_emit_token(IRIREF, var(ts) + 1, (var(te) - 1) - (var(ts) + 1)); };
+        BLANK_NODE_LABEL { lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); };
+        QNAME            { lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); };
+        IRIREF           { lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1)); };
 
         INTEGER { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
         DECIMAL { lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); };
         DOUBLE  { lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); };
         BOOLEAN { lexer_emit_token(BOOLEAN_LITERAL, var(ts), var(te) - var(ts)); };
 
+        STRING_LITERAL_LONG_QUOTE => {
+                printf("<<< %s >>>\n", shared_lexer->string);
+              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
+        };
+        STRING_LITERAL_LONG_SINGLE_QUOTE => {
+                printf("--- %s ---\n", shared_lexer->string);
+              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
+        };
+
         STRING_LITERAL_QUOTE {
+                printf("=== %s ===\n", shared_lexer->string);
               lexer_emit_token(STRING_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
         };
         STRING_LITERAL_SINGLE_QUOTE {
-              lexer_emit_token(STRING_LITERAL,  var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
-        };
-        STRING_LITERAL_LONG_QUOTE {
-              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
-        };
-        STRING_LITERAL_LONG_SINGLE_QUOTE {
-              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
+                printf("??? %s ???\n", shared_lexer->string);
+              lexer_emit_token(STRING_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
         };
 
         HAT => {
