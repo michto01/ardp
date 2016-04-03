@@ -13,6 +13,7 @@
 #include <ardp/lexer.h>
 #include <ardp/util.h>
 #include <ardp/color.h>
+#include <ardp/parser.h>
 
 #include <zlib.h>
 #include <bzlib.h>
@@ -54,7 +55,6 @@ int read_gzip( uint8_t *p, unsigned int len, void *arg )
         gzFile file = arg;
         return gzread(file, p, len);
 }
-void dispatch_queue_isempty(dispatch_queue_t queue);
 
 int color_stdout_is_tty = -1;
 
@@ -72,6 +72,9 @@ int main( int argc, char** argv )
         if (status isnt ARDP_SUCCESS)
                 die("Couldn't load defaults settings.");
 
+        ardp_parser_create(); //creates the parser shared opaque instance
+        //ardp_parser_trace();
+
         //Configure the lexer for turtle
         {
                 struct ardp_lexer_config cfg;
@@ -79,15 +82,11 @@ int main( int argc, char** argv )
                 cfg.logging.level = DEBUG;
                 cfg.logging.eprintf = &lexer_error;
 
-                __block int (^token)(int,const char *_Nullable) = ^int( int type, const char *_Nullable value){
-                        printf("( %d == %s )\n", type, value);
-                        return ARDP_SUCCESS;
-                };
                 __block int (^stoken)(int, utf8, size_t, size_t) = ^int(int type, utf8 value, size_t line, size_t col){
-                        printf("[ %d == %s]\n", type,value);
+                        //printf("[ %d == %s]\n", type,value);
+                        ardp_parser_exec(type, value ? value : 0);
                         return ARDP_SUCCESS;
                 };
-               cfg.cb.token = token;
                cfg.cb.stoken = stoken;
 
                 status = ardp_lexer_init(&cfg);
@@ -99,6 +98,9 @@ int main( int argc, char** argv )
         void* file = gzopen( "../../../tests/nt/nt-syntax-subm-01.nt", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);
+
+        ardp_parser_finish();
+        ardp_parser_destroy();
 
         return EXIT_SUCCESS;
 }

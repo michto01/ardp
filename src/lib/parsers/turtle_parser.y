@@ -10,6 +10,8 @@
 
 %extra_argument { struct parser* p }
 
+//%token_type { utf8 }
+
 %include {
         #include <assert.h>
         #include <stdio.h>
@@ -44,12 +46,6 @@
 %include {
 
 #define YYERROR do { fprintf(stderr, "\n\nERROR\n\n");  }while(0)
-
-
-static struct rdf_statement* generate_turtle_statement(void* x, void* s)
-{
-        return rdf_statement_from_nodes(NULL,NULL,NULL,NULL);
-}
 
 const uint8_t *const xsd_uri    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#";
 
@@ -391,7 +387,6 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                                 /* t->object = already set */
 
                                 p->cb.statement(t);
-                                generate_turtle_statement(/*parser*/NULL, t);
                         }
                         { /* rdf:Rest */
                                 struct rdf_term* temp = t->object;
@@ -401,7 +396,6 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                                 t->object    = object;
 
                                 p->cb.statement(t);
-                                generate_turtle_statement(/*parser*/NULL, t);
 
                           /* end */
                                 t->subject = NULL;
@@ -555,100 +549,3 @@ blankNode(A) ::= anon. {
 /* ![162s] ANON ::= '[' WS* ']' {{{ */
 anon ::= L_SQUARE R_SQUARE.
 /*}}}*/
-
-%include {
-
-static void generate_statement(void* parser, struct rdf_statement* t) {
-
-        return;
-/*
-        void *turtle_parser = (void*)parser->context;
-        struct rdf_statement *statement = &parser->statement;
-
-        if(!t->subject || !t->predicate || !t->object)
-                return;
-
-        if(!parser->cb.statement)
-                return;
-
-/* FIXME: emmit graph
-  if(!parser->emitted_default_graph && !turtle_parser->graph_name) {
-    /* for non-TRIG - start default graph at first triple * /
-    raptor_parser_start_graph(parser, NULL, 0);
-    parser->emitted_default_graph++;
-  }
-*/
-
-        /* Two choices for subject for Turtle */
-/*
-        switch (t->subject->type) {
-        case RDF_TERM_URI:
-                statement->subject = rdf_term_from_uri(t->subject->value.uri);
-                break;
-        case RDF_TERM_BLANK:
-                statement->subject = rdf_term_from_blank(t->subject->value.blank);
-                break;
-
-        default:
-                fprintf(stderr, "subject type is not resource!\n");
-                return;
-        }
-
-        /* Predicates are URIs but check for bad ordinals */
-        /* @FIXME: repair ordinal checking, missing check function */
-        if(!strncmp((const char*)(t->predicate->value.uri), "http://www.w3.org/1999/02/22-rdf-syntax-ns#_", 44)) {
-        //        unsigned char* predicate_uri_string = t->predicate->value.uri;
-        //        int predicate_ordinal = rdf_aux_check_ordinal(predicate_uri_string+44);
-        //        if(predicate_ordinal <= 0)
-        //                parser_error(parser, "Illegal ordinal value %d in property '%s'.", predicate_ordinal, predicate_uri_string);
-        }
-/*
-        statement->predicate = rdf_term_from_uri(t->predicate->value.uri);
-
-
-        /* Three choices for object for Turtle */
-/*        switch(t->object->type) {
-        case RDF_TERM_URI:
-                statement->object = rdf_term_from_uri(t->object->value.uri);
-                break;
-        case RDF_TERM_BLANK:
-                statement->object = rdf_term_from_blank(t->object->value.blank);
-                break;
-
-        case RDF_TERM_LITERAL:
-                statement->object = rdf_term_from_literal(
-                                                t->object->value.literal.string,
-                                                t->object->value.literal.datatype,
-                                                t->object->value.literal.language);
-                break;
-
-        case RDF_TERM_UNKNOWN:
-        default:
-                // ERROR: invalid term.
-                break;
-        }
-
-        /* Generate the statement */
-  /*      (*parser->cb.statement)(parser->user_data, statement);
-
-        { // Subject
-                rdf_term_free(statement->subject);
-                statement->subject = NULL;
-        }
-        { // Predicate
-                rdf_term_free(statement->predicate);
-                statement->predicate = NULL;
-        }
-        { // Object
-                rdf_term_free(statement->object);
-                statement->object = NULL;
-        }
-        { // Graph
-                if (statement->graph) {
-                        rdf_term_free(statement->graph);
-                        statement->graph = NULL;
-                }
-        }*/
-}
-
-}

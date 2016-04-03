@@ -6,10 +6,8 @@
  *  @author Tomas Michalek <tomas.michalek.st@vsb.cz>
  *  @date   2015
  *
- *  @TODO change the interface to reflect new scheme of token data:
- *              emit_token(type, value, line, column );
- *
  *  @TODO column guard
+ *  @FIXME Not all the linebreaks are being counted, causing misaligned lines
  */
 
 /* vim: set ts=8 sw=4 tw=0 noet : set foldmethod=marker */
@@ -62,15 +60,7 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
             i += c - '0';
         } else if (isxdigit(c)) {
                 i += c - ((isupper(c) ? 'A' : 'a')) + 10;
-        } 
-        /*
-        
-        else if ((c >= 'A' && c <= 'F') && (c >= 'A' && c <= 'F')) {
-            i += c - 'A' + 10;
-        } else if (c >= 'a' && c <= 'f') {
-            i += c - 'a' +  10;
         }
-        */
     }
     return i;
 }
@@ -118,9 +108,6 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-
-    #unicode = UNICODE $u8_push;
-
 
     UCHAR     = '\\' . ( ('u' xdigit{4} >mark %unescape) | ('U' xdigit{8} >mark %unescape) )
               ;
@@ -211,7 +198,7 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
         BASE          => { lexer_emit_token_const(BASE); };
         SPARQL_BASE   => { lexer_emit_token_const(SPARQL_BASE); };
 
-        BLANK_NODE_LABEL { lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); };
+        BLANK_NODE_LABEL => { lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); };
         QNAME            { lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); };
         IRIREF           {
                 lexer_emit_u8_token(IRIREF);
@@ -308,14 +295,13 @@ static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable st
 {
         assert( shared_lexer ); /* sanity check */
 
+        __block utf8 s = string_create_n(str,len,len+1);
         __block ptrdiff_t col = shared_lexer->env.ts - column;
 
-        if (shared_lexer->cb.token) {
+        if (shared_lexer->cb.stoken) {
             dispatch_async( shared_lexer->event_queue, ^{
                 //char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
                 //assert(p_str); /* Sanity check for the malloc() */
-                utf8 s = string_create_n(str,len, len+1);
-
                 //strncat( p_str, ( const char * )str, len );
 
                 shared_lexer->cb.stoken( type, s, shared_lexer->line, col );

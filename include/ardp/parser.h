@@ -12,8 +12,8 @@
 #endif
 
 #include <ardp/string.h>
-#include <ardp/rdf.h>
 #include <ardp/hashmap.h>
+#include <ardp/rdf.h>
 
 /*! @struct parser
  *
@@ -22,6 +22,7 @@
  *
  *  For another specifications will require to add other properties.
  */
+/* struct parser {{{ */
 struct parser {
 
         /*!
@@ -115,10 +116,13 @@ struct parser {
                 const char *_Nullable bprefix;
         } extra;
 };
+/*}}}*/
 
 /*!
  * @fn ardp_parser_create
  * @brief Create and initialize all prerequisites for shared_parser.
+ *
+ * @return 0 if successful, non-zero otherwise.
  */
 int ardp_parser_create(void);
 
@@ -145,6 +149,12 @@ void ardp_parser_exec(int type, void *_Nullable value);
  */
 void ardp_parser_finish(void);
 
+/*!
+ * @fn ardp_parser_destroy
+ *
+ * Destroy shared lexer. And all its underlying structures.
+ */
+void ardp_parser_destroy(void);
 
 /*!
  * @fn    ardp_parser_add_namespace
@@ -154,71 +164,10 @@ void ardp_parser_finish(void);
  */
 int ardp_parser_add_namespace(utf8 _Nullable qname, utf8 _Nullable iri);
 
-/*!
- * @fn    ardp_parser_rebase
- * @brief
- */
+
+void ardp_parser_trace(void);
 
 /*
-struct _ardp_turtle_parser {
-
-                uint64_t    n_bnode;
-
-                uint8_t*    baseURI;
-                map_t       namespaces;
-                struct pair bnodeLabels;
-
-                int         error;
-                size_t      n_triples;
-                size_t      n_directives;
-                size_t      n_errors;
-
-        } ardp_turtle_parser;
-
-
-
-        static bool changeBase( const char* base )
-        {
-                assert( shared_parser_internals );
-
-                struct ardp_turtle_parser* this = shared_parser_internals;
-
-                if(this->baseURI);
-                        free(this->baseURI);
-
-                this->baseURI = base;
-                return true; // Error checking should be employed
-        }
-
-        static bool addNamespace( const char* qname, const char* iri)
-        {
-                assert( shared_parser_internals );
-                struct ardp_turtle_parser* this = shared_parser_internals;
-                if( is_prefix_qname(qname) )
-                        if ( iri )
-                                map_push( qname, iri );
-        }
-*/
-
-/*
-
-Grammar for the triples parser:
-
-TRIPLE = SUBJECT PREDICATE OBJECT
-
-SUBJECT = ARDP_IRI
-        | ARDP_BLANK_NODE
-
-PREDICATE = ARDP_IRI
-
-OBJECT = ARDP_IRI
-       | ARDP_BLANK_NODE
-       | ARDP_SIMPLE_LITERAL_VALUE
-       | ARDP_LANGUAGE_TAGGED_LITERAL_VALUE ARDP_LANGUAGE_TAGGED_LITERAL_LANGUAGE
-       | ARDP_DATATYPE_LITERAL_VALUE ARDP_DATATYPE_LITERAL_IRI
-
-*/
-
 typedef enum {
         ARDP_IRI,
         ARDP_BLANK_NODE,
@@ -254,3 +203,4 @@ void ardp_parser_set_reader( ardp_parser *_Nonnull parser,
 void ardp_parser_set_handler( ardp_parser *_Nonnull parser,
                               ardp_handler handler,
                               void *_Nullable handler_arg );
+*/

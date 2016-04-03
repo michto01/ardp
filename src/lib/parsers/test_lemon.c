@@ -298,10 +298,16 @@ void ardp_parser_destroy(void)
 }
 /*}}}*/
 
+void ardp_parser_trace(void)
+{
+        ParseTrace(stdout, "[@parser]: ");
+}
+
+/* TEST-BUILD  {{{ */
+#ifdef TEST_BUILD
 int color_stdout_is_tty = -1;
 
-
-int main ( int argc, char **argv )
+int main( int argc, char **argv )
 {
         ardp_parser_create();
         //ParseTrace(stdout, "$parser: ");
@@ -392,3 +398,5 @@ int main ( int argc, char **argv )
 
         return EXIT_SUCCESS;
 }
+#endif /* TEST_BUILD */
+/*}}}*/
