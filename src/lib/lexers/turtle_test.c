@@ -80,11 +80,15 @@ int main( int argc, char** argv )
                 cfg.logging.eprintf = &lexer_error;
 
                 __block int (^token)(int,const char *_Nullable) = ^int( int type, const char *_Nullable value){
-                        //printf("( %d == %s )\n", type, value);
+                        printf("( %d == %s )\n", type, value);
                         return ARDP_SUCCESS;
                 };
-
+                __block int (^stoken)(int, utf8, size_t, size_t) = ^int(int type, utf8 value, size_t line, size_t col){
+                        printf("[ %d == %s]\n", type,value);
+                        return ARDP_SUCCESS;
+                };
                cfg.cb.token = token;
+               cfg.cb.stoken = stoken;
 
                 status = ardp_lexer_init(&cfg);
 

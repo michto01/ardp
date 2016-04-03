@@ -22,6 +22,7 @@
 #include <string.h>             /* C buffer manipulation functions */
 #include <assert.h>             /* Asserts in the code */
 #include <dispatch/dispatch.h>  /* Clang GCD dispatch_* functions */
+#include <ctype.h>
 
 #include <ardp/lexer.h>         /* Generic lexer */
 #include <ardp/lexer.turtle.h>  /* Turtle specific lexer constants */
@@ -40,6 +41,39 @@
  * Global variable holding the shared lexer;
  */
 static struct lexer *_Nullable shared_lexer;
+
+/*! Holds the column reference point */
+static uint8_t* column;
+
+/*!
+ * Converst constrained string buffer to unsigned integer.
+ *
+ * @param[in] src String to probe.
+ * @param[in] len Length to probe.
+ *
+ * @return UTF-8 codepoint.
+ */
+static uint32_t hex(const unsigned char *src, unsigned int len) {
+    uint32_t i = 0;
+    for (uint8_t j = 0; j < len; j++) {
+        i *= 16;
+        uint8_t c = src[j];
+        if (isdigit(c)) {
+            i += c - '0';
+        } else if (isxdigit(c)) {
+                i += c - ((isupper(c) ? 'A' : 'a')) + 10;
+        } 
+        /*
+        
+        else if ((c >= 'A' && c <= 'F') && (c >= 'A' && c <= 'F')) {
+            i += c - 'A' + 10;
+        } else if (c >= 'a' && c <= 'f') {
+            i += c - 'a' +  10;
+        }
+        */
+    }
+    return i;
+}
 
 /*!
  * Shorthand to speedup token input.
@@ -80,25 +114,95 @@ static struct lexer *_Nullable shared_lexer;
     action unescape {
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (!string_append_utf8(shared_lexer->string, codepoint))
-                shared_lexer->finished = 1;
+        if (shared_lexer->string)
+                if (!string_append_utf8(&shared_lexer->string, codepoint))
+                        shared_lexer->finished = 1;
     }
 
     #unicode = UNICODE $u8_push;
 
 
+    UCHAR     = '\\' . ( ('u' xdigit{4} >mark %unescape) | ('U' xdigit{8} >mark %unescape) )
+              ;
 
-    STR_Q    = ( STRING_VALUE_QUOTE        >u8_create $u8_push %u8_finish );
-    STR_DQ   = ( STRING_VALUE_SINGLE_QUOTE >u8_create $u8_push %u8_finish );
+    ECHAR     = '\\'. (
+                        ('t' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\t');
+                              }
+                        )
+                        |
+                        ('b' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\b');
+                              }
+                        )
+                        |
+                        ('n' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\n');
+                              }
+                        )
+                        |
+                        ('r' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\r');
+                              }
+                        )
+                        |
+                        ('f' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\f');
+                              }
+                        )
+                        |
+                        ('"' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\"');
+                              }
+                        )
+                        |
+                        ('\'' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\'');
+                              }
+                        )
+                        |
+                        ('\\' ${
+                                if (shared_lexer->string)
+                                        string_append_char(&shared_lexer->string, '\\');
+                              }
+                        )
+              )
+              ;
 
-    STR_LQ   = ( STRING_VALUE_LONG_QUOTE        >u8_create $u8_push %u8_finish );
-    STR_LDQ  = ( STRING_VALUE_LONG_SINGLE_QUOTE >u8_create $u8_push %u8_finish );
+    # FIXME: This is not as specification specifies the IRIREF, is it enought ?
+    IRI_VALUE = (^([<>{}\"`^\\] | 0x00 .. 0x20) $u8_push | UCHAR )* >u8_create %u8_finish;
+
+    #IRIREF    = '<' (PN_CHARS | '.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* '>';
+    IRIREF = '<' IRI_VALUE '>';
+
+
+    STRING_VALUE_QUOTE             = ( ^(0x27 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
+    STRING_VALUE_SINGLE_QUOTE      = ( ^(0x22 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
+    STRING_VALUE_LONG_QUOTE        = ( ('"' | '""')? ( ^('"' | '\\') $u8_push | ECHAR | UCHAR) )*;
+    STRING_VALUE_LONG_SINGLE_QUOTE = ( ("'" | "''")? ( ^("'" | '\\') $u8_push | ECHAR | UCHAR) )*;
+
+    STR_Q    = ( STRING_VALUE_QUOTE        >u8_create %u8_finish );
+    STR_DQ   = ( STRING_VALUE_SINGLE_QUOTE >u8_create %u8_finish );
+
+    STR_LQ   = ( STRING_VALUE_LONG_QUOTE        >u8_create %u8_finish );
+    STR_LDQ  = ( STRING_VALUE_LONG_SINGLE_QUOTE >u8_create %u8_finish );
 
     STRING_LITERAL_QUOTE        = '"' STR_Q :>> '"';
     STRING_LITERAL_SINGLE_QUOTE = "'" STR_DQ :>> "'";
 
     STRING_LITERAL_LONG_QUOTE        = '"""' STR_LQ :> '"""';
     STRING_LITERAL_LONG_SINGLE_QUOTE = "'''" STR_LDQ :> "'''";
+
+    #
+    ## Scanner
+    #
 
     main := |*
 
@@ -109,30 +213,22 @@ static struct lexer *_Nullable shared_lexer;
 
         BLANK_NODE_LABEL { lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); };
         QNAME            { lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); };
-        IRIREF           { lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1)); };
+        IRIREF           {
+                lexer_emit_u8_token(IRIREF);
+                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
+        };
+
 
         INTEGER { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
         DECIMAL { lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); };
         DOUBLE  { lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); };
         BOOLEAN { lexer_emit_token(BOOLEAN_LITERAL, var(ts), var(te) - var(ts)); };
 
-        STRING_LITERAL_LONG_QUOTE => {
-                printf("<<< %s >>>\n", shared_lexer->string);
-              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
-        };
-        STRING_LITERAL_LONG_SINGLE_QUOTE => {
-                printf("--- %s ---\n", shared_lexer->string);
-              lexer_emit_token(STRING_LITERAL, var(ts) + 3, (var(te) - 3) - (var(ts) + 3));
-        };
+        STRING_LITERAL_LONG_QUOTE        => { lexer_emit_u8_token(STRING_LITERAL); };
+        STRING_LITERAL_LONG_SINGLE_QUOTE => { lexer_emit_u8_token(STRING_LITERAL); };
 
-        STRING_LITERAL_QUOTE {
-                printf("=== %s ===\n", shared_lexer->string);
-              lexer_emit_token(STRING_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
-        };
-        STRING_LITERAL_SINGLE_QUOTE {
-                printf("??? %s ???\n", shared_lexer->string);
-              lexer_emit_token(STRING_LITERAL, var(ts) + 1, (var(te) - 1) - (var(ts) + 1));
-        };
+        STRING_LITERAL_QUOTE        { lexer_emit_u8_token(STRING_LITERAL); };
+        STRING_LITERAL_SINGLE_QUOTE { lexer_emit_u8_token(STRING_LITERAL); };
 
         HAT => {
               lexer_emit_token_const(HAT);
@@ -156,11 +252,18 @@ static struct lexer *_Nullable shared_lexer;
 
         EOL => {
               dispatch_async(shared_lexer->event_queue, ^{
+                  column = fpc;
                   shared_lexer->line++;
               });
         };
 
-        COMMENT | WS*;
+        COMMENT {
+              dispatch_async(shared_lexer->event_queue, ^{
+                  column = fpc;
+                  shared_lexer->line++;
+              });
+        };
+        #WS*;
         any; #invalids to be skiped
     *|;
 
@@ -182,20 +285,40 @@ static void log(int level, const char* message)
             });
 }
 /*}}}*/
+/* lexer_emit_u8_token() {{{*/
+static void lexer_emit_u8_token(enum turtle_token_type type) {
+        assert(shared_lexer); /* sanity check*/
+        if (shared_lexer->cb.stoken) {
+                __block utf8 s;
+                if (shared_lexer->string)
+                         s = string_copy(shared_lexer->string);
+                else
+                         s = NULL;
+                dispatch_async( shared_lexer->event_queue, ^{
+                        ptrdiff_t col = shared_lexer->env.ts - column;
+                        shared_lexer->cb.stoken(type, s, shared_lexer->line+1, col);
+                        if (shared_lexer->log.level < NOTICE)
+                                log (DEBUG, "Emitted token (UTF8)");
+                });
+        }
+}
+/*}}}*/
 /* lexer_emit_token() {{{ */
 static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable str, size_t len )
 {
         assert( shared_lexer ); /* sanity check */
 
+        __block ptrdiff_t col = shared_lexer->env.ts - column;
+
         if (shared_lexer->cb.token) {
             dispatch_async( shared_lexer->event_queue, ^{
-                char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
-                assert(p_str); /* Sanity check for the malloc() */
+                //char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
+                //assert(p_str); /* Sanity check for the malloc() */
+                utf8 s = string_create_n(str,len, len+1);
 
-                p_str[0] = '\0';
-                strncat( p_str, ( const char * )str, len );
+                //strncat( p_str, ( const char * )str, len );
 
-                shared_lexer->cb.token( type, p_str );
+                shared_lexer->cb.stoken( type, s, shared_lexer->line, col );
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted" );
             });
@@ -206,10 +329,10 @@ static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable st
 static void lexer_emit_token_const( enum turtle_token_type type )
 {
         assert( shared_lexer ); /* sanity check */
-
-        if ( shared_lexer->cb.token ) {
+        __block ptrdiff_t col = shared_lexer->env.ts - column;
+        if ( shared_lexer->cb.stoken ) {
             dispatch_async( shared_lexer->event_queue, ^{
-                shared_lexer->cb.token( type, NULL );
+                shared_lexer->cb.stoken( type, NULL, shared_lexer->line, col );
 
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted");

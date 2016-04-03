@@ -24,13 +24,10 @@
 
 ref:agro :hello :object .
 
-<http://text.com/test1> <http://value.org/text> '''
-multiline
-text
-of 
-doom ''' .
+<http://text.com/test1> <http://value.org/text> ''' multiline 
+text of doom ''' .
 
-<http://text.com/test2> <http://value.org/text2> """ いろはにほへど　ちりぬるを
+<http://.com/zoo> <http://value.org/text2\u00E9> """ いろはにほへど　ちりぬるを
 """ .
 
 <http://text.com/test2> <http://value.org/text2> ' Τη γλώσσα μου έδωσαν ελληνική // ಮಣ್ಣಾಗಿ ಮರವಾಗಿ ಮಿಗವಾಗಿ ಕಗವಾಗೀ ' .

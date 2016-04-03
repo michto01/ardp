@@ -74,7 +74,7 @@ struct ardp_lexer_config {
         } logging;
 
         struct {
-                int ( ^_Nullable stoken )( struct token tok);
+                int ( ^_Nullable stoken )(  int type, utf8 _Nullable value, size_t line, size_t col);
                 int ( ^_Nullable token  )( int type, const char *_Nullable  value );
         } cb;
 };
@@ -190,7 +190,7 @@ struct lexer {
                  *
                  * @FIXME: Should take arbitrary token type not only the turtle enum.
                  */
-                int ( ^_Nullable stoken )( struct token token);
+                int ( ^_Nullable stoken )( int type, utf8 _Nullable value, size_t line, size_t col);
                 int ( ^_Nullable token  )( int type, const char *_Nullable  value );
         } cb;
 };

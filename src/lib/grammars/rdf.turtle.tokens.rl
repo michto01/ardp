@@ -124,11 +124,6 @@
                 ( (PN_CHARS | '.' | ':' | PLX)* (PN_CHARS | ':' | PLX) )?
               ;
 
-    UCHAR     = '\\' . ( ('u' xdigit{4}) | ('U' xdigit{8}) )
-              ;
-
-    ECHAR     = '\\' [tbnrf\"\'\\]
-              ; #" > style-hack for syntax highlighter
 
     LANGTAG   = '@' alpha+ ( '-' ( alpha | digit )+ )* #FIXME: should add '_' ?
               ;
@@ -136,9 +131,6 @@
 
     QNAME     = PN_PREFIX? ':' PN_LOCAL?
               ;
-
-    # FIXME: This is not as specification specifies the IRIREF, is it enought ?
-    IRIREF    = '<' (PN_CHARS | '.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* '>';
 
     ##> operational tokens
 
@@ -169,16 +161,6 @@
     ##> String literals
 
     COMMENT  = '#' (any - EOL)* EOL;
-
-    STRING_VALUE_QUOTE             = ( ^(0x27 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)*;
-    STRING_VALUE_SINGLE_QUOTE      = ( ^(0x22 | 0x5C | 0xA | 0xD) | ECHAR | UCHAR)*;
-    STRING_VALUE_LONG_QUOTE        = ( ('"' | '""')? ( ^('"' | '\\') | ECHAR | UCHAR) )*;
-    STRING_VALUE_LONG_SINGLE_QUOTE = ( ("'" | "''")? ( ^("'" | '\\') | ECHAR | UCHAR) )*;
-
-  #  STRING_LITERAL_QUOTE              =  '"' STRING_VALUE_QUOTE  '"';
-  #  STRING_LITERAL_SINGLE_QUOTE       =  "'" STRING_VALUE_SINGLE_QUOTE "'";
-  #  STRING_LITERAL_LONG_QUOTE         =  '"""' STRING_VALUE_LONG_QUOTE '"""';
-  #  STRING_LITERAL_LONG_SINGLE_QUOTE  =  "'''" STRING_VALUE_LONG_SINGLE_QUOTE "'''";
 
     BLANK_NODE_LABEL = '_:' . (PN_CHARS_U | digit) ((PN_CHARS | '.')* PN_CHARS)?;
 }%%
