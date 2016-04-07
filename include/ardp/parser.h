@@ -112,12 +112,18 @@ struct parser {
         } cb;
 
         struct {
+                int show_datatype;
                 int expand_iri;
                 const char *_Nullable bprefix;
         } extra;
 };
 /*}}}*/
 
+
+typedef struct _datatype_sys_t {
+        utf8 _Nullable langtag;
+        utf8 _Nullable datatype;
+} datatype_sys_t;
 /*!
  * @fn ardp_parser_create
  * @brief Create and initialize all prerequisites for shared_parser.

@@ -24,11 +24,11 @@ static int sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_fr
         if (capacity < SEQUENCE_MIN_CAPACITY)
                 capacity = SEQUENCE_MIN_CAPACITY;
 
-        void** new_seq = calloc(capacity, sizeof(void*));
+        void **new_seq = calloc(capacity, sizeof(void *));
         if (!new_seq)
                 return 1;
 
-        uint64_t offset = (grow_at_front ? capacity - seq->capacity: 0) + seq->head;
+        uint64_t offset = (grow_at_front ? (capacity - seq->capacity): (0)) + seq->head;
         if (seq->size) {
                 memcpy(&new_seq[offset], &seq->items[seq->head], sizeof(void*) *seq->size );
                 free(seq->items);
@@ -43,14 +43,20 @@ static int sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_fr
 /*}}}*/
 
 /* sequence_create()  {{{  */
-struct sequence* sequence_create()
+struct sequence* sequence_create(sequence_free_handler  f,
+                                 sequence_error_handler e,
+                                 sequence_print_handler p)
 {
+        assert(f);
+
         struct sequence* seq = calloc(1, sizeof(*seq));
 
         if (!seq)
                 return NULL;
 
-        //TODO: code to input handlers
+        seq->free  = f;
+        seq->error = e;
+        seq->print = p;
 
         return seq;
 }
@@ -63,17 +69,18 @@ size_t sequence_size(struct sequence* seq)
         return seq->size;
 }
 /*}}}*/
+/* sequence_free() {{{*/
 void sequence_free( struct sequence* seq )
 {
         //@FIXME: segfault on deallocating the items
-        return;
+        //return;
 
         int i;
         int j;
         /* TODO: imporove deallocating of the items */
         if(!seq)
                 return;
-
+/*
         if(seq->free) {
                 for(i = seq->head, j = seq->head + seq->size; i < j; i++)
                         if(seq->items[i])
@@ -81,15 +88,23 @@ void sequence_free( struct sequence* seq )
         } else if(seq->context) {
                 for(i = seq->head, j = seq->head + seq->size; i < j; i++)
                         if(seq->items[i])
-                                 ;//seq->context(seq->context, seq->items[i]);
+                                 ;//seq->context->free(seq->context, seq->items[i]);
+        }
+*/
+        size_t n = sequence_size(seq);
+        while(n) {
+                seq->free(sequence_unshift(seq));
+                n = sequence_size(seq);
         }
 
-        if(seq->items)
+        if(seq->items) {
                 free(seq->items);
+        }
 
-        free(seq);
+        if (seq)
+                free(seq);
 }
-
+/*}}}*/
 /* sequence_set_at() {{{ */
 int sequence_set_at(struct sequence* seq, int idx, void *data)
 {
@@ -169,15 +184,14 @@ void* sequence_pop(struct sequence* seq)
 
         seq->size--;
 
-        size_t i = seq->head + seq->size;
+        size_t i   = seq->head + seq->size;
         void* data = seq->items[i];
 
         seq->items[i] = NULL;
-
         return data;
 }
 /*}}}*/
-/* sequence_push() {{{*/
+/* sequece_push() {{{*/
 int sequence_push(struct sequence* s, void* data)
 {
         if ( !s )
@@ -224,8 +238,9 @@ void* sequence_unshift(struct sequence* seq)
         if(!seq || !seq->size)
                 return NULL;
 
-        size_t i = seq->head++;
+        size_t i   = seq->head++;
         void* data = seq->items[i];
+
         seq->size--;
         seq->items[i] = NULL;
 

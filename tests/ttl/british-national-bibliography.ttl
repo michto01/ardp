@@ -1,0 +1,74 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+@prefix blterms: <http://www.bl.uk/schemas/bibliographic/blterms> .
+@prefix elements: <http://iflastandards.info/ns/isbd/elements/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl> .
+@prefix linked-data: <http://purl.org/linked-data/api/vocab> .
+@prefix void: <http://rdfs.org/ns/void> .
+
+<http://bnb.data.bl.uk/id/resource/006893251> dct:description "Includes index."@en ;
+                                              dct:title "American guerrilla : my war behind Japanese lines" ;
+                                              bibo:isbn10 "1574886916" ;
+                                              blterms:bnb "GBA3V1071" ;
+                                              elements:P1053 "312 p."@en ;
+                                              rdfs:label "American guerrilla / Roger Hilsman" ;
+                                              rdfs:seeAlso <http://www4.wiwiss.fu-berlin.de/bookmashup/books/1574886916> ;
+                                              rdf:type dct:BibliographicResource ,
+                                                       bibo:Book ;
+                                              dct:isPartOf <http://bnb.data.bl.uk/id/series/Memoriesofwar> ;
+                                              dct:language <http://lexvo.org/id/iso639-3/eng> ;
+                                              
+                                              dct:subject <http://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography> ,
+                                                          <http://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography> ,
+                                                          <http://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger> ,
+                                                          <http://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican> ,
+                                                          <http://bnb.data.bl.uk/id/concept/place/lcsh/Burma> ,
+                                                          <http://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices> ,
+                                                          <http://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma> ,
+                                                          <http://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945> ,
+                                                          <http://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography> ,
+                                                          <http://bnb.data.bl.uk/id/concept/ddc/e21/940.548673092> ;
+                                                          
+                                              foaf:page <http://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251> ;
+                                              owl:sameAs <http://bnb.data.bl.uk/id/resource/GBA3V1071> ;
+                                              dct:creator <http://bnb.data.bl.uk/id/person/HilsmanRoger> ;
+                                              blterms:publication <http://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005> ;
+                                              dct:spatial <http://bnb.data.bl.uk/id/place/Burma> ;
+                                              foaf:isPrimaryTopicOf <http://bnb.data.bl.uk/doc/resource/006893251.ttl> . 
+
+<http://bnb.data.bl.uk/id/series/Memoriesofwar> rdfs:label "Memories of war" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography> rdfs:label "Guerrillas--Burma--Biography" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography> rdfs:label "Guerrillas--United States--Biography" . 
+
+<http://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251> rdfs:label 
+"006893251" . 
+
+<http://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger> rdfs:label "Hilsman, Roger" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican> rdfs:label "World War, 1939-1945--Personal narratives, American" . 
+
+<http://bnb.data.bl.uk/id/concept/place/lcsh/Burma> rdfs:label "Burma" . 
+
+<http://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005> rdfs:label "Washington, DC : Potomac Books, Inc., 2005" . 
+
+<http://bnb.data.bl.uk/id/place/Burma> rdfs:label "Burma" . 
+
+<http://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices> rdfs:label "United States. Office of Strategic Services" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma> rdfs:label "World War, 1939-1945--Underground movements--Burma" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945> rdfs:label "Burma--History--Japanese occupation, 1942-1945" . 
+
+<http://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography> rdfs:label "United States. Office of Strategic Services--Biography" . 
+
+<http://bnb.data.bl.uk/doc/resource/006893251.ttl> foaf:primaryTopic <http://bnb.data.bl.uk/id/resource/006893251> ;
+                                                   rdfs:label "American guerrilla / Roger Hilsman" ;
+                                                   linked-data:definition <http://bnb.data.bl.uk/apiresource> ;
+                                                   void:inDataset <http://bnb.data.bl.uk/id/data/BNB> ;
+                                                   dct:license <http://creativecommons.org/publicdomain/zero/1.0/> ;
+                                                   linked-data:extendedMetadataVersion <http://bnb.data.bl.uk/doc/resource/006893251.ttl?_metadata=all%2Cviews%2Cformats%2Cexecution%2Cbindings%2Csite> . 

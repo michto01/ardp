@@ -40,9 +40,10 @@ typedef struct _utf8* utf8; // forward declaration of string struct.
  */
 enum rdf_term_type {
         RDF_TERM_UNKNOWN,
-        RDF_TERM_URI = 3, /*@FIXME: debugging constant Remove*/
-        RDF_TERM_LITERAL,
-        RDF_TERM_BLANK
+        RDF_TERM_URI,
+        RDF_TERM_CURIE,
+        RDF_TERM_BLANK,
+        RDF_TERM_LITERAL
 };
 
 /*!
@@ -101,6 +102,17 @@ struct rdf_statement {
  * @note URI Should be prepared beforehand.
  */
 struct rdf_term* rdf_term_from_uri(utf8 uri);
+
+/*!
+ * @fn    rdf_term_from_curie
+ * @brief Create new term from CURIE.
+ *
+ * @param[in] uri The string to transform into.
+ *
+ * @return Term, NULL if error.
+ *
+ */
+struct rdf_term* rdf_term_from_curie(utf8 uri);
 
 /*!
  * @fn    rdf_term_from_blank

@@ -1,0 +1,139 @@
+[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:description [0m[1mIncludes index.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:title [0m[1mAmerican guerrilla : my war behind Japanese lines
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mbibo:isbn10 [0m[1m1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:bnb [0m[1mGBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32melements:P1053 [0m[1m312 p.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:seeAlso [0m[1mhttp://www4.wiwiss.fu-berlin.de/bookmashup/books/1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mdct:BibliographicResource
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mbibo:Book
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:isPartOf [0m[1mhttp://bnb.data.bl.uk/id/series/Memoriesofwar
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:language [0m[1mhttp://lexvo.org/id/iso639-3/eng
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/ddc/e21/940.548673092
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:page [0m[1mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mowl:sameAs [0m[1mhttp://bnb.data.bl.uk/id/resource/GBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:creator [0m[1mhttp://bnb.data.bl.uk/id/person/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:publication [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:spatial [0m[1mhttp://bnb.data.bl.uk/id/place/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:isPrimaryTopicOf [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl
+[0m[31mhttp://bnb.data.bl.uk/id/series/Memoriesofwar [0m[32mrdfs:label [0m[1mMemories of war
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography [0m[32mrdfs:label [0m[1mGuerrillas--Burma--Biography
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography [0m[32mrdfs:label [0m[1mGuerrillas--United States--Biography
+[0m[31mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251 [0m[32mrdfs:label [0m[1m006893251
+[0m[31mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger [0m[32mrdfs:label [0m[1mHilsman, Roger
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Personal narratives, American
+[0m[31mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005 [0m[32mrdfs:label [0m[1mWashington, DC : Potomac Books, Inc., 2005
+[0m[31mhttp://bnb.data.bl.uk/id/place/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Underground movements--Burma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945 [0m[32mrdfs:label [0m[1mBurma--History--Japanese occupation, 1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services--Biography
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mfoaf:primaryTopic [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:definition [0m[1mhttp://bnb.data.bl.uk/apiresource
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mvoid:inDataset [0m[1mhttp://bnb.data.bl.uk/id/data/BNB
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mdct:license [0m[1mhttp://creativecommons.org/publicdomain/zero/1.0/
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:extendedMetadataVersion [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl?_metadata=all%2Cviews%2Cformats%2Cexecution%2Cbindings%2Csite
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:description [0m[1mIncludes index.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:title [0m[1mAmerican guerrilla : my war behind Japanese lines
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mbibo:isbn10 [0m[1m1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:bnb [0m[1mGBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32melements:P1053 [0m[1m312 p.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:seeAlso [0m[1mhttp://www4.wiwiss.fu-berlin.de/bookmashup/books/1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mdct:BibliographicResource
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mbibo:Book
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:isPartOf [0m[1mhttp://bnb.data.bl.uk/id/series/Memoriesofwar
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:language [0m[1mhttp://lexvo.org/id/iso639-3/eng
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/ddc/e21/940.548673092
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:page [0m[1mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mowl:sameAs [0m[1mhttp://bnb.data.bl.uk/id/resource/GBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:creator [0m[1mhttp://bnb.data.bl.uk/id/person/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:publication [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:spatial [0m[1mhttp://bnb.data.bl.uk/id/place/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:isPrimaryTopicOf [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl
+[0m[31mhttp://bnb.data.bl.uk/id/series/Memoriesofwar [0m[32mrdfs:label [0m[1mMemories of war
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography [0m[32mrdfs:label [0m[1mGuerrillas--Burma--Biography
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography [0m[32mrdfs:label [0m[1mGuerrillas--United States--Biography
+[0m[31mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251 [0m[32mrdfs:label [0m[1m006893251
+[0m[31mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger [0m[32mrdfs:label [0m[1mHilsman, Roger
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Personal narratives, American
+[0m[31mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005 [0m[32mrdfs:label [0m[1mWashington, DC : Potomac Books, Inc., 2005
+[0m[31mhttp://bnb.data.bl.uk/id/place/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Underground movements--Burma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945 [0m[32mrdfs:label [0m[1mBurma--History--Japanese occupation, 1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services--Biography
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mfoaf:primaryTopic [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:definition [0m[1mhttp://bnb.data.bl.uk/apiresource
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mvoid:inDataset [0m[1mhttp://bnb.data.bl.uk/id/data/BNB
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mdct:license [0m[1mhttp://creativecommons.org/publicdomain/zero/1.0/
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:extendedMetadataVersion [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl?_metadata=all%2Cviews%2Cformats%2Cexecution%2Cbindings%2Csite
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:description [0m[1mIncludes index.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:title [0m[1mAmerican guerrilla : my war behind Japanese lines
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mbibo:isbn10 [0m[1m1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:bnb [0m[1mGBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32melements:P1053 [0m[1m312 p.
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdfs:seeAlso [0m[1mhttp://www4.wiwiss.fu-berlin.de/bookmashup/books/1574886916
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mdct:BibliographicResource
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mrdf:type [0m[1mbibo:Book
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:isPartOf [0m[1mhttp://bnb.data.bl.uk/id/series/Memoriesofwar
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:language [0m[1mhttp://lexvo.org/id/iso639-3/eng
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:subject [0m[1mhttp://bnb.data.bl.uk/id/concept/ddc/e21/940.548673092
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:page [0m[1mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mowl:sameAs [0m[1mhttp://bnb.data.bl.uk/id/resource/GBA3V1071
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:creator [0m[1mhttp://bnb.data.bl.uk/id/person/HilsmanRoger
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mblterms:publication [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mdct:spatial [0m[1mhttp://bnb.data.bl.uk/id/place/Burma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251 [0m[32mfoaf:isPrimaryTopicOf [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl
+[0m[31mhttp://bnb.data.bl.uk/id/series/Memoriesofwar [0m[32mrdfs:label [0m[1mMemories of war
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasBurmaBiography [0m[32mrdfs:label [0m[1mGuerrillas--Burma--Biography
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/GuerrillasUnitedStatesBiography [0m[32mrdfs:label [0m[1mGuerrillas--United States--Biography
+[0m[31mhttp://explore.bl.uk/primo_library/libweb/action/search.do?vid=BLVU1%26fn=search%26vl%28freeText0%29=006893251 [0m[32mrdfs:label [0m[1m006893251
+[0m[31mhttp://bnb.data.bl.uk/id/concept/person/lcsh/HilsmanRoger [0m[32mrdfs:label [0m[1mHilsman, Roger
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945PersonalnarrativesAmerican [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Personal narratives, American
+[0m[31mhttp://bnb.data.bl.uk/id/concept/place/lcsh/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/resource/006893251/publicationevent/WashingtonDCPotomacBooksInc2005 [0m[32mrdfs:label [0m[1mWashington, DC : Potomac Books, Inc., 2005
+[0m[31mhttp://bnb.data.bl.uk/id/place/Burma [0m[32mrdfs:label [0m[1mBurma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/organization/lcsh/UnitedStatesOfficeofStrategicServices [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/WorldWar1939-1945UndergroundmovementsBurma [0m[32mrdfs:label [0m[1mWorld War, 1939-1945--Underground movements--Burma
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/BurmaHistoryJapaneseoccupation1942-1945 [0m[32mrdfs:label [0m[1mBurma--History--Japanese occupation, 1942-1945
+[0m[31mhttp://bnb.data.bl.uk/id/concept/lcsh/UnitedStatesOfficeofStrategicServicesBiography [0m[32mrdfs:label [0m[1mUnited States. Office of Strategic Services--Biography
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mfoaf:primaryTopic [0m[1mhttp://bnb.data.bl.uk/id/resource/006893251
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mrdfs:label [0m[1mAmerican guerrilla / Roger Hilsman
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:definition [0m[1mhttp://bnb.data.bl.uk/apiresource
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mvoid:inDataset [0m[1mhttp://bnb.data.bl.uk/id/data/BNB
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mdct:license [0m[1mhttp://creativecommons.org/publicdomain/zero/1.0/
+[0m[31mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl [0m[32mlinked-data:extendedMetadataVersion [0m[1mhttp://bnb.data.bl.uk/doc/resource/006893251.ttl?_metadata=all%2Cviews%2Cformats%2Cexecution%2Cbindings%2Csite
+[0m

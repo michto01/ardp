@@ -2,3 +2,12 @@
 # or on a line by themselves
 _:subject1 <http://an.example/predicate1> "object1" .
 _:subject2 <http://an.example/predicate2> "object2" .
+
+_:test a "literal_with_UTF8_boundaries '\\x80\\x7ff\\x800\\xfff...'" .
+_:test2 a 'string "inside" hie' .
+
+_:test3 <#test> """ string ''' inside ''' """ .
+_:test4 <#test> ''' string """ inside """ '''.
+
+_:test5 <#test> 'string'.
+_:test6 <#test> "string".

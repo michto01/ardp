@@ -52,11 +52,15 @@ utf8 string_alloc( size_t len ) {
         assert( hdr );
         hdr->capacity = len;
         hdr->length = 0;
+
         return ( utf8 )( &hdr[1] ); //((utf8) hdr) + sizeof(string_header_t);
 }
 
 utf8 string_create_n(const uint8_t* s, size_t len,  size_t n)
 {
+        if ( len > n )
+                n = len;
+
         struct string_header *hdr = calloc(1, sizeof(*hdr)  + (n + 1));
         if ( !hdr )
                 return NULL;
@@ -74,7 +78,6 @@ utf8 string_create_n(const uint8_t* s, size_t len,  size_t n)
 utf8 string_create(const uint8_t* s)
 {
         size_t len = strlen(s);
-
         return string_create_n(s,len,len);
 }
 
@@ -198,7 +201,7 @@ int string_append_str(utf8 *src, utf8 apd)
 utf8 string_copy(utf8 src)
 {
         struct string_header *hdr = string_hdr(src);
-        struct string_header *cpy = calloc(1, (sizeof(*cpy) + hdr->capacity));
+        struct string_header *cpy = calloc(1, (sizeof(*hdr) + hdr->capacity+1));
 
         memcpy(cpy, hdr, sizeof(*hdr) + hdr->capacity);
 
@@ -319,11 +322,8 @@ int string_generic_cmp(const uint8_t* a, const uint8_t* b, int len)
                         for(pos = current*sizeof(size_t); pos < len ; ++pos ){
                                 if( (ptr0[pos] ^ ptr1[pos]) || (ptr0[pos] == 0) || (ptr1[pos] == 0)  ){
                                         return  (int)((unsigned char)ptr0[pos] - (unsigned char)ptr1[pos]);
-
                                 }
-
                         }
-
                 }
                     ++current;
 
@@ -333,7 +333,6 @@ int string_generic_cmp(const uint8_t* a, const uint8_t* b, int len)
                 return (int)((unsigned char)ptr0[offset] - (unsigned char)ptr1[offset]);
                       }
                     ++offset;
-
         }
         return 0;
 

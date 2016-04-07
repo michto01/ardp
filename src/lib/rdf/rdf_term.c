@@ -3,25 +3,45 @@
  * Implements the `rdf term`
  *
  */
-#include <ardp/rdf.h>
 #include <stdlib.h>
+
+#include <ardp/rdf.h>
 #include <ardp/util.h>
 #include <ardp/string.h>
 
-extern utf8 string_copy(utf8 s);
+//extern utf8 string_copy(utf8 s);
 
 struct rdf_term* rdf_term_from_uri(utf8 uri)
 {
-        if ((!uri) || string_strlen(uri) == 0)
+        if (!uri)
                 return NULL; // PANIC quickly.
 
         struct rdf_term* t = calloc(1, sizeof(*t));
-
         if (!t)
                 return NULL; //Abort
 
-        t->type      = RDF_TERM_URI;
+        if (  string_strlen(uri) == 0 ) {
+                t->type      = RDF_TERM_URI;
+                t->value.uri = string_create_n("null", 4, 4);
+        } else {
+                t->type      = RDF_TERM_URI;
+                t->value.uri = string_copy(uri);
+        }
+        return t;
+}
+
+struct rdf_term* rdf_term_from_curie(utf8 uri)
+{
+        if (!uri)
+                return NULL; // Panic, fast.
+
+        struct rdf_term *t = calloc(1, sizeof(*t));
+        if (!t)
+                return NULL; // Abort after unsucessfull allocation.
+
+        t->type      = RDF_TERM_CURIE;
         t->value.uri = string_copy(uri);
+
         return t;
 }
 
@@ -32,7 +52,6 @@ struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype)
 
         if (lang && datatype)
                 return NULL;
-
 
         struct rdf_term* t = calloc(1, sizeof(*t));
 
@@ -57,9 +76,8 @@ struct rdf_term* rdf_term_from_blank( utf8 blank )
 
         if (blank)
                 t->value.blank = string_copy(blank);
-         else
+        else
                 return NULL;
-
 
         return t;
 }
@@ -74,9 +92,7 @@ struct rdf_term* rdf_term_copy(struct rdf_term* t)
         if (!c)
                 return NULL;
 
-
         c->type = t->type;
-        /* fprintf(stderr, "Type of the term is: %d", c->type); */
         switch(c->type) {
                 case RDF_TERM_BLANK:
                         c->value.blank = string_copy(t->value.blank);
@@ -93,6 +109,7 @@ struct rdf_term* rdf_term_copy(struct rdf_term* t)
                         break;
 
                 case RDF_TERM_URI:
+                case RDF_TERM_CURIE:
                         c->value.uri = string_copy(t->value.uri);
                         break;
 
@@ -110,11 +127,13 @@ void rdf_term_free(struct rdf_term* t)
                 return;
 
         switch(t->type) {
-                case RDF_TERM_URI:
-                        string_dealloc(t->value.uri);
+                case RDF_TERM_CURIE:
+                case RDF_TERM_URI: {
+                        if (t->value.uri)
+                                string_dealloc(t->value.uri);
                         t->value.uri = NULL;
                         break;
-
+                }
 
                 case RDF_TERM_BLANK:
                         string_dealloc(t->value.blank);
@@ -153,6 +172,7 @@ int rdf_term_equals(const struct rdf_term* a, const struct rdf_term* b)
 
         switch (a->type) {
         case RDF_TERM_URI:
+        case RDF_TERM_CURIE:
                 if (string_strlen(a->value.uri) != string_strlen(b->value.uri))
                         break;
                 ret = !string_generic_cmp(a->value.uri, b->value.uri,
@@ -198,7 +218,6 @@ int rdf_term_equals(const struct rdf_term* a, const struct rdf_term* b)
                 }
                 break;
 
-
         case RDF_TERM_UNKNOWN:
         default:
                 break;
@@ -225,6 +244,7 @@ int rdf_term_compare(const struct rdf_term* a, const struct rdf_term* b)
 
         switch(a->type) {
         case RDF_TERM_URI:
+        case RDF_TERM_CURIE:
                 break;
 
         case RDF_TERM_BLANK:

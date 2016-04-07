@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include <ardp/rdf.h>
 #include <ardp/string.h>
@@ -21,76 +22,139 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1
 
+/*! Opaque internal structure of the parser */
 struct parser* shared_parser_internal;
-void* shared_parser;
+
+/*! Opaque parser used by lemon */
+static void* shared_parser;
 
 
 /* transform_uri() {{{ */
+static inline int term_is_uri(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_URI;
+}
+
+static inline int term_is_curie(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_CURIE;
+}
+
+static inline int term_is_blank(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_BLANK;
+}
+
+static inline int term_is_literal(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_LITERAL;
+}
+
+static int uri_has_scheme(struct rdf_term *t)
+{
+        if (!t)
+                return 0;
+
+        /* RFC3986: scheme ::= ALPHA *( ALPHA | DIGIT | '+' | '-' | '.' ) */
+        if (!term_is_uri(t))
+                return 0;
+
+        utf8 uri = t->value.uri;
+
+        if (!isalpha(uri[0]))
+                return 0; /* Invalid scheme initial character => URI is relative. */
+
+        for(uint8_t c; (c = *++uri) != '\0';) {
+                switch(c) {
+                        case ':':
+                                return 1; /* End of scheme */
+                        case '+':
+                        case '-':
+                        case '.':
+                                break; /* Valid sheme separators*/
+                        default:
+                                if (!isalnum(c))
+                                        return 0; /* Invalid scheme character */
+                }
+        }
+
+        return 0;
+}
+
+static int is_relative_uri(struct rdf_term* t)
+{
+        return !uri_has_scheme(t);
+}
+/*
+uint8_t const *ssechr(uint8_t const *s, uint8_t ch)
+{
+        __m128i zero = _mm_setzero_si128();
+        __m128i cx16 = _mm_set1_epi8(ch); // (ch) replicated 16 times.
+        while (1) {
+                __m128i  x = _mm_loadu_si128((__m128i const *)s);
+                unsigned u = _mm_movemask_epi8(_mm_cmpeq_epi8(zero, x));
+                unsigned v = _mm_movemask_epi8(_mm_cmpeq_epi8(cx16, x))
+                        & ~u & (u - 1);
+                if (v) return s + ffs(v) - 1;
+                if (u) return  NULL;
+                s += 16;
+
+        }
+}
+*/
+static int expand_curie(struct rdf_term *t)
+{
+        if (!term_is_curie(t))
+                return 0;
+
+        const char delim /*alignas(char)*/ = ':';
+
+        if ((t)->value.uri[0] == delim) {
+                void *value;
+                utf8 uri;
+                int r = map_get(shared_parser_internal->namespaces,":",  &value);
+                uri = (utf8)value;
+
+                if ( r == ARDP_MAP_OK && uri ) {
+                        int ret = string_append(&uri, (t)->value.uri + 1);
+                        string_dealloc((t)->value.uri);
+                        (t)->value.uri = uri;
+                        return ret;
+                } else {
+                        return 14; // No prefix found.
+                }
+        }
+
+        uint8_t *search = strchr((t)->value.uri, delim);
+
+        if (search == NULL)
+                return 15; // <Doesn't have the delimenete
+
+        ptrdiff_t loc = search - t->value.uri;
+
+        uint8_t *prefix = calloc(1, sizeof(*prefix) + loc + 2); // ':\0' at the end
+        memcpy(prefix, (t)->value.uri, loc + 1);
+
+        var value;
+        utf8 str;
+        int r = map_get(shared_parser_internal->namespaces, prefix, &value);
+
+        if (r == 0) {
+                str = (utf8)value;
+                int ret = string_append(&str, (t)->value.uri + 1);
+                string_dealloc((t)->value.uri);
+                (t)->value.uri = str;
+                return ret;
+        } else {
+                return 14; // No prefix found
+        }
+
+        return 20; // Should not readch here
+}
+
 int transform_uri(struct parser* p, struct rdf_term** t)
 {
         return -1;
-
-
-        if ((*t)->type != RDF_TERM_URI)
-                return 1;
-
-        if (unlikely(p->namespaces))
-                p->namespaces = map_create(8);
-
-        //map_push(p->namespaces, string_create(":"), string_create("http://ex.org/"));
-
-        const char delim = ':';
-        const char pref  = '#';
-
-        if ((*t)->value.uri[0] == pref) {
-                if (p->base) {
-                        // Check for the prefix[0] for double append
-                        return string_prepend(&(*t)->value.uri, p->base);
-                }
-                return 16;
-        }
-
-        char *search = strrchr((char *)(*t)->value.uri, delim);
-
-        if (search == NULL)
-                return 15; // Not prefixed, ignore
-
-        ptrdiff_t loc = search - (char *)(*t)->value.uri; //change signess of the string
-
-        if (loc == 0) {
-                /* This is the empty prefix: ":something" */
-                void* value;
-                int r = map_get(p->namespaces, string_create(":"), &value);
-
-
-                if (r == ARDP_MAP_OK && value)
-                        return string_prepend(&(*t)->value.uri, (utf8) value);
-                else
-                        return 14; // Empty prefix not found.
-        } else {
-                char* check = strrchr(search - 1, delim); // Check if there is any other delims.
-                if (check != NULL)
-                        return 13; // Too many delimeters.
-
-
-                char prefix[loc + 1];
-                prefix[loc]= '\0';
-                memcpy(prefix, (*t)->value.uri, loc); // Check if it is correct
-
-
-                void *value;
-                int r = map_get(p->namespaces, prefix, &value);
-
-                if (r == ARDP_MAP_OK && value) {
-                        int s = string_prepend(&(*t)->value.uri, (utf8) value);
-                        if (!s)
-                                return string_prepend(&(*t)->value.uri, search + 1);
-                        else
-                                return s; // Error return
-                } else {
-                        return 14; // Prefix not found
-                }
-        }
 // C11 non-working functions {{{
 #ifdef __STDC_HAS_LIB_EXT1__
 #ifdef __FORCE_DISABLE
@@ -141,67 +205,112 @@ static int _add_namespace(utf8 _Nullable qname, utf8 _Nullable iri)
         if (unlikely(!shared_parser_internal->namespaces))
                 shared_parser_internal->namespaces = map_create(8);
 
-        return map_push(shared_parser_internal->namespaces, (char *) qname, iri);
+        return map_push(shared_parser_internal->namespaces, qname, iri);
 }
 /*}}}*/
 /* _triple() {{{ */
 int _triple(struct rdf_statement* s)
 {
-        uint8_t* subject;
-        uint8_t* predicate;
-        uint8_t* object;
+        uint8_t* subject   = NULL;
+        uint8_t* predicate = NULL;
+        uint8_t* object    = NULL;
 
-        switch (s->subject->type) {
-        case RDF_TERM_URI:
-                transform_uri(shared_parser_internal, &s->subject);
-                subject = s->subject->value.uri;
-                break;
-        case RDF_TERM_BLANK:
-                subject = s->subject->value.blank;
-                break;
-        case RDF_TERM_LITERAL:
-                subject = s->subject->value.literal.string;
-                break;
-        default:
-                subject = NULL;
-                break;
+        uint8_t* prefix;
+        uint8_t* type;
+
+        int c = 0; // subject is blank
+        int p = 0; // predicate is blank
+        int o = 0; // object is blank
+        int t = 0; // object value
+
+        if (s->subject) {
+                switch (s->subject->type) {
+                        case RDF_TERM_CURIE:
+                                expand_curie(s->subject);
+                        case RDF_TERM_URI:
+                                //transform_uri(shared_parser_internal, &s->subject);
+                                subject = s->subject->value.uri;
+                                break;
+                        case RDF_TERM_BLANK:
+                                c = 1;
+                                subject = s->subject->value.blank;
+                                break;
+                        case RDF_TERM_LITERAL:
+                                subject = s->subject->value.literal.string;
+                                break;
+                        default:
+                                subject = NULL;
+                                break;
+                }
         }
 
-        switch (s->predicate->type) {
-        case RDF_TERM_URI:
-                transform_uri(shared_parser_internal, &s->predicate);
-                predicate = s->predicate->value.uri;
-                break;
-        case RDF_TERM_BLANK:
-                predicate = s->predicate->value.blank;
-                break;
-        case RDF_TERM_LITERAL:
-                predicate = s->predicate->value.literal.string;
-                break;
-        default:
-                predicate = NULL;
-                break;
+        if (s->predicate) {
+                switch (s->predicate->type) {
+                        case RDF_TERM_CURIE:
+                                expand_curie(s->predicate);
+                        case RDF_TERM_URI:
+                                //transform_uri(shared_parser_internal, &s->predicate);
+                                predicate = s->predicate->value.uri;
+                                break;
+                        case RDF_TERM_BLANK:
+                                p = 1;
+                                predicate = s->predicate->value.blank;
+                                break;
+                        case RDF_TERM_LITERAL:
+                                predicate = s->predicate->value.literal.string;
+                                break;
+                        default:
+                                predicate = NULL;
+                                break;
+                }
         }
 
-        switch (s->object->type) {
-        case RDF_TERM_URI:
-                transform_uri(shared_parser_internal, &s->object);
-                object = s->object->value.uri;
-                break;
-        case RDF_TERM_BLANK:
-                object = s->object->value.blank;
-                break;
-        case RDF_TERM_LITERAL:
-                object = s->object->value.literal.string;
-                break;
-        default:
-                subject = NULL;
-                break;
+        if (s->object) {
+                switch (s->object->type) {
+                        case RDF_TERM_CURIE:
+                                expand_curie(s->object);
+                        case RDF_TERM_URI:
+                                //transform_uri(shared_parser_internal, &s->object);
+                                object = s->object->value.uri;
+                                break;
+                        case RDF_TERM_BLANK:
+                                o = 1;
+                                object = s->object->value.blank;
+                                break;
+                        case RDF_TERM_LITERAL: {
+                                object = s->object->value.literal.string;
+                                if (s->object->value.literal.language)
+                                        t = 1;
+                                if (s->object->value.literal.datatype)
+                                        t = 2;
+
+                                switch(t) {
+                                        default:
+                                                break;
+                                        case 1:
+                                                prefix = (uint8_t *)"@";
+                                                type   = s->object->value.literal.language;
+                                                break;
+                                        case 2:
+                                                prefix = (uint8_t *)"^^";
+                                                type   = s->object->value.literal.datatype;
+                                                break;
+                                }
+                                }
+                                break;
+                        default:
+                                object = NULL;
+                                break;
+                }
         }
 
-        ardp_fprintf(stdout, kARDPColorRed,   "%s%s ", s->subject->type == RDF_TERM_BLANK ? "_:":"", subject);
-        ardp_fprintf(stdout, kARDPColorGreen, "%s%s ", s->predicate->type == RDF_TERM_BLANK ? "_:":"", predicate);
-        ardp_fprintf(stdout, kARDPColorBold,  "%s%s\n", s->object->type == RDF_TERM_BLANK ? "_:":"", object);
+        ardp_fprintf(stdout, kARDPColorRed,   "%s%s ", c ? "_:":"", subject);
+        ardp_fprintf(stdout, kARDPColorGreen, "%s%s ", p ? "_:":"", predicate);
+        ardp_fprintf(stdout, kARDPColorBold,  "%s%s",  o ? "_:":"", object);
+        if (t && shared_parser_internal->extra.show_datatype)
+                ardp_fprintf(stdout, kARDPColorYellow, "%s%s", prefix, type);
+
+        ardp_fprintf(stdout, kARDPColorNormal, "\n");
 
         if (likely(shared_parser_internal))
                 shared_parser_internal->stats.n_triples++;
@@ -232,15 +341,37 @@ static struct parser* ardp_parser_create_internal(void)
         if (!p)
                 return NULL;
 
-        p->namespaces = map_create(8);
-
-
+        p->namespaces        = map_create(8);
         p->cb.rebase         = &_rebase;
         p->cb.add_namespace  = &_add_namespace;
         p->cb.statement      = &_triple;
         p->cb.generate_bnode = &_bnode;
         return p;
 } /*}}}*/
+/* ardp_parser_destroy_internal() {{{*/
+static void ardp_parser_destroy_internal(void)
+{
+        if (unlikely(!shared_parser_internal))
+                return;
+
+        struct parser* this = shared_parser_internal;
+
+        if (this->extra.bprefix) {
+                /*FIXME: Should free the bprefix*/
+                //char* t = this->extra.bprefix;
+                //free(t);
+        }
+        if (this->base)
+                string_dealloc(this->base);
+
+        if (this->namespaces)
+                map_free(this->namespaces);
+
+        free(this);
+        shared_parser_internal = NULL;
+}
+/*}}}*/
+
 /* ardp_parser_create() {{{*/
 /*!
  * @fn ardp_parser_create
@@ -250,7 +381,7 @@ int ardp_parser_create(void)
 {
         shared_parser_internal = ardp_parser_create_internal();
         if (!shared_parser_internal)
-                return 0;
+                return 1;
 
 
         shared_parser = ParseAlloc(malloc);
@@ -294,6 +425,7 @@ void ardp_parser_finish(void)
  */
 void ardp_parser_destroy(void)
 {
+        ardp_parser_destroy_internal();
         ParseFree(shared_parser, free);
 }
 /*}}}*/
@@ -310,7 +442,7 @@ int color_stdout_is_tty = -1;
 int main( int argc, char **argv )
 {
         ardp_parser_create();
-        //ParseTrace(stdout, "$parser: ");
+       // ParseTrace(stdout, "$parser: ");
         {
                 /*
                  *
@@ -360,6 +492,7 @@ int main( int argc, char **argv )
                 ardp_parser_exec(QNAME,  string_create("foaf:name"));
                 ardp_parser_exec(STRING_LITERAL, string_create("Green Goblin"));
                 ardp_parser_exec(DOT, 0);
+
         }
         {
                 /*
@@ -391,6 +524,7 @@ int main( int argc, char **argv )
                 ardp_parser_exec(IRIREF, string_create("http://purl.org/net/dajobe/"));
                 ardp_parser_exec(R_SQUARE, 0);
                 ardp_parser_exec(DOT, 0);
+
         }
 
         ardp_parser_finish();

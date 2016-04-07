@@ -16,11 +16,11 @@
 
 #include <unistd.h>             /* sleep() */
 #include <errno.h>              /* Included for 'stderr' */
+#include <ctype.h>              /* isalnum() ... */
 #include <iso646.h>             /* verbose || and && */
 #include <string.h>             /* C buffer manipulation functions */
 #include <assert.h>             /* Asserts in the code */
 #include <dispatch/dispatch.h>  /* Clang GCD dispatch_* functions */
-#include <ctype.h>
 
 #include <ardp/lexer.h>         /* Generic lexer */
 #include <ardp/lexer.turtle.h>  /* Turtle specific lexer constants */
@@ -81,7 +81,8 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
 
     action u8_create {
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 
     action u8_finish {
@@ -91,7 +92,6 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     }
 
     action u8_push {
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, fc);
             }
@@ -104,7 +104,7 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     action unescape {
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
@@ -167,13 +167,13 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     IRI_VALUE = (^([<>{}\"`^\\] | 0x00 .. 0x20) $u8_push | UCHAR )* >u8_create %u8_finish;
 
     #IRIREF    = '<' (PN_CHARS | '.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* '>';
-    IRIREF = '<' IRI_VALUE '>';
+    IRIREF = '<' IRI_VALUE :>> '>';
 
+    STRING_VALUE_QUOTE             = ( ^(0x22 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
+    STRING_VALUE_SINGLE_QUOTE      = ( ^(0x27 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
 
-    STRING_VALUE_QUOTE             = ( ^(0x27 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
-    STRING_VALUE_SINGLE_QUOTE      = ( ^(0x22 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
-    STRING_VALUE_LONG_QUOTE        = ( ('"' | '""')? ( ^('"' | '\\') $u8_push | ECHAR | UCHAR) )*;
-    STRING_VALUE_LONG_SINGLE_QUOTE = ( ("'" | "''")? ( ^("'" | '\\') $u8_push | ECHAR | UCHAR) )*;
+    STRING_VALUE_LONG_QUOTE        = ( ('"' | '""')? (^('"' | '\\' | "'''") $u8_push | ECHAR | UCHAR) )*;
+    STRING_VALUE_LONG_SINGLE_QUOTE = ( ("'" | "''")? (^("'" | '\\' | '"""') $u8_push | ECHAR | UCHAR) )*;
 
     STR_Q    = ( STRING_VALUE_QUOTE        >u8_create %u8_finish );
     STR_DQ   = ( STRING_VALUE_SINGLE_QUOTE >u8_create %u8_finish );
@@ -184,8 +184,16 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     STRING_LITERAL_QUOTE        = '"' STR_Q :>> '"';
     STRING_LITERAL_SINGLE_QUOTE = "'" STR_DQ :>> "'";
 
-    STRING_LITERAL_LONG_QUOTE        = '"""' STR_LQ :> '"""';
-    STRING_LITERAL_LONG_SINGLE_QUOTE = "'''" STR_LDQ :> "'''";
+    STRING_LITERAL_LONG_QUOTE        = '"""' . STR_LQ :>  '"""';
+    STRING_LITERAL_LONG_SINGLE_QUOTE = "'''" . STR_LDQ :> "'''";
+
+    BLANK_NODE_LABEL = '_:' . (
+                                ((PN_CHARS_U | digit) $u8_push)
+                                (((PN_CHARS | '.')* PN_CHARS)? $u8_push) ) >u8_create %u8_finish;
+
+
+    QNAME     = (PN_PREFIX? ':' PN_LOCAL?) >u8_create %u8_finish $u8_push;
+
 
     #
     ## Scanner
@@ -198,12 +206,9 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
         BASE          => { lexer_emit_token_const(BASE); };
         SPARQL_BASE   => { lexer_emit_token_const(SPARQL_BASE); };
 
-        BLANK_NODE_LABEL => { lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); };
-        QNAME            { lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); };
-        IRIREF           {
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        };
+        BLANK_NODE_LABEL => { lexer_emit_u8_token(BLANK_LITERAL); };
+        QNAME            => { lexer_emit_u8_token(QNAME); };
+        IRIREF           => { lexer_emit_u8_token(IRIREF); };
 
 
         INTEGER { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
@@ -238,18 +243,17 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
         R_CURLY   => { lexer_emit_token_const(R_CURLY);  };
 
         EOL => {
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = fpc;
+              dispatch_sync(shared_lexer->event_queue, ^{
                   shared_lexer->line++;
               });
         };
 
         COMMENT {
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = fpc;
+              dispatch_sync(shared_lexer->event_queue, ^{
                   shared_lexer->line++;
               });
         };
+
         #WS*;
         any; #invalids to be skiped
     *|;
@@ -273,17 +277,20 @@ static void log(int level, const char* message)
 }
 /*}}}*/
 /* lexer_emit_u8_token() {{{*/
-static void lexer_emit_u8_token(enum turtle_token_type type) {
+static void lexer_emit_u8_token(enum turtle_token_type type)
+{
         assert(shared_lexer); /* sanity check*/
-        if (shared_lexer->cb.stoken) {
+        if (likely(shared_lexer->cb.stoken)) {
                 __block utf8 s;
                 if (shared_lexer->string)
                          s = string_copy(shared_lexer->string);
                 else
                          s = NULL;
+
+                fprintf(stderr, "<<%s>>", s);
+
                 dispatch_async( shared_lexer->event_queue, ^{
-                        ptrdiff_t col = shared_lexer->env.ts - column;
-                        shared_lexer->cb.stoken(type, s, shared_lexer->line+1, col);
+                        shared_lexer->cb.stoken(type, s, shared_lexer->line, 0);
                         if (shared_lexer->log.level < NOTICE)
                                 log (DEBUG, "Emitted token (UTF8)");
                 });
@@ -294,17 +301,11 @@ static void lexer_emit_u8_token(enum turtle_token_type type) {
 static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable str, size_t len )
 {
         assert( shared_lexer ); /* sanity check */
+        if (likely(shared_lexer->cb.stoken)) {
+            __block utf8 s = string_create_n(str,len,len);
 
-        __block utf8 s = string_create_n(str,len,len+1);
-        __block ptrdiff_t col = shared_lexer->env.ts - column;
-
-        if (shared_lexer->cb.stoken) {
             dispatch_async( shared_lexer->event_queue, ^{
-                //char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
-                //assert(p_str); /* Sanity check for the malloc() */
-                //strncat( p_str, ( const char * )str, len );
-
-                shared_lexer->cb.stoken( type, s, shared_lexer->line, col );
+                shared_lexer->cb.stoken( type, s, shared_lexer->line, 0);
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted" );
             });
@@ -315,10 +316,9 @@ static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable st
 static void lexer_emit_token_const( enum turtle_token_type type )
 {
         assert( shared_lexer ); /* sanity check */
-        __block ptrdiff_t col = shared_lexer->env.ts - column;
-        if ( shared_lexer->cb.stoken ) {
+        if ( likely(shared_lexer->cb.stoken) ) {
             dispatch_async( shared_lexer->event_queue, ^{
-                shared_lexer->cb.stoken( type, NULL, shared_lexer->line, col );
+                shared_lexer->cb.stoken( type, NULL, shared_lexer->line, 0 );
 
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted");
@@ -330,8 +330,8 @@ static void lexer_emit_token_const( enum turtle_token_type type )
 void ardp_lexer_turtle_debug( void )
 {
         const char states[][15] = {"created", "initialized", "ready", "unknown"};
-        printf( "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
-        printf( "It's state is: %s\n", states[shared_lexer->state] );
+        fprintf(stderr, "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
+        fprintf(stderr, "It's state is: %s\n", states[shared_lexer->state] );
 }
 /*}}}*/
 
@@ -368,9 +368,9 @@ int ardp_lexer_create(void)
             ardp_lexer_destroy();
         }
 
-        shared_lexer = malloc(sizeof(struct lexer));
+        shared_lexer = calloc(1, sizeof(struct lexer)); // malloc(sizeof(struct lexer));
 
-        if ( shared_lexer is NULL ) {
+        if ( unlikely(shared_lexer is NULL) ) {
             log( ERROR, "Didn't allocate the shared lexer. (MALLOC ERROR)");
             //return ARDP_ERROR_LEXER_MALLOC;
             return ARDP_FAILURE;
@@ -380,12 +380,12 @@ int ardp_lexer_create(void)
             dispatch_queue_create( "eu.cre8iv.ardp.Lexer", DISPATCH_QUEUE_SERIAL );
 
         shared_lexer->event_queue =
-            dispatch_queue_create( "eu.cre8iv.ardp.LexerEvent", 0 );
+            dispatch_queue_create( "eu.cre8iv.ardp.Events", 0 );
 
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_CREATED;
-        shared_lexer->finished = 0;
-        log ( INFO, "Created the shared lexer." );
+        shared_lexer->finished = 1;
 
+        log ( INFO, "Created the shared lexer." );
         return ARDP_SUCCESS;
 }
 /*}}}*/
@@ -396,8 +396,10 @@ int ardp_lexer_defaults(void)
     case ARDP_LEXER_TURTLE_STATUS_CREATED:
     {
         struct lexer *this = shared_lexer;
-                      this->line  = 0;
+                      this->line  = 1;
                       this->state = ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED;
+
+        column = NULL;
 
         log(INFO, "Defaults for loaded");
         return ARDP_SUCCESS;
@@ -495,7 +497,6 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
 
         __block uint8_t *_Nullable p = v; // redirection to allow GCD
 
-
         const uint8_t *_Nullable pe;
         const uint8_t *_Nullable eof;
 
@@ -545,7 +546,6 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
                }
 
                status = ardp_lexer_process_block( p, len, mark, eof );
-
                if (shared_lexer->env.cs == turtle_error ) {
                         status = ARDP_LEXER_GENERIC_ERROR;
                         break;
@@ -559,14 +559,16 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
         }
 
         dispatch_queue_t *q = &shared_lexer->lexer_queue;
+        dispatch_queue_t *e = &shared_lexer->event_queue;
 
         // Optimalization to free CPU operations
-        while(   !dispatch_queue_isempty(*q)
-              || !dispatch_queue_isempty(shared_lexer->event_queue))
-                usleep(5);
+        while(!dispatch_queue_isempty(*q) || !dispatch_queue_isempty(*e))
+                usleep(25);
+
         return status;
 }
-
+/*}}}*/
+/* ardp_lexer_process_reader_old()  {{{ */
 void ardp_lexer_process_reader_old( lexer_reader reader,
                                        void *_Nullable reader_args,
                                        completation_block handler )

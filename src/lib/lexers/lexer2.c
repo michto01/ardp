@@ -18,11 +18,11 @@
 
 #include <unistd.h>             /* sleep() */
 #include <errno.h>              /* Included for 'stderr' */
+#include <ctype.h>              /* isalnum() ... */
 #include <iso646.h>             /* verbose || and && */
 #include <string.h>             /* C buffer manipulation functions */
 #include <assert.h>             /* Asserts in the code */
 #include <dispatch/dispatch.h>  /* Clang GCD dispatch_* functions */
-#include <ctype.h>
 
 #include <ardp/lexer.h>         /* Generic lexer */
 #include <ardp/lexer.turtle.h>  /* Turtle specific lexer constants */
@@ -76,14 +76,14 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
 /* ragel-machine() {{{*/
 
 #line 79 "lexer2.c"
-static const int turtle_start = 169;
-static const int turtle_first_final = 169;
+static const int turtle_start = 188;
+static const int turtle_first_final = 188;
 static const int turtle_error = -1;
 
-static const int turtle_en_main = 169;
+static const int turtle_en_main = 188;
 
 
-#line 258 "turtle.rl"
+#line 262 "turtle.rl"
 
 /* }}} */
 /* clang-format on */
@@ -102,17 +102,20 @@ static void log(int level, const char* message)
 }
 /*}}}*/
 /* lexer_emit_u8_token() {{{*/
-static void lexer_emit_u8_token(enum turtle_token_type type) {
+static void lexer_emit_u8_token(enum turtle_token_type type)
+{
         assert(shared_lexer); /* sanity check*/
-        if (shared_lexer->cb.stoken) {
+        if (likely(shared_lexer->cb.stoken)) {
                 __block utf8 s;
                 if (shared_lexer->string)
                          s = string_copy(shared_lexer->string);
                 else
                          s = NULL;
+
+                fprintf(stderr, "<<%s>>", s);
+
                 dispatch_async( shared_lexer->event_queue, ^{
-                        ptrdiff_t col = shared_lexer->env.ts - column;
-                        shared_lexer->cb.stoken(type, s, shared_lexer->line+1, col);
+                        shared_lexer->cb.stoken(type, s, shared_lexer->line, 0);
                         if (shared_lexer->log.level < NOTICE)
                                 log (DEBUG, "Emitted token (UTF8)");
                 });
@@ -123,17 +126,11 @@ static void lexer_emit_u8_token(enum turtle_token_type type) {
 static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable str, size_t len )
 {
         assert( shared_lexer ); /* sanity check */
+        if (likely(shared_lexer->cb.stoken)) {
+            __block utf8 s = string_create_n(str,len,len);
 
-        __block utf8 s = string_create_n(str,len,len+1);
-        __block ptrdiff_t col = shared_lexer->env.ts - column;
-
-        if (shared_lexer->cb.stoken) {
             dispatch_async( shared_lexer->event_queue, ^{
-                //char* p_str = malloc( ( len + 1 ) * sizeof( *p_str ) );
-                //assert(p_str); /* Sanity check for the malloc() */
-                //strncat( p_str, ( const char * )str, len );
-
-                shared_lexer->cb.stoken( type, s, shared_lexer->line, col );
+                shared_lexer->cb.stoken( type, s, shared_lexer->line, 0);
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted" );
             });
@@ -144,10 +141,9 @@ static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable st
 static void lexer_emit_token_const( enum turtle_token_type type )
 {
         assert( shared_lexer ); /* sanity check */
-        __block ptrdiff_t col = shared_lexer->env.ts - column;
-        if ( shared_lexer->cb.stoken ) {
+        if ( likely(shared_lexer->cb.stoken) ) {
             dispatch_async( shared_lexer->event_queue, ^{
-                shared_lexer->cb.stoken( type, NULL, shared_lexer->line, col );
+                shared_lexer->cb.stoken( type, NULL, shared_lexer->line, 0 );
 
                 if (shared_lexer->log.level < NOTICE)
                     log( DEBUG, "Token emmitted");
@@ -159,8 +155,8 @@ static void lexer_emit_token_const( enum turtle_token_type type )
 void ardp_lexer_turtle_debug( void )
 {
         const char states[][15] = {"created", "initialized", "ready", "unknown"};
-        printf( "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
-        printf( "It's state is: %s\n", states[shared_lexer->state] );
+        fprintf(stderr, "Shared lexer %s created.\n", shared_lexer ? "is" : "isn't" );
+        fprintf(stderr, "It's state is: %s\n", states[shared_lexer->state] );
 }
 /*}}}*/
 
@@ -197,9 +193,9 @@ int ardp_lexer_create(void)
             ardp_lexer_destroy();
         }
 
-        shared_lexer = malloc(sizeof(struct lexer));
+        shared_lexer = calloc(1, sizeof(struct lexer)); // malloc(sizeof(struct lexer));
 
-        if ( shared_lexer is NULL ) {
+        if ( unlikely(shared_lexer is NULL) ) {
             log( ERROR, "Didn't allocate the shared lexer. (MALLOC ERROR)");
             //return ARDP_ERROR_LEXER_MALLOC;
             return ARDP_FAILURE;
@@ -209,12 +205,12 @@ int ardp_lexer_create(void)
             dispatch_queue_create( "eu.cre8iv.ardp.Lexer", DISPATCH_QUEUE_SERIAL );
 
         shared_lexer->event_queue =
-            dispatch_queue_create( "eu.cre8iv.ardp.LexerEvent", 0 );
+            dispatch_queue_create( "eu.cre8iv.ardp.Events", 0 );
 
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_CREATED;
-        shared_lexer->finished = 0;
-        log ( INFO, "Created the shared lexer." );
+        shared_lexer->finished = 1;
 
+        log ( INFO, "Created the shared lexer." );
         return ARDP_SUCCESS;
 }
 /*}}}*/
@@ -225,8 +221,10 @@ int ardp_lexer_defaults(void)
     case ARDP_LEXER_TURTLE_STATUS_CREATED:
     {
         struct lexer *this = shared_lexer;
-                      this->line  = 0;
+                      this->line  = 1;
                       this->state = ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED;
+
+        column = NULL;
 
         log(INFO, "Defaults for loaded");
         return ARDP_SUCCESS;
@@ -245,7 +243,7 @@ int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
     case ARDP_LEXER_TURTLE_STATUS_READY:
         /* clang-format off */
         
-#line 249 "lexer2.c"
+#line 247 "lexer2.c"
 	{
 	 shared_lexer->env.cs = turtle_start;
 	 shared_lexer->env.ts = 0;
@@ -253,7 +251,7 @@ int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
 	 shared_lexer->env.act = 0;
 	}
 
-#line 419 "turtle.rl"
+#line 421 "turtle.rl"
         /* clang-format on */
         shared_lexer->cb.token    = cfg->cb.token;
         shared_lexer->cb.stoken   = cfg->cb.stoken;
@@ -314,97 +312,96 @@ int ardp_lexer_process_block( uint8_t *_Nullable v,
 
     /* clang-format off */
     
-#line 318 "lexer2.c"
+#line 316 "lexer2.c"
 	{
 	if ( p == pe )
 		goto _test_eof;
 	switch (  shared_lexer->env.cs )
 	{
 tr0:
-#line 254 "turtle.rl"
+#line 258 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}}
-	goto st169;
+	goto st188;
 tr2:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr23:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr26:
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr34:
-#line 214 "turtle.rl"
+#line 219 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr59:
-#line 247 "turtle.rl"
+#line 251 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
+              dispatch_sync(shared_lexer->event_queue, ^{
                   shared_lexer->line++;
               });
         }}
-	goto st169;
+	goto st188;
 tr61:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr82:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr85:
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr93:
-#line 215 "turtle.rl"
+#line 220 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr117:
 #line 1 "NONE"
 	{	switch(  shared_lexer->env.act ) {
@@ -419,9 +416,6 @@ tr117:
 	break;
 	case 4:
 	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token_const(SPARQL_BASE); }
-	break;
-	case 5:
-	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }
 	break;
 	case 8:
 	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }
@@ -446,284 +440,283 @@ tr117:
 	break;
 	}
 	}
-	goto st169;
+	goto st188;
 tr120:
-#line 209 "turtle.rl"
+#line 214 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
+	goto st188;
 tr122:
-#line 202 "turtle.rl"
-	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); }}
-	goto st169;
+#line 210 "turtle.rl"
+	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(QNAME); }}
+	goto st188;
 tr154:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
+#line 211 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
 tr167:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
-tr218:
-#line 201 "turtle.rl"
-	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }}
-	goto st169;
-tr236:
-#line 254 "turtle.rl"
-	{ shared_lexer->env.te = p+1;}
-	goto st169;
-tr238:
-#line 240 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr242:
-#line 235 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_ROUND);  }}
-	goto st169;
-tr243:
-#line 236 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_ROUND);  }}
-	goto st169;
-tr245:
-#line 230 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(COMMA); }}
-	goto st169;
-tr248:
-#line 231 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(SEMICOLON); }}
-	goto st169;
-tr254:
-#line 233 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_SQUARE); }}
-	goto st169;
-tr255:
-#line 234 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_SQUARE); }}
-	goto st169;
-tr261:
-#line 237 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_CURLY);  }}
-	goto st169;
-tr262:
-#line 238 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_CURLY);  }}
-	goto st169;
-tr277:
-#line 240 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr278:
-#line 254 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;}
-	goto st169;
-tr282:
-#line 217 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
-tr284:
-#line 247 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr288:
-#line 218 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
-tr291:
-#line 210 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr292:
 #line 211 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr293:
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
+tr218:
 #line 209 "turtle.rl"
+	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(BLANK_LITERAL); }}
+	goto st188;
+tr260:
+#line 258 "turtle.rl"
+	{ shared_lexer->env.te = p+1;}
+	goto st188;
+tr262:
+#line 245 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr266:
+#line 240 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_ROUND);  }}
+	goto st188;
+tr267:
+#line 241 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_ROUND);  }}
+	goto st188;
+tr269:
+#line 235 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(COMMA); }}
+	goto st188;
+tr273:
+#line 236 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(SEMICOLON); }}
+	goto st188;
+tr279:
+#line 238 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_SQUARE); }}
+	goto st188;
+tr280:
+#line 239 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_SQUARE); }}
+	goto st188;
+tr286:
+#line 242 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_CURLY);  }}
+	goto st188;
+tr287:
+#line 243 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_CURLY);  }}
+	goto st188;
+tr302:
+#line 245 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr303:
+#line 258 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;}
+	goto st188;
+tr307:
+#line 222 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
+	goto st188;
+tr309:
+#line 251 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr313:
+#line 223 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
+	goto st188;
+tr316:
+#line 215 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); }}
+	goto st188;
+tr317:
+#line 216 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); }}
+	goto st188;
+tr318:
+#line 214 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr295:
-#line 229 "turtle.rl"
+	goto st188;
+tr320:
+#line 234 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{ lexer_emit_token_const(DOT); }}
-	goto st169;
-tr296:
-#line 202 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); }}
-	goto st169;
-tr300:
+	goto st188;
+tr321:
+#line 88 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_finish(shared_lexer->string);
+            }
+    }
+#line 210 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(QNAME); }}
+	goto st188;
+tr325:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
-tr306:
-#line 223 "turtle.rl"
+#line 211 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
+tr331:
+#line 228 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{
               // '@'. VALUE
               lexer_emit_token(LANGTAG, var(ts)+1, var(te) - (var(ts)+1));
         }}
-	goto st169;
-tr317:
-#line 220 "turtle.rl"
+	goto st188;
+tr342:
+#line 225 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{
               lexer_emit_token_const(HAT);
         }}
-	goto st169;
-tr319:
-#line 201 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }}
-	goto st169;
-st169:
+	goto st188;
+tr344:
+#line 88 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_finish(shared_lexer->string);
+            }
+    }
+#line 209 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(BLANK_LITERAL); }}
+	goto st188;
+st188:
 #line 1 "NONE"
 	{ shared_lexer->env.ts = 0;}
 	if ( ++p == pe )
-		goto _test_eof169;
-case 169:
+		goto _test_eof188;
+case 188:
 #line 1 "NONE"
 	{ shared_lexer->env.ts = p;}
-#line 635 "lexer2.c"
+#line 630 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto st170;
-		case 13u: goto tr238;
-		case 34u: goto tr239;
-		case 35u: goto tr240;
-		case 39u: goto tr241;
-		case 40u: goto tr242;
-		case 41u: goto tr243;
-		case 44u: goto tr245;
-		case 46u: goto st181;
-		case 58u: goto tr173;
-		case 59u: goto tr248;
-		case 60u: goto tr249;
-		case 64u: goto st185;
-		case 66u: goto tr252;
-		case 80u: goto tr253;
-		case 91u: goto tr254;
-		case 93u: goto tr255;
-		case 94u: goto st199;
-		case 95u: goto tr257;
-		case 97u: goto tr258;
-		case 98u: goto tr252;
-		case 102u: goto tr259;
-		case 112u: goto tr253;
-		case 116u: goto tr260;
-		case 123u: goto tr261;
-		case 125u: goto tr262;
-		case 195u: goto tr263;
-		case 203u: goto tr265;
-		case 205u: goto tr266;
-		case 223u: goto tr265;
-		case 224u: goto tr267;
-		case 225u: goto tr268;
-		case 226u: goto tr269;
-		case 227u: goto tr270;
-		case 237u: goto tr272;
-		case 239u: goto tr273;
-		case 240u: goto tr274;
-		case 243u: goto tr276;
+		case 10u: goto st189;
+		case 13u: goto tr262;
+		case 34u: goto tr263;
+		case 35u: goto tr264;
+		case 39u: goto tr265;
+		case 40u: goto tr266;
+		case 41u: goto tr267;
+		case 44u: goto tr269;
+		case 46u: goto st200;
+		case 58u: goto tr272;
+		case 59u: goto tr273;
+		case 60u: goto tr274;
+		case 64u: goto st204;
+		case 66u: goto tr277;
+		case 80u: goto tr278;
+		case 91u: goto tr279;
+		case 93u: goto tr280;
+		case 94u: goto st218;
+		case 95u: goto tr282;
+		case 97u: goto tr283;
+		case 98u: goto tr277;
+		case 102u: goto tr284;
+		case 112u: goto tr278;
+		case 116u: goto tr285;
+		case 123u: goto tr286;
+		case 125u: goto tr287;
+		case 195u: goto tr288;
+		case 203u: goto tr290;
+		case 205u: goto tr291;
+		case 223u: goto tr290;
+		case 224u: goto tr292;
+		case 225u: goto tr293;
+		case 226u: goto tr294;
+		case 227u: goto tr295;
+		case 237u: goto tr297;
+		case 239u: goto tr298;
+		case 240u: goto tr299;
+		case 243u: goto tr301;
 	}
 	if ( (*p) < 99u ) {
 		if ( (*p) < 48u ) {
 			if ( 43u <= (*p) && (*p) <= 45u )
-				goto tr244;
+				goto tr268;
 		} else if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr251;
+				goto tr276;
 		} else
-			goto tr247;
+			goto tr271;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 206u ) {
 			if ( 196u <= (*p) && (*p) <= 202u )
-				goto tr264;
+				goto tr289;
 		} else if ( (*p) > 222u ) {
 			if ( (*p) > 236u ) {
 				if ( 241u <= (*p) && (*p) <= 242u )
-					goto tr275;
+					goto tr300;
 			} else if ( (*p) >= 228u )
-				goto tr271;
+				goto tr296;
 		} else
-			goto tr264;
+			goto tr289;
 	} else
-		goto tr251;
-	goto tr236;
-st170:
+		goto tr276;
+	goto tr260;
+st189:
 	if ( ++p == pe )
-		goto _test_eof170;
-case 170:
+		goto _test_eof189;
+case 189:
 	if ( (*p) == 13u )
-		goto tr238;
-	goto tr277;
-tr239:
+		goto tr262;
+	goto tr302;
+tr263:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st171;
-st171:
+	goto st190;
+st190:
 	if ( ++p == pe )
-		goto _test_eof171;
-case 171:
-#line 715 "lexer2.c"
+		goto _test_eof190;
+case 190:
+#line 710 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto tr278;
-		case 13u: goto tr278;
-		case 34u: goto tr280;
-		case 39u: goto tr278;
-		case 92u: goto tr281;
+		case 10u: goto tr303;
+		case 13u: goto tr303;
+		case 34u: goto tr305;
+		case 92u: goto tr306;
 	}
-	goto tr279;
+	goto tr304;
 tr1:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -790,27 +783,26 @@ tr22:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st0;
-tr279:
+tr304:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -820,12 +812,11 @@ st0:
 	if ( ++p == pe )
 		goto _test_eof0;
 case 0:
-#line 824 "lexer2.c"
+#line 816 "lexer2.c"
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
 		case 34u: goto tr2;
-		case 39u: goto tr0;
 		case 92u: goto st1;
 	}
 	goto tr1;
@@ -834,23 +825,24 @@ tr24:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st1;
-tr281:
+tr306:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st1;
 st1:
 	if ( ++p == pe )
 		goto _test_eof1;
 case 1:
-#line 854 "lexer2.c"
+#line 846 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr4;
 		case 39u: goto tr5;
@@ -887,7 +879,7 @@ st3:
 	if ( ++p == pe )
 		goto _test_eof3;
 case 3:
-#line 891 "lexer2.c"
+#line 883 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st4;
@@ -946,7 +938,7 @@ st7:
 	if ( ++p == pe )
 		goto _test_eof7;
 case 7:
-#line 950 "lexer2.c"
+#line 942 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st8;
@@ -990,7 +982,6 @@ case 10:
 		case 10u: goto tr0;
 		case 13u: goto tr0;
 		case 34u: goto tr23;
-		case 39u: goto tr0;
 		case 92u: goto tr24;
 	}
 	goto tr22;
@@ -1007,29 +998,30 @@ case 11:
 	} else
 		goto tr25;
 	goto tr0;
-tr280:
+tr305:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-	goto st172;
-st172:
+	goto st191;
+st191:
 	if ( ++p == pe )
-		goto _test_eof172;
-case 172:
-#line 1030 "lexer2.c"
+		goto _test_eof191;
+case 191:
+#line 1022 "lexer2.c"
 	if ( (*p) == 34u )
 		goto st12;
-	goto tr282;
+	goto tr307;
 st12:
 	if ( ++p == pe )
 		goto _test_eof12;
@@ -1040,9 +1032,8 @@ case 12:
 	}
 	goto tr27;
 tr30:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1109,13 +1100,12 @@ tr53:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1125,11 +1115,11 @@ tr27:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1139,7 +1129,7 @@ st13:
 	if ( ++p == pe )
 		goto _test_eof13;
 case 13:
-#line 1143 "lexer2.c"
+#line 1133 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr31;
 		case 92u: goto st16;
@@ -1149,9 +1139,10 @@ tr28:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1159,7 +1150,7 @@ tr28:
     }
 	goto st14;
 tr31:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1171,11 +1162,11 @@ tr54:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1186,7 +1177,7 @@ st14:
 	if ( ++p == pe )
 		goto _test_eof14;
 case 14:
-#line 1190 "lexer2.c"
+#line 1181 "lexer2.c"
 	if ( (*p) == 34u )
 		goto st15;
 	goto tr26;
@@ -1202,7 +1193,7 @@ tr55:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
@@ -1211,14 +1202,15 @@ tr29:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st16;
 st16:
 	if ( ++p == pe )
 		goto _test_eof16;
 case 16:
-#line 1222 "lexer2.c"
+#line 1214 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr35;
 		case 39u: goto tr36;
@@ -1255,7 +1247,7 @@ st18:
 	if ( ++p == pe )
 		goto _test_eof18;
 case 18:
-#line 1259 "lexer2.c"
+#line 1251 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st19;
@@ -1314,7 +1306,7 @@ st22:
 	if ( ++p == pe )
 		goto _test_eof22;
 case 22:
-#line 1318 "lexer2.c"
+#line 1310 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st23;
@@ -1372,17 +1364,17 @@ case 26:
 	} else
 		goto tr56;
 	goto tr26;
-tr240:
+tr264:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st173;
-st173:
+	goto st192;
+st192:
 	if ( ++p == pe )
-		goto _test_eof173;
-case 173:
-#line 1384 "lexer2.c"
+		goto _test_eof192;
+case 192:
+#line 1376 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto st174;
+		case 10u: goto st193;
 		case 13u: goto tr59;
 	}
 	goto st27;
@@ -1391,38 +1383,36 @@ st27:
 		goto _test_eof27;
 case 27:
 	switch( (*p) ) {
-		case 10u: goto st174;
+		case 10u: goto st193;
 		case 13u: goto tr59;
 	}
 	goto st27;
-st174:
+st193:
 	if ( ++p == pe )
-		goto _test_eof174;
-case 174:
+		goto _test_eof193;
+case 193:
 	if ( (*p) == 13u )
 		goto tr59;
-	goto tr284;
-tr241:
+	goto tr309;
+tr265:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st175;
-st175:
+	goto st194;
+st194:
 	if ( ++p == pe )
-		goto _test_eof175;
-case 175:
-#line 1414 "lexer2.c"
+		goto _test_eof194;
+case 194:
+#line 1406 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto tr278;
-		case 13u: goto tr278;
-		case 34u: goto tr278;
-		case 39u: goto tr286;
-		case 92u: goto tr287;
+		case 10u: goto tr303;
+		case 13u: goto tr303;
+		case 39u: goto tr311;
+		case 92u: goto tr312;
 	}
-	goto tr285;
+	goto tr310;
 tr60:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1489,27 +1479,26 @@ tr81:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st28;
-tr285:
+tr310:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1519,11 +1508,10 @@ st28:
 	if ( ++p == pe )
 		goto _test_eof28;
 case 28:
-#line 1523 "lexer2.c"
+#line 1512 "lexer2.c"
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
-		case 34u: goto tr0;
 		case 39u: goto tr61;
 		case 92u: goto st29;
 	}
@@ -1533,23 +1521,24 @@ tr83:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st29;
-tr287:
+tr312:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st29;
 st29:
 	if ( ++p == pe )
 		goto _test_eof29;
 case 29:
-#line 1553 "lexer2.c"
+#line 1542 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr63;
 		case 39u: goto tr64;
@@ -1586,7 +1575,7 @@ st31:
 	if ( ++p == pe )
 		goto _test_eof31;
 case 31:
-#line 1590 "lexer2.c"
+#line 1579 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st32;
@@ -1645,7 +1634,7 @@ st35:
 	if ( ++p == pe )
 		goto _test_eof35;
 case 35:
-#line 1649 "lexer2.c"
+#line 1638 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st36;
@@ -1688,7 +1677,6 @@ case 38:
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
-		case 34u: goto tr0;
 		case 39u: goto tr82;
 		case 92u: goto tr83;
 	}
@@ -1706,29 +1694,30 @@ case 39:
 	} else
 		goto tr84;
 	goto tr0;
-tr286:
+tr311:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-	goto st176;
-st176:
+	goto st195;
+st195:
 	if ( ++p == pe )
-		goto _test_eof176;
-case 176:
-#line 1729 "lexer2.c"
+		goto _test_eof195;
+case 195:
+#line 1718 "lexer2.c"
 	if ( (*p) == 39u )
 		goto st40;
-	goto tr288;
+	goto tr313;
 st40:
 	if ( ++p == pe )
 		goto _test_eof40;
@@ -1739,9 +1728,8 @@ case 40:
 	}
 	goto tr86;
 tr89:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1808,13 +1796,12 @@ tr112:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1824,11 +1811,11 @@ tr86:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -1838,7 +1825,7 @@ st41:
 	if ( ++p == pe )
 		goto _test_eof41;
 case 41:
-#line 1842 "lexer2.c"
+#line 1829 "lexer2.c"
 	switch( (*p) ) {
 		case 39u: goto tr90;
 		case 92u: goto st44;
@@ -1848,9 +1835,10 @@ tr87:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1858,7 +1846,7 @@ tr87:
     }
 	goto st42;
 tr90:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1870,11 +1858,11 @@ tr113:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -1885,7 +1873,7 @@ st42:
 	if ( ++p == pe )
 		goto _test_eof42;
 case 42:
-#line 1889 "lexer2.c"
+#line 1877 "lexer2.c"
 	if ( (*p) == 39u )
 		goto st43;
 	goto tr85;
@@ -1901,7 +1889,7 @@ tr114:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
@@ -1910,14 +1898,15 @@ tr88:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st44;
 st44:
 	if ( ++p == pe )
 		goto _test_eof44;
 case 44:
-#line 1921 "lexer2.c"
+#line 1910 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr94;
 		case 39u: goto tr95;
@@ -1954,7 +1943,7 @@ st46:
 	if ( ++p == pe )
 		goto _test_eof46;
 case 46:
-#line 1958 "lexer2.c"
+#line 1947 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st47;
@@ -2013,7 +2002,7 @@ st50:
 	if ( ++p == pe )
 		goto _test_eof50;
 case 50:
-#line 2017 "lexer2.c"
+#line 2006 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st51;
@@ -2071,20 +2060,20 @@ case 54:
 	} else
 		goto tr115;
 	goto tr85;
-tr244:
+tr268:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st177;
-st177:
+	goto st196;
+st196:
 	if ( ++p == pe )
-		goto _test_eof177;
-case 177:
-#line 2083 "lexer2.c"
+		goto _test_eof196;
+case 196:
+#line 2072 "lexer2.c"
 	if ( (*p) == 46u )
 		goto st55;
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto tr247;
-	goto tr278;
+		goto tr271;
+	goto tr303;
 st55:
 	if ( ++p == pe )
 		goto _test_eof55;
@@ -2095,21 +2084,21 @@ case 55:
 tr116:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 210 "turtle.rl"
+#line 215 "turtle.rl"
 	{ shared_lexer->env.act = 9;}
-	goto st178;
-st178:
+	goto st197;
+st197:
 	if ( ++p == pe )
-		goto _test_eof178;
-case 178:
-#line 2106 "lexer2.c"
+		goto _test_eof197;
+case 197:
+#line 2095 "lexer2.c"
 	switch( (*p) ) {
 		case 69u: goto st56;
 		case 101u: goto st56;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
-	goto tr291;
+	goto tr316;
 st56:
 	if ( ++p == pe )
 		goto _test_eof56;
@@ -2119,41 +2108,41 @@ case 56:
 		case 45u: goto st57;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
+		goto st198;
 	goto tr117;
 st57:
 	if ( ++p == pe )
 		goto _test_eof57;
 case 57:
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
+		goto st198;
 	goto tr117;
-st179:
+st198:
 	if ( ++p == pe )
-		goto _test_eof179;
-case 179:
+		goto _test_eof198;
+case 198:
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
-	goto tr292;
-tr247:
+		goto st198;
+	goto tr317;
+tr271:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 209 "turtle.rl"
+#line 214 "turtle.rl"
 	{ shared_lexer->env.act = 8;}
-	goto st180;
-st180:
+	goto st199;
+st199:
 	if ( ++p == pe )
-		goto _test_eof180;
-case 180:
-#line 2149 "lexer2.c"
+		goto _test_eof199;
+case 199:
+#line 2138 "lexer2.c"
 	switch( (*p) ) {
 		case 46u: goto st58;
 		case 69u: goto st56;
 		case 101u: goto st56;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto tr247;
-	goto tr293;
+		goto tr271;
+	goto tr318;
 st58:
 	if ( ++p == pe )
 		goto _test_eof58;
@@ -2165,38 +2154,60 @@ case 58:
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
 	goto tr120;
-st181:
+st200:
 	if ( ++p == pe )
-		goto _test_eof181;
-case 181:
+		goto _test_eof200;
+case 200:
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
-	goto tr295;
+	goto tr320;
 tr173:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st182;
-st182:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st201;
+tr272:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st201;
+st201:
 	if ( ++p == pe )
-		goto _test_eof182;
-case 182:
-#line 2184 "lexer2.c"
+		goto _test_eof201;
+case 201:
+#line 2195 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
-		case 92u: goto st62;
+		case 37u: goto tr125;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 205u: goto st86;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st87;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 205u: goto tr322;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr323;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 196u ) {
 		if ( (*p) < 65u ) {
@@ -2210,32 +2221,50 @@ case 182:
 	} else if ( (*p) > 202u ) {
 		if ( (*p) < 228u ) {
 			if ( 206u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
-		goto st64;
-	goto tr296;
+		goto tr129;
+	goto tr321;
+tr125:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st59;
 st59:
 	if ( ++p == pe )
 		goto _test_eof59;
 case 59:
+#line 2246 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
-			goto st60;
+			goto tr123;
 	} else if ( (*p) > 70u ) {
 		if ( 97u <= (*p) && (*p) <= 102u )
-			goto st60;
+			goto tr123;
 	} else
-		goto st60;
+		goto tr123;
 	goto tr122;
+tr123:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st60;
 st60:
 	if ( ++p == pe )
 		goto _test_eof60;
 case 60:
+#line 2268 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto tr124;
@@ -2248,32 +2277,38 @@ case 60:
 tr124:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st183;
-st183:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st202;
+st202:
 	if ( ++p == pe )
-		goto _test_eof183;
-case 183:
-#line 2257 "lexer2.c"
+		goto _test_eof202;
+case 202:
+#line 2292 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
+		case 37u: goto tr125;
 		case 45u: goto tr124;
-		case 46u: goto st61;
-		case 92u: goto st62;
+		case 46u: goto tr126;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
 		case 183u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 204u: goto st66;
-		case 205u: goto st67;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st70;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 204u: goto tr131;
+		case 205u: goto tr132;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr135;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 58u ) {
@@ -2284,39 +2319,48 @@ case 183:
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
 		goto tr124;
-	goto tr296;
+	goto tr321;
+tr126:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st61;
 st61:
 	if ( ++p == pe )
 		goto _test_eof61;
 case 61:
+#line 2344 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
+		case 37u: goto tr125;
 		case 45u: goto tr124;
-		case 46u: goto st61;
-		case 92u: goto st62;
+		case 46u: goto tr126;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
 		case 183u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 204u: goto st66;
-		case 205u: goto st67;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st70;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 204u: goto tr131;
+		case 205u: goto tr132;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr135;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 58u ) {
@@ -2327,19 +2371,28 @@ case 61:
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
 		goto tr124;
 	goto tr122;
+tr127:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st62;
 st62:
 	if ( ++p == pe )
 		goto _test_eof62;
 case 62:
+#line 2396 "lexer2.c"
 	switch( (*p) ) {
 		case 33u: goto tr124;
 		case 59u: goto tr124;
@@ -2353,10 +2406,19 @@ case 62:
 	} else if ( (*p) >= 35u )
 		goto tr124;
 	goto tr122;
+tr128:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st63;
 st63:
 	if ( ++p == pe )
 		goto _test_eof63;
 case 63:
+#line 2422 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
 			goto tr124;
@@ -2366,253 +2428,486 @@ case 63:
 	} else
 		goto tr124;
 	goto tr122;
+tr129:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st64;
 st64:
 	if ( ++p == pe )
 		goto _test_eof64;
 case 64:
+#line 2444 "lexer2.c"
 	goto tr124;
+tr130:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st65;
 st65:
 	if ( ++p == pe )
 		goto _test_eof65;
 case 65:
+#line 2458 "lexer2.c"
 	if ( 192u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr131:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st66;
 st66:
 	if ( ++p == pe )
 		goto _test_eof66;
 case 66:
+#line 2474 "lexer2.c"
 	if ( 128u <= (*p) )
 		goto tr124;
 	goto tr122;
+tr132:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st67;
 st67:
 	if ( ++p == pe )
 		goto _test_eof67;
 case 67:
+#line 2490 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr122;
 	goto tr124;
+tr133:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st68;
 st68:
 	if ( ++p == pe )
 		goto _test_eof68;
 case 68:
+#line 2506 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st66;
+		goto tr131;
 	if ( 161u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr134:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st69;
 st69:
 	if ( ++p == pe )
 		goto _test_eof69;
 case 69:
+#line 2524 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st65;
+		goto tr130;
 	if ( 192u <= (*p) )
 		goto tr122;
-	goto st64;
+	goto tr129;
+tr135:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st70;
 st70:
 	if ( ++p == pe )
 		goto _test_eof70;
 case 70:
+#line 2542 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st71;
-		case 129u: goto st72;
-		case 134u: goto st73;
-		case 176u: goto st66;
-		case 191u: goto st74;
+		case 128u: goto tr143;
+		case 129u: goto tr144;
+		case 134u: goto tr145;
+		case 176u: goto tr131;
+		case 191u: goto tr146;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st64;
+			goto tr129;
 	} else if ( (*p) >= 130u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr143:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st71;
 st71:
 	if ( ++p == pe )
 		goto _test_eof71;
 case 71:
+#line 2568 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
 			goto tr124;
 	} else if ( (*p) >= 140u )
 		goto tr124;
 	goto tr122;
+tr144:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st72;
 st72:
 	if ( ++p == pe )
 		goto _test_eof72;
 case 72:
+#line 2587 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr122;
 	goto tr124;
+tr145:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st73;
 st73:
 	if ( ++p == pe )
 		goto _test_eof73;
 case 73:
+#line 2603 "lexer2.c"
 	if ( 144u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr146:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st74;
 st74:
 	if ( ++p == pe )
 		goto _test_eof74;
 case 74:
+#line 2619 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr136:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st75;
 st75:
 	if ( ++p == pe )
 		goto _test_eof75;
 case 75:
+#line 2635 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st76;
+		goto tr147;
 	if ( 129u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr147:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st76;
 st76:
 	if ( ++p == pe )
 		goto _test_eof76;
 case 76:
+#line 2653 "lexer2.c"
 	if ( 129u <= (*p) )
 		goto tr124;
 	goto tr122;
+tr137:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st77;
 st77:
 	if ( ++p == pe )
 		goto _test_eof77;
 case 77:
-	goto st64;
+#line 2669 "lexer2.c"
+	goto tr129;
+tr138:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st78;
 st78:
 	if ( ++p == pe )
 		goto _test_eof78;
 case 78:
+#line 2683 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st65;
+		goto tr130;
 	if ( 160u <= (*p) )
 		goto tr122;
-	goto st64;
+	goto tr129;
+tr139:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st79;
 st79:
 	if ( ++p == pe )
 		goto _test_eof79;
 case 79:
+#line 2701 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st66;
-		case 183u: goto st80;
-		case 191u: goto st81;
+		case 164u: goto tr131;
+		case 183u: goto tr148;
+		case 191u: goto tr149;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr148:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st80;
 st80:
 	if ( ++p == pe )
 		goto _test_eof80;
 case 80:
+#line 2722 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
 		goto tr122;
 	goto tr124;
+tr149:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st81;
 st81:
 	if ( ++p == pe )
 		goto _test_eof81;
 case 81:
+#line 2738 "lexer2.c"
 	if ( 190u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr140:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st82;
 st82:
 	if ( ++p == pe )
 		goto _test_eof82;
 case 82:
+#line 2754 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st83;
+		goto tr150;
 	if ( 145u <= (*p) )
-		goto st77;
+		goto tr137;
 	goto tr122;
+tr150:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st83;
 st83:
 	if ( ++p == pe )
 		goto _test_eof83;
 case 83:
+#line 2772 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st66;
+		goto tr131;
 	if ( 129u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr141:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st84;
 st84:
 	if ( ++p == pe )
 		goto _test_eof84;
 case 84:
-	goto st77;
+#line 2790 "lexer2.c"
+	goto tr137;
+tr142:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st85;
 st85:
 	if ( ++p == pe )
 		goto _test_eof85;
 case 85:
+#line 2804 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st69;
+		goto tr134;
 	if ( 176u <= (*p) )
 		goto tr122;
-	goto st77;
+	goto tr137;
+tr322:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st86;
 st86:
 	if ( ++p == pe )
 		goto _test_eof86;
 case 86:
+#line 2822 "lexer2.c"
 	if ( (*p) > 189u ) {
 		if ( 191u <= (*p) )
 			goto tr124;
 	} else if ( (*p) >= 176u )
 		goto tr124;
 	goto tr122;
+tr323:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st87;
 st87:
 	if ( ++p == pe )
 		goto _test_eof87;
 case 87:
+#line 2841 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st88;
-		case 129u: goto st89;
-		case 134u: goto st73;
-		case 176u: goto st66;
-		case 191u: goto st74;
+		case 128u: goto tr151;
+		case 129u: goto tr152;
+		case 134u: goto tr145;
+		case 176u: goto tr131;
+		case 191u: goto tr146;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st64;
+			goto tr129;
 	} else if ( (*p) >= 130u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr151:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st88;
 st88:
 	if ( ++p == pe )
 		goto _test_eof88;
 case 88:
+#line 2867 "lexer2.c"
 	if ( 140u <= (*p) && (*p) <= 141u )
 		goto tr124;
 	goto tr122;
+tr152:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st89;
 st89:
 	if ( ++p == pe )
 		goto _test_eof89;
 case 89:
+#line 2883 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr124;
 	goto tr122;
-tr249:
+tr274:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st184;
-st184:
+	goto st203;
+st203:
 	if ( ++p == pe )
-		goto _test_eof184;
-case 184:
-#line 2599 "lexer2.c"
+		goto _test_eof203;
+case 203:
+#line 2895 "lexer2.c"
 	switch( (*p) ) {
-		case 34u: goto tr278;
-		case 60u: goto tr278;
-		case 62u: goto tr300;
-		case 92u: goto tr301;
-		case 94u: goto tr278;
-		case 96u: goto tr278;
-		case 123u: goto tr278;
-		case 125u: goto tr278;
+		case 34u: goto tr303;
+		case 60u: goto tr303;
+		case 62u: goto tr325;
+		case 92u: goto tr326;
+		case 94u: goto tr303;
+		case 96u: goto tr303;
+		case 123u: goto tr303;
+		case 125u: goto tr303;
 	}
 	if ( (*p) <= 32u )
-		goto tr278;
-	goto tr299;
+		goto tr303;
+	goto tr324;
 tr153:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -2623,27 +2918,26 @@ tr166:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st90;
-tr299:
+tr324:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -2653,7 +2947,7 @@ st90:
 	if ( ++p == pe )
 		goto _test_eof90;
 case 90:
-#line 2657 "lexer2.c"
+#line 2951 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr0;
 		case 60u: goto tr0;
@@ -2672,23 +2966,24 @@ tr168:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st91;
-tr301:
+tr326:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st91;
 st91:
 	if ( ++p == pe )
 		goto _test_eof91;
 case 91:
-#line 2692 "lexer2.c"
+#line 2987 "lexer2.c"
 	switch( (*p) ) {
 		case 85u: goto st92;
 		case 117u: goto st101;
@@ -2717,7 +3012,7 @@ st93:
 	if ( ++p == pe )
 		goto _test_eof93;
 case 93:
-#line 2721 "lexer2.c"
+#line 3016 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st94;
@@ -2776,7 +3071,7 @@ st97:
 	if ( ++p == pe )
 		goto _test_eof97;
 case 97:
-#line 2780 "lexer2.c"
+#line 3075 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st98;
@@ -2842,50 +3137,50 @@ case 101:
 	} else
 		goto tr169;
 	goto tr0;
-st185:
+st204:
 	if ( ++p == pe )
-		goto _test_eof185;
-case 185:
+		goto _test_eof204;
+case 204:
 	switch( (*p) ) {
-		case 98u: goto tr303;
-		case 112u: goto tr304;
+		case 98u: goto tr328;
+		case 112u: goto tr329;
 	}
 	if ( (*p) > 90u ) {
 		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
+			goto tr327;
 	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr278;
-tr302:
+		goto tr327;
+	goto tr303;
+tr327:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
+#line 228 "turtle.rl"
 	{ shared_lexer->env.act = 17;}
-	goto st186;
-tr309:
+	goto st205;
+tr334:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 198 "turtle.rl"
+#line 206 "turtle.rl"
 	{ shared_lexer->env.act = 3;}
-	goto st186;
-tr314:
+	goto st205;
+tr339:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 196 "turtle.rl"
+#line 204 "turtle.rl"
 	{ shared_lexer->env.act = 1;}
-	goto st186;
-st186:
+	goto st205;
+st205:
 	if ( ++p == pe )
-		goto _test_eof186;
-case 186:
-#line 2882 "lexer2.c"
+		goto _test_eof205;
+case 205:
+#line 3177 "lexer2.c"
 	if ( (*p) == 45u )
 		goto st102;
 	if ( (*p) > 90u ) {
 		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
+			goto tr327;
 	} else if ( (*p) >= 65u )
-		goto tr302;
+		goto tr327;
 	goto tr117;
 st102:
 	if ( ++p == pe )
@@ -2903,14 +3198,14 @@ case 102:
 tr170:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
+#line 228 "turtle.rl"
 	{ shared_lexer->env.act = 17;}
-	goto st187;
-st187:
+	goto st206;
+st206:
 	if ( ++p == pe )
-		goto _test_eof187;
-case 187:
-#line 2914 "lexer2.c"
+		goto _test_eof206;
+case 206:
+#line 3209 "lexer2.c"
 	if ( (*p) == 45u )
 		goto st102;
 	if ( (*p) < 65u ) {
@@ -2921,929 +3216,1272 @@ case 187:
 			goto tr170;
 	} else
 		goto tr170;
-	goto tr306;
-tr303:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st188;
-st188:
-	if ( ++p == pe )
-		goto _test_eof188;
-case 188:
-#line 2936 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 97u: goto tr307;
-	}
-	if ( (*p) > 90u ) {
-		if ( 98u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr307:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st189;
-st189:
-	if ( ++p == pe )
-		goto _test_eof189;
-case 189:
-#line 2957 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 115u: goto tr308;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr308:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st190;
-st190:
-	if ( ++p == pe )
-		goto _test_eof190;
-case 190:
-#line 2978 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 101u: goto tr309;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr304:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st191;
-st191:
-	if ( ++p == pe )
-		goto _test_eof191;
-case 191:
-#line 2999 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 114u: goto tr310;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr310:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st192;
-st192:
-	if ( ++p == pe )
-		goto _test_eof192;
-case 192:
-#line 3020 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 101u: goto tr311;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr311:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st193;
-st193:
-	if ( ++p == pe )
-		goto _test_eof193;
-case 193:
-#line 3041 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 102u: goto tr312;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr312:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st194;
-st194:
-	if ( ++p == pe )
-		goto _test_eof194;
-case 194:
-#line 3062 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 105u: goto tr313;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr313:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st195;
-st195:
-	if ( ++p == pe )
-		goto _test_eof195;
-case 195:
-#line 3083 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 120u: goto tr314;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr198:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 199 "turtle.rl"
-	{ shared_lexer->env.act = 4;}
-	goto st196;
-tr202:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 197 "turtle.rl"
-	{ shared_lexer->env.act = 2;}
-	goto st196;
-tr235:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 212 "turtle.rl"
-	{ shared_lexer->env.act = 11;}
-	goto st196;
-tr251:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st196;
-tr258:
+	goto tr331;
+tr328:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 228 "turtle.rl"
-	{ shared_lexer->env.act = 18;}
-	goto st196;
-st196:
+	{ shared_lexer->env.act = 17;}
+	goto st207;
+st207:
 	if ( ++p == pe )
-		goto _test_eof196;
-case 196:
-#line 3128 "lexer2.c"
+		goto _test_eof207;
+case 207:
+#line 3231 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto st102;
+		case 97u: goto tr332;
+	}
+	if ( (*p) > 90u ) {
+		if ( 98u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr332:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st208;
+st208:
+	if ( ++p == pe )
+		goto _test_eof208;
+case 208:
+#line 3252 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 115u: goto tr333;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr333:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st209;
+st209:
+	if ( ++p == pe )
+		goto _test_eof209;
+case 209:
+#line 3273 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 101u: goto tr334;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr329:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st210;
+st210:
+	if ( ++p == pe )
+		goto _test_eof210;
+case 210:
+#line 3294 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 114u: goto tr335;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr335:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st211;
+st211:
+	if ( ++p == pe )
+		goto _test_eof211;
+case 211:
+#line 3315 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 101u: goto tr336;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr336:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st212;
+st212:
+	if ( ++p == pe )
+		goto _test_eof212;
+case 212:
+#line 3336 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 102u: goto tr337;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr337:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st213;
+st213:
+	if ( ++p == pe )
+		goto _test_eof213;
+case 213:
+#line 3357 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 105u: goto tr338;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr338:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st214;
+st214:
+	if ( ++p == pe )
+		goto _test_eof214;
+case 214:
+#line 3378 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 120u: goto tr339;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr198:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 207 "turtle.rl"
+	{ shared_lexer->env.act = 4;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st215;
+tr202:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 205 "turtle.rl"
+	{ shared_lexer->env.act = 2;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st215;
+tr259:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 217 "turtle.rl"
+	{ shared_lexer->env.act = 11;}
+	goto st215;
+tr276:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st215;
+tr283:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 233 "turtle.rl"
+	{ shared_lexer->env.act = 18;}
+	goto st215;
+st215:
+	if ( ++p == pe )
+		goto _test_eof215;
+case 215:
+#line 3465 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr171:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st103;
 st103:
 	if ( ++p == pe )
 		goto _test_eof103;
 case 103:
+#line 3516 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr172:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st104;
 st104:
 	if ( ++p == pe )
 		goto _test_eof104;
 case 104:
+#line 3567 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr174:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st105;
 st105:
 	if ( ++p == pe )
 		goto _test_eof105;
 case 105:
+#line 3617 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 182u ) {
 		if ( 184u <= (*p) )
-			goto st103;
+			goto tr171;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr175:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st106;
 st106:
 	if ( ++p == pe )
 		goto _test_eof106;
 case 106:
-	goto st103;
+#line 3639 "lexer2.c"
+	goto tr171;
+tr176:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st107;
 st107:
 	if ( ++p == pe )
 		goto _test_eof107;
 case 107:
+#line 3653 "lexer2.c"
 	if ( 192u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr177:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st108;
 st108:
 	if ( ++p == pe )
 		goto _test_eof108;
 case 108:
+#line 3669 "lexer2.c"
 	if ( 128u <= (*p) )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr178:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st109;
 st109:
 	if ( ++p == pe )
 		goto _test_eof109;
 case 109:
+#line 3685 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr179:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st110;
 st110:
 	if ( ++p == pe )
 		goto _test_eof110;
 case 110:
+#line 3701 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st108;
+		goto tr177;
 	if ( 161u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr180:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st111;
 st111:
 	if ( ++p == pe )
 		goto _test_eof111;
 case 111:
+#line 3719 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st107;
+		goto tr176;
 	if ( 192u <= (*p) )
 		goto tr117;
-	goto st106;
+	goto tr175;
+tr181:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st112;
 st112:
 	if ( ++p == pe )
 		goto _test_eof112;
 case 112:
+#line 3737 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st113;
-		case 129u: goto st114;
-		case 134u: goto st115;
-		case 176u: goto st108;
-		case 191u: goto st116;
+		case 128u: goto tr189;
+		case 129u: goto tr190;
+		case 134u: goto tr191;
+		case 176u: goto tr177;
+		case 191u: goto tr192;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st106;
+			goto tr175;
 	} else if ( (*p) >= 130u )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr189:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st113;
 st113:
 	if ( ++p == pe )
 		goto _test_eof113;
 case 113:
+#line 3763 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) >= 140u )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr190:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st114;
 st114:
 	if ( ++p == pe )
 		goto _test_eof114;
 case 114:
+#line 3782 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr191:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st115;
 st115:
 	if ( ++p == pe )
 		goto _test_eof115;
 case 115:
+#line 3798 "lexer2.c"
 	if ( 144u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr192:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st116;
 st116:
 	if ( ++p == pe )
 		goto _test_eof116;
 case 116:
+#line 3814 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr182:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st117;
 st117:
 	if ( ++p == pe )
 		goto _test_eof117;
 case 117:
+#line 3830 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st118;
+		goto tr193;
 	if ( 129u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr193:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st118;
 st118:
 	if ( ++p == pe )
 		goto _test_eof118;
 case 118:
+#line 3848 "lexer2.c"
 	if ( 129u <= (*p) )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr183:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st119;
 st119:
 	if ( ++p == pe )
 		goto _test_eof119;
 case 119:
-	goto st106;
+#line 3864 "lexer2.c"
+	goto tr175;
+tr184:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st120;
 st120:
 	if ( ++p == pe )
 		goto _test_eof120;
 case 120:
+#line 3878 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st107;
+		goto tr176;
 	if ( 160u <= (*p) )
 		goto tr117;
-	goto st106;
+	goto tr175;
+tr185:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st121;
 st121:
 	if ( ++p == pe )
 		goto _test_eof121;
 case 121:
+#line 3896 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st108;
-		case 183u: goto st122;
-		case 191u: goto st123;
+		case 164u: goto tr177;
+		case 183u: goto tr194;
+		case 191u: goto tr195;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr194:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st122;
 st122:
 	if ( ++p == pe )
 		goto _test_eof122;
 case 122:
+#line 3917 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr195:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st123;
 st123:
 	if ( ++p == pe )
 		goto _test_eof123;
 case 123:
+#line 3933 "lexer2.c"
 	if ( 190u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr186:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st124;
 st124:
 	if ( ++p == pe )
 		goto _test_eof124;
 case 124:
+#line 3949 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st125;
+		goto tr196;
 	if ( 145u <= (*p) )
-		goto st119;
+		goto tr183;
 	goto tr117;
+tr196:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st125;
 st125:
 	if ( ++p == pe )
 		goto _test_eof125;
 case 125:
+#line 3967 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st108;
+		goto tr177;
 	if ( 129u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr187:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st126;
 st126:
 	if ( ++p == pe )
 		goto _test_eof126;
 case 126:
-	goto st119;
+#line 3985 "lexer2.c"
+	goto tr183;
+tr188:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st127;
 st127:
 	if ( ++p == pe )
 		goto _test_eof127;
 case 127:
+#line 3999 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st111;
+		goto tr180;
 	if ( 176u <= (*p) )
 		goto tr117;
-	goto st119;
-tr252:
+	goto tr183;
+tr277:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
 	{ shared_lexer->env.act = 30;}
-	goto st197;
-st197:
+	goto st216;
+st216:
 	if ( ++p == pe )
-		goto _test_eof197;
-case 197:
-#line 3453 "lexer2.c"
+		goto _test_eof216;
+case 216:
+#line 4027 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 65u: goto st128;
-		case 95u: goto st103;
-		case 97u: goto st128;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 65u: goto tr340;
+		case 95u: goto tr171;
+		case 97u: goto tr340;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 98u ) {
 		if ( (*p) > 57u ) {
 			if ( 66u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
-	goto tr278;
+		goto tr171;
+	goto tr303;
+tr340:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st128;
 st128:
 	if ( ++p == pe )
 		goto _test_eof128;
 case 128:
+#line 4080 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 83u: goto st129;
-		case 95u: goto st103;
-		case 115u: goto st129;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 83u: goto tr197;
+		case 95u: goto tr171;
+		case 115u: goto tr197;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr197:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st129;
 st129:
 	if ( ++p == pe )
 		goto _test_eof129;
 case 129:
+#line 4133 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
 		case 69u: goto tr198;
-		case 95u: goto st103;
+		case 95u: goto tr171;
 		case 101u: goto tr198;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
-tr253:
+tr278:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
 	{ shared_lexer->env.act = 30;}
-	goto st198;
-st198:
+	goto st217;
+st217:
 	if ( ++p == pe )
-		goto _test_eof198;
-case 198:
-#line 3592 "lexer2.c"
+		goto _test_eof217;
+case 217:
+#line 4196 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 82u: goto st130;
-		case 95u: goto st103;
-		case 114u: goto st130;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 82u: goto tr341;
+		case 95u: goto tr171;
+		case 114u: goto tr341;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
-	goto tr278;
+		goto tr171;
+	goto tr303;
+tr341:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st130;
 st130:
 	if ( ++p == pe )
 		goto _test_eof130;
 case 130:
+#line 4249 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 69u: goto st131;
-		case 95u: goto st103;
-		case 101u: goto st131;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 69u: goto tr199;
+		case 95u: goto tr171;
+		case 101u: goto tr199;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr199:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st131;
 st131:
 	if ( ++p == pe )
 		goto _test_eof131;
 case 131:
+#line 4302 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 70u: goto st132;
-		case 95u: goto st103;
-		case 102u: goto st132;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 70u: goto tr200;
+		case 95u: goto tr171;
+		case 102u: goto tr200;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr200:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st132;
 st132:
 	if ( ++p == pe )
 		goto _test_eof132;
 case 132:
+#line 4355 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 73u: goto st133;
-		case 95u: goto st103;
-		case 105u: goto st133;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 73u: goto tr201;
+		case 95u: goto tr171;
+		case 105u: goto tr201;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr201:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st133;
 st133:
 	if ( ++p == pe )
 		goto _test_eof133;
 case 133:
+#line 4408 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
 		case 88u: goto tr202;
-		case 95u: goto st103;
+		case 95u: goto tr171;
 		case 120u: goto tr202;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
-st199:
+st218:
 	if ( ++p == pe )
-		goto _test_eof199;
-case 199:
+		goto _test_eof218;
+case 218:
 	if ( (*p) == 94u )
-		goto tr317;
-	goto tr278;
-tr257:
+		goto tr342;
+	goto tr303;
+tr282:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st200;
-st200:
+	goto st219;
+st219:
 	if ( ++p == pe )
-		goto _test_eof200;
-case 200:
-#line 3826 "lexer2.c"
+		goto _test_eof219;
+case 219:
+#line 4464 "lexer2.c"
 	if ( (*p) == 58u )
 		goto st134;
-	goto tr278;
+	goto tr303;
 st134:
 	if ( ++p == pe )
 		goto _test_eof134;
 case 134:
 	switch( (*p) ) {
 		case 95u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 205u: goto st159;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st160;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 195u: goto tr204;
+		case 203u: goto tr206;
+		case 205u: goto tr207;
+		case 223u: goto tr206;
+		case 224u: goto tr208;
+		case 225u: goto tr209;
+		case 226u: goto tr210;
+		case 227u: goto tr211;
+		case 237u: goto tr213;
+		case 239u: goto tr214;
+		case 240u: goto tr215;
+		case 243u: goto tr217;
 	}
 	if ( (*p) < 196u ) {
 		if ( (*p) < 65u ) {
@@ -3857,854 +4495,1811 @@ case 134:
 	} else if ( (*p) > 202u ) {
 		if ( (*p) < 228u ) {
 			if ( 206u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr205;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr216;
 		} else
-			goto st150;
+			goto tr212;
 	} else
-		goto st137;
+		goto tr205;
 	goto tr0;
+tr219:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st220;
 tr203:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 201 "turtle.rl"
-	{ shared_lexer->env.act = 5;}
-	goto st201;
-st201:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st220;
+st220:
 	if ( ++p == pe )
-		goto _test_eof201;
-case 201:
-#line 3880 "lexer2.c"
+		goto _test_eof220;
+case 220:
+#line 4538 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto tr203;
-		case 46u: goto st135;
-		case 95u: goto tr203;
-		case 183u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 204u: goto st139;
-		case 205u: goto st140;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st143;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 45u: goto tr219;
+		case 46u: goto tr220;
+		case 95u: goto tr219;
+		case 183u: goto tr219;
+		case 195u: goto tr221;
+		case 203u: goto tr223;
+		case 204u: goto tr224;
+		case 205u: goto tr225;
+		case 223u: goto tr223;
+		case 224u: goto tr226;
+		case 225u: goto tr227;
+		case 226u: goto tr228;
+		case 227u: goto tr229;
+		case 237u: goto tr231;
+		case 239u: goto tr232;
+		case 240u: goto tr233;
+		case 243u: goto tr235;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr203;
+				goto tr219;
 		} else if ( (*p) >= 48u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr222;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr234;
 		} else
-			goto st150;
+			goto tr230;
 	} else
-		goto tr203;
-	goto tr319;
+		goto tr219;
+	goto tr344;
+tr220:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st135;
 st135:
 	if ( ++p == pe )
 		goto _test_eof135;
 case 135:
+#line 4588 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto tr203;
-		case 46u: goto st135;
-		case 95u: goto tr203;
-		case 183u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 204u: goto st139;
-		case 205u: goto st140;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st143;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 45u: goto tr219;
+		case 46u: goto tr220;
+		case 95u: goto tr219;
+		case 183u: goto tr219;
+		case 195u: goto tr221;
+		case 203u: goto tr223;
+		case 204u: goto tr224;
+		case 205u: goto tr225;
+		case 223u: goto tr223;
+		case 224u: goto tr226;
+		case 225u: goto tr227;
+		case 226u: goto tr228;
+		case 227u: goto tr229;
+		case 237u: goto tr231;
+		case 239u: goto tr232;
+		case 240u: goto tr233;
+		case 243u: goto tr235;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr203;
+				goto tr219;
 		} else if ( (*p) >= 48u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr222;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr234;
 		} else
-			goto st150;
+			goto tr230;
 	} else
-		goto tr203;
+		goto tr219;
 	goto tr218;
+tr221:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st136;
 st136:
 	if ( ++p == pe )
 		goto _test_eof136;
 case 136:
+#line 4638 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 182u ) {
 		if ( 184u <= (*p) )
-			goto tr203;
+			goto tr219;
 	} else
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr222:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st137;
 st137:
 	if ( ++p == pe )
 		goto _test_eof137;
 case 137:
-	goto tr203;
+#line 4660 "lexer2.c"
+	goto tr219;
+tr223:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st138;
 st138:
 	if ( ++p == pe )
 		goto _test_eof138;
 case 138:
+#line 4674 "lexer2.c"
 	if ( 192u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr224:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st139;
 st139:
 	if ( ++p == pe )
 		goto _test_eof139;
 case 139:
+#line 4690 "lexer2.c"
 	if ( 128u <= (*p) )
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr225:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st140;
 st140:
 	if ( ++p == pe )
 		goto _test_eof140;
 case 140:
+#line 4706 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr218;
-	goto tr203;
+	goto tr219;
+tr226:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st141;
 st141:
 	if ( ++p == pe )
 		goto _test_eof141;
 case 141:
+#line 4722 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st139;
+		goto tr224;
 	if ( 161u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr227:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st142;
 st142:
 	if ( ++p == pe )
 		goto _test_eof142;
 case 142:
+#line 4740 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st138;
+		goto tr223;
 	if ( 192u <= (*p) )
-		goto tr117;
-	goto st137;
+		goto tr218;
+	goto tr222;
+tr228:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st143;
 st143:
 	if ( ++p == pe )
 		goto _test_eof143;
 case 143:
+#line 4758 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st144;
-		case 129u: goto st145;
-		case 134u: goto st146;
-		case 176u: goto st139;
-		case 191u: goto st147;
+		case 128u: goto tr236;
+		case 129u: goto tr237;
+		case 134u: goto tr238;
+		case 176u: goto tr224;
+		case 191u: goto tr239;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st137;
+			goto tr222;
 	} else if ( (*p) >= 130u )
-		goto st137;
+		goto tr222;
 	goto tr218;
+tr236:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st144;
 st144:
 	if ( ++p == pe )
 		goto _test_eof144;
 case 144:
+#line 4784 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) >= 140u )
-		goto tr203;
+		goto tr219;
 	goto tr218;
+tr237:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st145;
 st145:
 	if ( ++p == pe )
 		goto _test_eof145;
 case 145:
+#line 4803 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr218;
-	goto tr203;
+	goto tr219;
+tr238:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st146;
 st146:
 	if ( ++p == pe )
 		goto _test_eof146;
 case 146:
+#line 4819 "lexer2.c"
 	if ( 144u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr239:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st147;
 st147:
 	if ( ++p == pe )
 		goto _test_eof147;
 case 147:
+#line 4835 "lexer2.c"
 	if ( 176u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr229:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st148;
 st148:
 	if ( ++p == pe )
 		goto _test_eof148;
 case 148:
+#line 4851 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st149;
+		goto tr240;
 	if ( 129u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr240:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st149;
 st149:
 	if ( ++p == pe )
 		goto _test_eof149;
 case 149:
+#line 4869 "lexer2.c"
 	if ( 129u <= (*p) )
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr230:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st150;
 st150:
 	if ( ++p == pe )
 		goto _test_eof150;
 case 150:
-	goto st137;
+#line 4885 "lexer2.c"
+	goto tr222;
+tr231:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st151;
 st151:
 	if ( ++p == pe )
 		goto _test_eof151;
 case 151:
+#line 4899 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st138;
+		goto tr223;
 	if ( 160u <= (*p) )
-		goto tr117;
-	goto st137;
+		goto tr218;
+	goto tr222;
+tr232:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st152;
 st152:
 	if ( ++p == pe )
 		goto _test_eof152;
 case 152:
+#line 4917 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st139;
-		case 183u: goto st153;
-		case 191u: goto st154;
+		case 164u: goto tr224;
+		case 183u: goto tr241;
+		case 191u: goto tr242;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr241:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st153;
 st153:
 	if ( ++p == pe )
 		goto _test_eof153;
 case 153:
+#line 4938 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr242:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st154;
 st154:
 	if ( ++p == pe )
 		goto _test_eof154;
 case 154:
+#line 4954 "lexer2.c"
 	if ( 190u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr233:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st155;
 st155:
 	if ( ++p == pe )
 		goto _test_eof155;
 case 155:
+#line 4970 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st156;
+		goto tr243;
 	if ( 145u <= (*p) )
-		goto st150;
-	goto tr117;
+		goto tr230;
+	goto tr218;
+tr243:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st156;
 st156:
 	if ( ++p == pe )
 		goto _test_eof156;
 case 156:
+#line 4988 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st139;
+		goto tr224;
 	if ( 129u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr234:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st157;
 st157:
 	if ( ++p == pe )
 		goto _test_eof157;
 case 157:
-	goto st150;
+#line 5006 "lexer2.c"
+	goto tr230;
+tr235:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st158;
 st158:
 	if ( ++p == pe )
 		goto _test_eof158;
 case 158:
+#line 5020 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st142;
+		goto tr227;
 	if ( 176u <= (*p) )
-		goto tr117;
-	goto st150;
+		goto tr218;
+	goto tr230;
+tr204:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st159;
 st159:
 	if ( ++p == pe )
 		goto _test_eof159;
 case 159:
-	if ( (*p) > 189u ) {
-		if ( 191u <= (*p) )
-			goto tr203;
-	} else if ( (*p) >= 176u )
-		goto tr203;
+#line 5044 "lexer2.c"
+	if ( (*p) < 152u ) {
+		if ( 128u <= (*p) && (*p) <= 150u )
+			goto tr219;
+	} else if ( (*p) > 182u ) {
+		if ( 184u <= (*p) )
+			goto tr219;
+	} else
+		goto tr219;
 	goto tr0;
+tr245:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st160;
+tr205:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st160;
 st160:
 	if ( ++p == pe )
 		goto _test_eof160;
 case 160:
-	switch( (*p) ) {
-		case 128u: goto st161;
-		case 129u: goto st162;
-		case 134u: goto st146;
-		case 176u: goto st139;
-		case 191u: goto st147;
-	}
-	if ( (*p) > 133u ) {
-		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st137;
-	} else if ( (*p) >= 130u )
-		goto st137;
-	goto tr0;
+#line 5080 "lexer2.c"
+	goto tr219;
+tr246:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st161;
+tr206:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st161;
 st161:
 	if ( ++p == pe )
 		goto _test_eof161;
 case 161:
-	if ( 140u <= (*p) && (*p) <= 141u )
-		goto tr203;
-	goto tr0;
+#line 5108 "lexer2.c"
+	if ( 192u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr207:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st162;
 st162:
 	if ( ++p == pe )
 		goto _test_eof162;
 case 162:
-	if ( 176u <= (*p) )
-		goto tr203;
+#line 5130 "lexer2.c"
+	if ( (*p) > 189u ) {
+		if ( 191u <= (*p) )
+			goto tr219;
+	} else if ( (*p) >= 176u )
+		goto tr219;
 	goto tr0;
-tr259:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st202;
-st202:
-	if ( ++p == pe )
-		goto _test_eof202;
-case 202:
-#line 4203 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 97u: goto st163;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 98u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr278;
+tr208:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st163;
 st163:
 	if ( ++p == pe )
 		goto _test_eof163;
 case 163:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 108u: goto st164;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
+#line 5155 "lexer2.c"
+	if ( (*p) == 160u )
+		goto tr244;
+	if ( 161u <= (*p) )
+		goto tr245;
 	goto tr0;
+tr244:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st164;
 st164:
 	if ( ++p == pe )
 		goto _test_eof164;
 case 164:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 115u: goto st165;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
+#line 5173 "lexer2.c"
+	if ( 128u <= (*p) )
+		goto tr219;
 	goto tr0;
+tr256:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st165;
+tr209:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st165;
 st165:
 	if ( ++p == pe )
 		goto _test_eof165;
 case 165:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 101u: goto tr235;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr0;
-tr260:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st203;
-st203:
-	if ( ++p == pe )
-		goto _test_eof203;
-case 203:
-#line 4382 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 114u: goto st166;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr278;
+#line 5203 "lexer2.c"
+	if ( (*p) == 191u )
+		goto tr246;
+	if ( 192u <= (*p) )
+		goto tr0;
+	goto tr245;
+tr210:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st166;
 st166:
 	if ( ++p == pe )
 		goto _test_eof166;
 case 166:
+#line 5227 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 117u: goto st165;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr0;
-tr263:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st204;
-st204:
-	if ( ++p == pe )
-		goto _test_eof204;
-case 204:
-#line 4475 "lexer2.c"
-	if ( (*p) < 152u ) {
-		if ( 128u <= (*p) && (*p) <= 150u )
-			goto st103;
-	} else if ( (*p) > 182u ) {
-		if ( 184u <= (*p) )
-			goto st103;
-	} else
-		goto st103;
-	goto tr278;
-tr264:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st205;
-st205:
-	if ( ++p == pe )
-		goto _test_eof205;
-case 205:
-#line 4495 "lexer2.c"
-	goto st103;
-tr265:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st206;
-st206:
-	if ( ++p == pe )
-		goto _test_eof206;
-case 206:
-#line 4507 "lexer2.c"
-	if ( 192u <= (*p) )
-		goto tr278;
-	goto st103;
-tr266:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st207;
-st207:
-	if ( ++p == pe )
-		goto _test_eof207;
-case 207:
-#line 4521 "lexer2.c"
-	if ( (*p) > 189u ) {
-		if ( 191u <= (*p) )
-			goto st103;
-	} else if ( (*p) >= 176u )
-		goto st103;
-	goto tr278;
-tr267:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st208;
-st208:
-	if ( ++p == pe )
-		goto _test_eof208;
-case 208:
-#line 4538 "lexer2.c"
-	if ( (*p) == 160u )
-		goto st108;
-	if ( 161u <= (*p) )
-		goto st106;
-	goto tr278;
-tr268:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st209;
-st209:
-	if ( ++p == pe )
-		goto _test_eof209;
-case 209:
-#line 4554 "lexer2.c"
-	if ( (*p) == 191u )
-		goto st107;
-	if ( 192u <= (*p) )
-		goto tr278;
-	goto st106;
-tr269:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st210;
-st210:
-	if ( ++p == pe )
-		goto _test_eof210;
-case 210:
-#line 4570 "lexer2.c"
-	switch( (*p) ) {
-		case 128u: goto st167;
-		case 129u: goto st168;
-		case 134u: goto st115;
-		case 176u: goto st108;
-		case 191u: goto st116;
+		case 128u: goto tr247;
+		case 129u: goto tr248;
+		case 134u: goto tr249;
+		case 176u: goto tr244;
+		case 191u: goto tr250;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st106;
+			goto tr245;
 	} else if ( (*p) >= 130u )
-		goto st106;
-	goto tr278;
+		goto tr245;
+	goto tr0;
+tr247:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st167;
 st167:
 	if ( ++p == pe )
 		goto _test_eof167;
 case 167:
+#line 5253 "lexer2.c"
 	if ( 140u <= (*p) && (*p) <= 141u )
-		goto st103;
+		goto tr219;
 	goto tr0;
+tr248:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st168;
 st168:
 	if ( ++p == pe )
 		goto _test_eof168;
 case 168:
+#line 5269 "lexer2.c"
 	if ( 176u <= (*p) )
-		goto st103;
+		goto tr219;
 	goto tr0;
-tr270:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st211;
-st211:
+tr249:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st169;
+st169:
 	if ( ++p == pe )
-		goto _test_eof211;
-case 211:
-#line 4608 "lexer2.c"
+		goto _test_eof169;
+case 169:
+#line 5285 "lexer2.c"
+	if ( 144u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr250:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st170;
+st170:
+	if ( ++p == pe )
+		goto _test_eof170;
+case 170:
+#line 5301 "lexer2.c"
+	if ( 176u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr211:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st171;
+st171:
+	if ( ++p == pe )
+		goto _test_eof171;
+case 171:
+#line 5323 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st118;
+		goto tr251;
 	if ( 129u <= (*p) )
-		goto st106;
-	goto tr278;
-tr271:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st212;
-st212:
+		goto tr245;
+	goto tr0;
+tr251:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st172;
+st172:
 	if ( ++p == pe )
-		goto _test_eof212;
-case 212:
-#line 4624 "lexer2.c"
-	goto st106;
-tr272:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st213;
-st213:
+		goto _test_eof172;
+case 172:
+#line 5341 "lexer2.c"
+	if ( 129u <= (*p) )
+		goto tr219;
+	goto tr0;
+tr255:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st173;
+tr212:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st173;
+st173:
 	if ( ++p == pe )
-		goto _test_eof213;
-case 213:
-#line 4636 "lexer2.c"
+		goto _test_eof173;
+case 173:
+#line 5371 "lexer2.c"
+	goto tr245;
+tr213:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st174;
+st174:
+	if ( ++p == pe )
+		goto _test_eof174;
+case 174:
+#line 5391 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st107;
+		goto tr246;
 	if ( 160u <= (*p) )
-		goto tr278;
-	goto st106;
-tr273:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st214;
-st214:
+		goto tr0;
+	goto tr245;
+tr214:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st175;
+st175:
 	if ( ++p == pe )
-		goto _test_eof214;
-case 214:
-#line 4652 "lexer2.c"
+		goto _test_eof175;
+case 175:
+#line 5415 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st108;
-		case 183u: goto st122;
-		case 191u: goto st123;
+		case 164u: goto tr244;
+		case 183u: goto tr252;
+		case 191u: goto tr253;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st106;
-	goto tr278;
-tr274:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st215;
-st215:
+		goto tr245;
+	goto tr0;
+tr252:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st176;
+st176:
 	if ( ++p == pe )
-		goto _test_eof215;
-case 215:
-#line 4671 "lexer2.c"
+		goto _test_eof176;
+case 176:
+#line 5436 "lexer2.c"
+	if ( 144u <= (*p) && (*p) <= 175u )
+		goto tr0;
+	goto tr219;
+tr253:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st177;
+st177:
+	if ( ++p == pe )
+		goto _test_eof177;
+case 177:
+#line 5452 "lexer2.c"
+	if ( 190u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr215:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st178;
+st178:
+	if ( ++p == pe )
+		goto _test_eof178;
+case 178:
+#line 5474 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st125;
+		goto tr254;
 	if ( 145u <= (*p) )
-		goto st119;
-	goto tr278;
-tr275:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st216;
-st216:
+		goto tr255;
+	goto tr0;
+tr254:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st179;
+st179:
 	if ( ++p == pe )
-		goto _test_eof216;
-case 216:
-#line 4687 "lexer2.c"
-	goto st119;
-tr276:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st217;
-st217:
+		goto _test_eof179;
+case 179:
+#line 5492 "lexer2.c"
+	if ( (*p) == 128u )
+		goto tr244;
+	if ( 129u <= (*p) )
+		goto tr245;
+	goto tr0;
+tr216:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st180;
+st180:
 	if ( ++p == pe )
-		goto _test_eof217;
-case 217:
-#line 4699 "lexer2.c"
+		goto _test_eof180;
+case 180:
+#line 5516 "lexer2.c"
+	goto tr255;
+tr217:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st181;
+st181:
+	if ( ++p == pe )
+		goto _test_eof181;
+case 181:
+#line 5536 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st111;
+		goto tr256;
 	if ( 176u <= (*p) )
-		goto tr278;
-	goto st119;
+		goto tr0;
+	goto tr255;
+tr284:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st221;
+st221:
+	if ( ++p == pe )
+		goto _test_eof221;
+case 221:
+#line 5564 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 97u: goto tr345;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
-	_test_eof169:  shared_lexer->env.cs = 169; goto _test_eof; 
-	_test_eof170:  shared_lexer->env.cs = 170; goto _test_eof; 
-	_test_eof171:  shared_lexer->env.cs = 171; goto _test_eof; 
+	if ( (*p) < 98u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr303;
+tr345:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st182;
+st182:
+	if ( ++p == pe )
+		goto _test_eof182;
+case 182:
+#line 5616 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 108u: goto tr257;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr257:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st183;
+st183:
+	if ( ++p == pe )
+		goto _test_eof183;
+case 183:
+#line 5668 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 115u: goto tr258;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr258:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st184;
+st184:
+	if ( ++p == pe )
+		goto _test_eof184;
+case 184:
+#line 5720 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 101u: goto tr259;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr285:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st222;
+st222:
+	if ( ++p == pe )
+		goto _test_eof222;
+case 222:
+#line 5782 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 114u: goto tr346;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr303;
+tr346:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st185;
+st185:
+	if ( ++p == pe )
+		goto _test_eof185;
+case 185:
+#line 5834 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 117u: goto tr258;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr288:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st223;
+st223:
+	if ( ++p == pe )
+		goto _test_eof223;
+case 223:
+#line 5896 "lexer2.c"
+	if ( (*p) < 152u ) {
+		if ( 128u <= (*p) && (*p) <= 150u )
+			goto tr171;
+	} else if ( (*p) > 182u ) {
+		if ( 184u <= (*p) )
+			goto tr171;
+	} else
+		goto tr171;
+	goto tr303;
+tr289:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st224;
+st224:
+	if ( ++p == pe )
+		goto _test_eof224;
+case 224:
+#line 5928 "lexer2.c"
+	goto tr171;
+tr290:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st225;
+st225:
+	if ( ++p == pe )
+		goto _test_eof225;
+case 225:
+#line 5952 "lexer2.c"
+	if ( 192u <= (*p) )
+		goto tr303;
+	goto tr171;
+tr291:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st226;
+st226:
+	if ( ++p == pe )
+		goto _test_eof226;
+case 226:
+#line 5978 "lexer2.c"
+	if ( (*p) > 189u ) {
+		if ( 191u <= (*p) )
+			goto tr171;
+	} else if ( (*p) >= 176u )
+		goto tr171;
+	goto tr303;
+tr292:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st227;
+st227:
+	if ( ++p == pe )
+		goto _test_eof227;
+case 227:
+#line 6007 "lexer2.c"
+	if ( (*p) == 160u )
+		goto tr177;
+	if ( 161u <= (*p) )
+		goto tr175;
+	goto tr303;
+tr293:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st228;
+st228:
+	if ( ++p == pe )
+		goto _test_eof228;
+case 228:
+#line 6035 "lexer2.c"
+	if ( (*p) == 191u )
+		goto tr176;
+	if ( 192u <= (*p) )
+		goto tr303;
+	goto tr175;
+tr294:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st229;
+st229:
+	if ( ++p == pe )
+		goto _test_eof229;
+case 229:
+#line 6063 "lexer2.c"
+	switch( (*p) ) {
+		case 128u: goto tr347;
+		case 129u: goto tr348;
+		case 134u: goto tr191;
+		case 176u: goto tr177;
+		case 191u: goto tr192;
+	}
+	if ( (*p) > 133u ) {
+		if ( 177u <= (*p) && (*p) <= 190u )
+			goto tr175;
+	} else if ( (*p) >= 130u )
+		goto tr175;
+	goto tr303;
+tr347:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st186;
+st186:
+	if ( ++p == pe )
+		goto _test_eof186;
+case 186:
+#line 6089 "lexer2.c"
+	if ( 140u <= (*p) && (*p) <= 141u )
+		goto tr171;
+	goto tr0;
+tr348:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st187;
+st187:
+	if ( ++p == pe )
+		goto _test_eof187;
+case 187:
+#line 6105 "lexer2.c"
+	if ( 176u <= (*p) )
+		goto tr171;
+	goto tr0;
+tr295:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st230;
+st230:
+	if ( ++p == pe )
+		goto _test_eof230;
+case 230:
+#line 6131 "lexer2.c"
+	if ( (*p) == 128u )
+		goto tr193;
+	if ( 129u <= (*p) )
+		goto tr175;
+	goto tr303;
+tr296:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st231;
+st231:
+	if ( ++p == pe )
+		goto _test_eof231;
+case 231:
+#line 6159 "lexer2.c"
+	goto tr175;
+tr297:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st232;
+st232:
+	if ( ++p == pe )
+		goto _test_eof232;
+case 232:
+#line 6183 "lexer2.c"
+	if ( (*p) == 159u )
+		goto tr176;
+	if ( 160u <= (*p) )
+		goto tr303;
+	goto tr175;
+tr298:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st233;
+st233:
+	if ( ++p == pe )
+		goto _test_eof233;
+case 233:
+#line 6211 "lexer2.c"
+	switch( (*p) ) {
+		case 164u: goto tr177;
+		case 183u: goto tr194;
+		case 191u: goto tr195;
+	}
+	if ( 165u <= (*p) && (*p) <= 190u )
+		goto tr175;
+	goto tr303;
+tr299:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st234;
+st234:
+	if ( ++p == pe )
+		goto _test_eof234;
+case 234:
+#line 6242 "lexer2.c"
+	if ( (*p) == 144u )
+		goto tr196;
+	if ( 145u <= (*p) )
+		goto tr183;
+	goto tr303;
+tr300:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st235;
+st235:
+	if ( ++p == pe )
+		goto _test_eof235;
+case 235:
+#line 6270 "lexer2.c"
+	goto tr183;
+tr301:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st236;
+st236:
+	if ( ++p == pe )
+		goto _test_eof236;
+case 236:
+#line 6294 "lexer2.c"
+	if ( (*p) == 175u )
+		goto tr180;
+	if ( 176u <= (*p) )
+		goto tr303;
+	goto tr183;
+	}
+	_test_eof188:  shared_lexer->env.cs = 188; goto _test_eof; 
+	_test_eof189:  shared_lexer->env.cs = 189; goto _test_eof; 
+	_test_eof190:  shared_lexer->env.cs = 190; goto _test_eof; 
 	_test_eof0:  shared_lexer->env.cs = 0; goto _test_eof; 
 	_test_eof1:  shared_lexer->env.cs = 1; goto _test_eof; 
 	_test_eof2:  shared_lexer->env.cs = 2; goto _test_eof; 
@@ -4717,7 +6312,7 @@ case 217:
 	_test_eof9:  shared_lexer->env.cs = 9; goto _test_eof; 
 	_test_eof10:  shared_lexer->env.cs = 10; goto _test_eof; 
 	_test_eof11:  shared_lexer->env.cs = 11; goto _test_eof; 
-	_test_eof172:  shared_lexer->env.cs = 172; goto _test_eof; 
+	_test_eof191:  shared_lexer->env.cs = 191; goto _test_eof; 
 	_test_eof12:  shared_lexer->env.cs = 12; goto _test_eof; 
 	_test_eof13:  shared_lexer->env.cs = 13; goto _test_eof; 
 	_test_eof14:  shared_lexer->env.cs = 14; goto _test_eof; 
@@ -4733,10 +6328,10 @@ case 217:
 	_test_eof24:  shared_lexer->env.cs = 24; goto _test_eof; 
 	_test_eof25:  shared_lexer->env.cs = 25; goto _test_eof; 
 	_test_eof26:  shared_lexer->env.cs = 26; goto _test_eof; 
-	_test_eof173:  shared_lexer->env.cs = 173; goto _test_eof; 
+	_test_eof192:  shared_lexer->env.cs = 192; goto _test_eof; 
 	_test_eof27:  shared_lexer->env.cs = 27; goto _test_eof; 
-	_test_eof174:  shared_lexer->env.cs = 174; goto _test_eof; 
-	_test_eof175:  shared_lexer->env.cs = 175; goto _test_eof; 
+	_test_eof193:  shared_lexer->env.cs = 193; goto _test_eof; 
+	_test_eof194:  shared_lexer->env.cs = 194; goto _test_eof; 
 	_test_eof28:  shared_lexer->env.cs = 28; goto _test_eof; 
 	_test_eof29:  shared_lexer->env.cs = 29; goto _test_eof; 
 	_test_eof30:  shared_lexer->env.cs = 30; goto _test_eof; 
@@ -4749,7 +6344,7 @@ case 217:
 	_test_eof37:  shared_lexer->env.cs = 37; goto _test_eof; 
 	_test_eof38:  shared_lexer->env.cs = 38; goto _test_eof; 
 	_test_eof39:  shared_lexer->env.cs = 39; goto _test_eof; 
-	_test_eof176:  shared_lexer->env.cs = 176; goto _test_eof; 
+	_test_eof195:  shared_lexer->env.cs = 195; goto _test_eof; 
 	_test_eof40:  shared_lexer->env.cs = 40; goto _test_eof; 
 	_test_eof41:  shared_lexer->env.cs = 41; goto _test_eof; 
 	_test_eof42:  shared_lexer->env.cs = 42; goto _test_eof; 
@@ -4765,19 +6360,19 @@ case 217:
 	_test_eof52:  shared_lexer->env.cs = 52; goto _test_eof; 
 	_test_eof53:  shared_lexer->env.cs = 53; goto _test_eof; 
 	_test_eof54:  shared_lexer->env.cs = 54; goto _test_eof; 
-	_test_eof177:  shared_lexer->env.cs = 177; goto _test_eof; 
+	_test_eof196:  shared_lexer->env.cs = 196; goto _test_eof; 
 	_test_eof55:  shared_lexer->env.cs = 55; goto _test_eof; 
-	_test_eof178:  shared_lexer->env.cs = 178; goto _test_eof; 
+	_test_eof197:  shared_lexer->env.cs = 197; goto _test_eof; 
 	_test_eof56:  shared_lexer->env.cs = 56; goto _test_eof; 
 	_test_eof57:  shared_lexer->env.cs = 57; goto _test_eof; 
-	_test_eof179:  shared_lexer->env.cs = 179; goto _test_eof; 
-	_test_eof180:  shared_lexer->env.cs = 180; goto _test_eof; 
+	_test_eof198:  shared_lexer->env.cs = 198; goto _test_eof; 
+	_test_eof199:  shared_lexer->env.cs = 199; goto _test_eof; 
 	_test_eof58:  shared_lexer->env.cs = 58; goto _test_eof; 
-	_test_eof181:  shared_lexer->env.cs = 181; goto _test_eof; 
-	_test_eof182:  shared_lexer->env.cs = 182; goto _test_eof; 
+	_test_eof200:  shared_lexer->env.cs = 200; goto _test_eof; 
+	_test_eof201:  shared_lexer->env.cs = 201; goto _test_eof; 
 	_test_eof59:  shared_lexer->env.cs = 59; goto _test_eof; 
 	_test_eof60:  shared_lexer->env.cs = 60; goto _test_eof; 
-	_test_eof183:  shared_lexer->env.cs = 183; goto _test_eof; 
+	_test_eof202:  shared_lexer->env.cs = 202; goto _test_eof; 
 	_test_eof61:  shared_lexer->env.cs = 61; goto _test_eof; 
 	_test_eof62:  shared_lexer->env.cs = 62; goto _test_eof; 
 	_test_eof63:  shared_lexer->env.cs = 63; goto _test_eof; 
@@ -4807,7 +6402,7 @@ case 217:
 	_test_eof87:  shared_lexer->env.cs = 87; goto _test_eof; 
 	_test_eof88:  shared_lexer->env.cs = 88; goto _test_eof; 
 	_test_eof89:  shared_lexer->env.cs = 89; goto _test_eof; 
-	_test_eof184:  shared_lexer->env.cs = 184; goto _test_eof; 
+	_test_eof203:  shared_lexer->env.cs = 203; goto _test_eof; 
 	_test_eof90:  shared_lexer->env.cs = 90; goto _test_eof; 
 	_test_eof91:  shared_lexer->env.cs = 91; goto _test_eof; 
 	_test_eof92:  shared_lexer->env.cs = 92; goto _test_eof; 
@@ -4820,19 +6415,19 @@ case 217:
 	_test_eof99:  shared_lexer->env.cs = 99; goto _test_eof; 
 	_test_eof100:  shared_lexer->env.cs = 100; goto _test_eof; 
 	_test_eof101:  shared_lexer->env.cs = 101; goto _test_eof; 
-	_test_eof185:  shared_lexer->env.cs = 185; goto _test_eof; 
-	_test_eof186:  shared_lexer->env.cs = 186; goto _test_eof; 
+	_test_eof204:  shared_lexer->env.cs = 204; goto _test_eof; 
+	_test_eof205:  shared_lexer->env.cs = 205; goto _test_eof; 
 	_test_eof102:  shared_lexer->env.cs = 102; goto _test_eof; 
-	_test_eof187:  shared_lexer->env.cs = 187; goto _test_eof; 
-	_test_eof188:  shared_lexer->env.cs = 188; goto _test_eof; 
-	_test_eof189:  shared_lexer->env.cs = 189; goto _test_eof; 
-	_test_eof190:  shared_lexer->env.cs = 190; goto _test_eof; 
-	_test_eof191:  shared_lexer->env.cs = 191; goto _test_eof; 
-	_test_eof192:  shared_lexer->env.cs = 192; goto _test_eof; 
-	_test_eof193:  shared_lexer->env.cs = 193; goto _test_eof; 
-	_test_eof194:  shared_lexer->env.cs = 194; goto _test_eof; 
-	_test_eof195:  shared_lexer->env.cs = 195; goto _test_eof; 
-	_test_eof196:  shared_lexer->env.cs = 196; goto _test_eof; 
+	_test_eof206:  shared_lexer->env.cs = 206; goto _test_eof; 
+	_test_eof207:  shared_lexer->env.cs = 207; goto _test_eof; 
+	_test_eof208:  shared_lexer->env.cs = 208; goto _test_eof; 
+	_test_eof209:  shared_lexer->env.cs = 209; goto _test_eof; 
+	_test_eof210:  shared_lexer->env.cs = 210; goto _test_eof; 
+	_test_eof211:  shared_lexer->env.cs = 211; goto _test_eof; 
+	_test_eof212:  shared_lexer->env.cs = 212; goto _test_eof; 
+	_test_eof213:  shared_lexer->env.cs = 213; goto _test_eof; 
+	_test_eof214:  shared_lexer->env.cs = 214; goto _test_eof; 
+	_test_eof215:  shared_lexer->env.cs = 215; goto _test_eof; 
 	_test_eof103:  shared_lexer->env.cs = 103; goto _test_eof; 
 	_test_eof104:  shared_lexer->env.cs = 104; goto _test_eof; 
 	_test_eof105:  shared_lexer->env.cs = 105; goto _test_eof; 
@@ -4858,18 +6453,18 @@ case 217:
 	_test_eof125:  shared_lexer->env.cs = 125; goto _test_eof; 
 	_test_eof126:  shared_lexer->env.cs = 126; goto _test_eof; 
 	_test_eof127:  shared_lexer->env.cs = 127; goto _test_eof; 
-	_test_eof197:  shared_lexer->env.cs = 197; goto _test_eof; 
+	_test_eof216:  shared_lexer->env.cs = 216; goto _test_eof; 
 	_test_eof128:  shared_lexer->env.cs = 128; goto _test_eof; 
 	_test_eof129:  shared_lexer->env.cs = 129; goto _test_eof; 
-	_test_eof198:  shared_lexer->env.cs = 198; goto _test_eof; 
+	_test_eof217:  shared_lexer->env.cs = 217; goto _test_eof; 
 	_test_eof130:  shared_lexer->env.cs = 130; goto _test_eof; 
 	_test_eof131:  shared_lexer->env.cs = 131; goto _test_eof; 
 	_test_eof132:  shared_lexer->env.cs = 132; goto _test_eof; 
 	_test_eof133:  shared_lexer->env.cs = 133; goto _test_eof; 
-	_test_eof199:  shared_lexer->env.cs = 199; goto _test_eof; 
-	_test_eof200:  shared_lexer->env.cs = 200; goto _test_eof; 
+	_test_eof218:  shared_lexer->env.cs = 218; goto _test_eof; 
+	_test_eof219:  shared_lexer->env.cs = 219; goto _test_eof; 
 	_test_eof134:  shared_lexer->env.cs = 134; goto _test_eof; 
-	_test_eof201:  shared_lexer->env.cs = 201; goto _test_eof; 
+	_test_eof220:  shared_lexer->env.cs = 220; goto _test_eof; 
 	_test_eof135:  shared_lexer->env.cs = 135; goto _test_eof; 
 	_test_eof136:  shared_lexer->env.cs = 136; goto _test_eof; 
 	_test_eof137:  shared_lexer->env.cs = 137; goto _test_eof; 
@@ -4898,35 +6493,54 @@ case 217:
 	_test_eof160:  shared_lexer->env.cs = 160; goto _test_eof; 
 	_test_eof161:  shared_lexer->env.cs = 161; goto _test_eof; 
 	_test_eof162:  shared_lexer->env.cs = 162; goto _test_eof; 
-	_test_eof202:  shared_lexer->env.cs = 202; goto _test_eof; 
 	_test_eof163:  shared_lexer->env.cs = 163; goto _test_eof; 
 	_test_eof164:  shared_lexer->env.cs = 164; goto _test_eof; 
 	_test_eof165:  shared_lexer->env.cs = 165; goto _test_eof; 
-	_test_eof203:  shared_lexer->env.cs = 203; goto _test_eof; 
 	_test_eof166:  shared_lexer->env.cs = 166; goto _test_eof; 
-	_test_eof204:  shared_lexer->env.cs = 204; goto _test_eof; 
-	_test_eof205:  shared_lexer->env.cs = 205; goto _test_eof; 
-	_test_eof206:  shared_lexer->env.cs = 206; goto _test_eof; 
-	_test_eof207:  shared_lexer->env.cs = 207; goto _test_eof; 
-	_test_eof208:  shared_lexer->env.cs = 208; goto _test_eof; 
-	_test_eof209:  shared_lexer->env.cs = 209; goto _test_eof; 
-	_test_eof210:  shared_lexer->env.cs = 210; goto _test_eof; 
 	_test_eof167:  shared_lexer->env.cs = 167; goto _test_eof; 
 	_test_eof168:  shared_lexer->env.cs = 168; goto _test_eof; 
-	_test_eof211:  shared_lexer->env.cs = 211; goto _test_eof; 
-	_test_eof212:  shared_lexer->env.cs = 212; goto _test_eof; 
-	_test_eof213:  shared_lexer->env.cs = 213; goto _test_eof; 
-	_test_eof214:  shared_lexer->env.cs = 214; goto _test_eof; 
-	_test_eof215:  shared_lexer->env.cs = 215; goto _test_eof; 
-	_test_eof216:  shared_lexer->env.cs = 216; goto _test_eof; 
-	_test_eof217:  shared_lexer->env.cs = 217; goto _test_eof; 
+	_test_eof169:  shared_lexer->env.cs = 169; goto _test_eof; 
+	_test_eof170:  shared_lexer->env.cs = 170; goto _test_eof; 
+	_test_eof171:  shared_lexer->env.cs = 171; goto _test_eof; 
+	_test_eof172:  shared_lexer->env.cs = 172; goto _test_eof; 
+	_test_eof173:  shared_lexer->env.cs = 173; goto _test_eof; 
+	_test_eof174:  shared_lexer->env.cs = 174; goto _test_eof; 
+	_test_eof175:  shared_lexer->env.cs = 175; goto _test_eof; 
+	_test_eof176:  shared_lexer->env.cs = 176; goto _test_eof; 
+	_test_eof177:  shared_lexer->env.cs = 177; goto _test_eof; 
+	_test_eof178:  shared_lexer->env.cs = 178; goto _test_eof; 
+	_test_eof179:  shared_lexer->env.cs = 179; goto _test_eof; 
+	_test_eof180:  shared_lexer->env.cs = 180; goto _test_eof; 
+	_test_eof181:  shared_lexer->env.cs = 181; goto _test_eof; 
+	_test_eof221:  shared_lexer->env.cs = 221; goto _test_eof; 
+	_test_eof182:  shared_lexer->env.cs = 182; goto _test_eof; 
+	_test_eof183:  shared_lexer->env.cs = 183; goto _test_eof; 
+	_test_eof184:  shared_lexer->env.cs = 184; goto _test_eof; 
+	_test_eof222:  shared_lexer->env.cs = 222; goto _test_eof; 
+	_test_eof185:  shared_lexer->env.cs = 185; goto _test_eof; 
+	_test_eof223:  shared_lexer->env.cs = 223; goto _test_eof; 
+	_test_eof224:  shared_lexer->env.cs = 224; goto _test_eof; 
+	_test_eof225:  shared_lexer->env.cs = 225; goto _test_eof; 
+	_test_eof226:  shared_lexer->env.cs = 226; goto _test_eof; 
+	_test_eof227:  shared_lexer->env.cs = 227; goto _test_eof; 
+	_test_eof228:  shared_lexer->env.cs = 228; goto _test_eof; 
+	_test_eof229:  shared_lexer->env.cs = 229; goto _test_eof; 
+	_test_eof186:  shared_lexer->env.cs = 186; goto _test_eof; 
+	_test_eof187:  shared_lexer->env.cs = 187; goto _test_eof; 
+	_test_eof230:  shared_lexer->env.cs = 230; goto _test_eof; 
+	_test_eof231:  shared_lexer->env.cs = 231; goto _test_eof; 
+	_test_eof232:  shared_lexer->env.cs = 232; goto _test_eof; 
+	_test_eof233:  shared_lexer->env.cs = 233; goto _test_eof; 
+	_test_eof234:  shared_lexer->env.cs = 234; goto _test_eof; 
+	_test_eof235:  shared_lexer->env.cs = 235; goto _test_eof; 
+	_test_eof236:  shared_lexer->env.cs = 236; goto _test_eof; 
 
 	_test_eof: {}
 	if ( p == eof )
 	{
 	switch (  shared_lexer->env.cs ) {
-	case 170: goto tr277;
-	case 171: goto tr278;
+	case 189: goto tr302;
+	case 190: goto tr303;
 	case 0: goto tr0;
 	case 1: goto tr0;
 	case 2: goto tr0;
@@ -4939,7 +6553,7 @@ case 217:
 	case 9: goto tr0;
 	case 10: goto tr0;
 	case 11: goto tr0;
-	case 172: goto tr282;
+	case 191: goto tr307;
 	case 12: goto tr26;
 	case 13: goto tr26;
 	case 14: goto tr26;
@@ -4955,10 +6569,10 @@ case 217:
 	case 24: goto tr26;
 	case 25: goto tr26;
 	case 26: goto tr26;
-	case 173: goto tr278;
+	case 192: goto tr303;
 	case 27: goto tr0;
-	case 174: goto tr284;
-	case 175: goto tr278;
+	case 193: goto tr309;
+	case 194: goto tr303;
 	case 28: goto tr0;
 	case 29: goto tr0;
 	case 30: goto tr0;
@@ -4971,7 +6585,7 @@ case 217:
 	case 37: goto tr0;
 	case 38: goto tr0;
 	case 39: goto tr0;
-	case 176: goto tr288;
+	case 195: goto tr313;
 	case 40: goto tr85;
 	case 41: goto tr85;
 	case 42: goto tr85;
@@ -4987,19 +6601,19 @@ case 217:
 	case 52: goto tr85;
 	case 53: goto tr85;
 	case 54: goto tr85;
-	case 177: goto tr278;
+	case 196: goto tr303;
 	case 55: goto tr0;
-	case 178: goto tr291;
+	case 197: goto tr316;
 	case 56: goto tr117;
 	case 57: goto tr117;
-	case 179: goto tr292;
-	case 180: goto tr293;
+	case 198: goto tr317;
+	case 199: goto tr318;
 	case 58: goto tr120;
-	case 181: goto tr295;
-	case 182: goto tr296;
+	case 200: goto tr320;
+	case 201: goto tr321;
 	case 59: goto tr122;
 	case 60: goto tr122;
-	case 183: goto tr296;
+	case 202: goto tr321;
 	case 61: goto tr122;
 	case 62: goto tr122;
 	case 63: goto tr122;
@@ -5029,7 +6643,7 @@ case 217:
 	case 87: goto tr122;
 	case 88: goto tr122;
 	case 89: goto tr122;
-	case 184: goto tr278;
+	case 203: goto tr303;
 	case 90: goto tr0;
 	case 91: goto tr0;
 	case 92: goto tr0;
@@ -5042,19 +6656,19 @@ case 217:
 	case 99: goto tr0;
 	case 100: goto tr0;
 	case 101: goto tr0;
-	case 185: goto tr278;
-	case 186: goto tr117;
+	case 204: goto tr303;
+	case 205: goto tr117;
 	case 102: goto tr117;
-	case 187: goto tr306;
-	case 188: goto tr306;
-	case 189: goto tr306;
-	case 190: goto tr306;
-	case 191: goto tr306;
-	case 192: goto tr306;
-	case 193: goto tr306;
-	case 194: goto tr306;
-	case 195: goto tr306;
-	case 196: goto tr117;
+	case 206: goto tr331;
+	case 207: goto tr331;
+	case 208: goto tr331;
+	case 209: goto tr331;
+	case 210: goto tr331;
+	case 211: goto tr331;
+	case 212: goto tr331;
+	case 213: goto tr331;
+	case 214: goto tr331;
+	case 215: goto tr117;
 	case 103: goto tr117;
 	case 104: goto tr117;
 	case 105: goto tr117;
@@ -5080,74 +6694,93 @@ case 217:
 	case 125: goto tr117;
 	case 126: goto tr117;
 	case 127: goto tr117;
-	case 197: goto tr278;
+	case 216: goto tr303;
 	case 128: goto tr0;
 	case 129: goto tr0;
-	case 198: goto tr278;
+	case 217: goto tr303;
 	case 130: goto tr0;
 	case 131: goto tr0;
 	case 132: goto tr0;
 	case 133: goto tr0;
-	case 199: goto tr278;
-	case 200: goto tr278;
+	case 218: goto tr303;
+	case 219: goto tr303;
 	case 134: goto tr0;
-	case 201: goto tr319;
+	case 220: goto tr344;
 	case 135: goto tr218;
-	case 136: goto tr117;
-	case 137: goto tr117;
-	case 138: goto tr117;
-	case 139: goto tr117;
+	case 136: goto tr218;
+	case 137: goto tr218;
+	case 138: goto tr218;
+	case 139: goto tr218;
 	case 140: goto tr218;
-	case 141: goto tr117;
-	case 142: goto tr117;
+	case 141: goto tr218;
+	case 142: goto tr218;
 	case 143: goto tr218;
 	case 144: goto tr218;
 	case 145: goto tr218;
-	case 146: goto tr117;
-	case 147: goto tr117;
-	case 148: goto tr117;
-	case 149: goto tr117;
-	case 150: goto tr117;
-	case 151: goto tr117;
-	case 152: goto tr117;
-	case 153: goto tr117;
-	case 154: goto tr117;
-	case 155: goto tr117;
-	case 156: goto tr117;
-	case 157: goto tr117;
-	case 158: goto tr117;
+	case 146: goto tr218;
+	case 147: goto tr218;
+	case 148: goto tr218;
+	case 149: goto tr218;
+	case 150: goto tr218;
+	case 151: goto tr218;
+	case 152: goto tr218;
+	case 153: goto tr218;
+	case 154: goto tr218;
+	case 155: goto tr218;
+	case 156: goto tr218;
+	case 157: goto tr218;
+	case 158: goto tr218;
 	case 159: goto tr0;
 	case 160: goto tr0;
 	case 161: goto tr0;
 	case 162: goto tr0;
-	case 202: goto tr278;
 	case 163: goto tr0;
 	case 164: goto tr0;
 	case 165: goto tr0;
-	case 203: goto tr278;
 	case 166: goto tr0;
-	case 204: goto tr278;
-	case 205: goto tr278;
-	case 206: goto tr278;
-	case 207: goto tr278;
-	case 208: goto tr278;
-	case 209: goto tr278;
-	case 210: goto tr278;
 	case 167: goto tr0;
 	case 168: goto tr0;
-	case 211: goto tr278;
-	case 212: goto tr278;
-	case 213: goto tr278;
-	case 214: goto tr278;
-	case 215: goto tr278;
-	case 216: goto tr278;
-	case 217: goto tr278;
+	case 169: goto tr0;
+	case 170: goto tr0;
+	case 171: goto tr0;
+	case 172: goto tr0;
+	case 173: goto tr0;
+	case 174: goto tr0;
+	case 175: goto tr0;
+	case 176: goto tr0;
+	case 177: goto tr0;
+	case 178: goto tr0;
+	case 179: goto tr0;
+	case 180: goto tr0;
+	case 181: goto tr0;
+	case 221: goto tr303;
+	case 182: goto tr0;
+	case 183: goto tr0;
+	case 184: goto tr0;
+	case 222: goto tr303;
+	case 185: goto tr0;
+	case 223: goto tr303;
+	case 224: goto tr303;
+	case 225: goto tr303;
+	case 226: goto tr303;
+	case 227: goto tr303;
+	case 228: goto tr303;
+	case 229: goto tr303;
+	case 186: goto tr0;
+	case 187: goto tr0;
+	case 230: goto tr303;
+	case 231: goto tr303;
+	case 232: goto tr303;
+	case 233: goto tr303;
+	case 234: goto tr303;
+	case 235: goto tr303;
+	case 236: goto tr303;
 	}
 	}
 
 	}
 
-#line 479 "turtle.rl"
+#line 481 "turtle.rl"
     /* clang-format on */
 
     return ARDP_SUCCESS;
@@ -5167,7 +6800,6 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
 
         __block uint8_t *_Nullable p = v; // redirection to allow GCD
 
-
         const uint8_t *_Nullable pe;
         const uint8_t *_Nullable eof;
 
@@ -5178,97 +6810,96 @@ void ardp_lexer_turtle_process_block( uint8_t *_Nullable v,
 
         /* clang-format off */
           
-#line 5182 "lexer2.c"
+#line 6814 "lexer2.c"
 	{
 	if ( p == pe )
 		goto _test_eof;
 	switch (  shared_lexer->env.cs )
 	{
 tr0:
-#line 254 "turtle.rl"
+#line 258 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}}
-	goto st169;
+	goto st188;
 tr2:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr23:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr26:
-#line 217 "turtle.rl"
+#line 222 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr34:
-#line 214 "turtle.rl"
+#line 219 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr59:
-#line 247 "turtle.rl"
+#line 251 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
+              dispatch_sync(shared_lexer->event_queue, ^{
                   shared_lexer->line++;
               });
         }}
-	goto st169;
+	goto st188;
 tr61:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr82:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr85:
-#line 218 "turtle.rl"
+#line 223 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr93:
-#line 215 "turtle.rl"
+#line 220 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
+	goto st188;
 tr117:
 #line 1 "NONE"
 	{	switch(  shared_lexer->env.act ) {
@@ -5283,9 +6914,6 @@ tr117:
 	break;
 	case 4:
 	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token_const(SPARQL_BASE); }
-	break;
-	case 5:
-	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }
 	break;
 	case 8:
 	{{p = (( shared_lexer->env.te))-1;} lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }
@@ -5310,284 +6938,283 @@ tr117:
 	break;
 	}
 	}
-	goto st169;
+	goto st188;
 tr120:
-#line 209 "turtle.rl"
+#line 214 "turtle.rl"
 	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
+	goto st188;
 tr122:
-#line 202 "turtle.rl"
-	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); }}
-	goto st169;
+#line 210 "turtle.rl"
+	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(QNAME); }}
+	goto st188;
 tr154:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
+#line 211 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
 tr167:
 #line 104 "turtle.rl"
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
-tr218:
-#line 201 "turtle.rl"
-	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }}
-	goto st169;
-tr236:
-#line 254 "turtle.rl"
-	{ shared_lexer->env.te = p+1;}
-	goto st169;
-tr238:
-#line 240 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr242:
-#line 235 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_ROUND);  }}
-	goto st169;
-tr243:
-#line 236 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_ROUND);  }}
-	goto st169;
-tr245:
-#line 230 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(COMMA); }}
-	goto st169;
-tr248:
-#line 231 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(SEMICOLON); }}
-	goto st169;
-tr254:
-#line 233 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_SQUARE); }}
-	goto st169;
-tr255:
-#line 234 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_SQUARE); }}
-	goto st169;
-tr261:
-#line 237 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_CURLY);  }}
-	goto st169;
-tr262:
-#line 238 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_CURLY);  }}
-	goto st169;
-tr277:
-#line 240 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr278:
-#line 254 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;}
-	goto st169;
-tr282:
-#line 217 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
-tr284:
-#line 247 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{
-              dispatch_async(shared_lexer->event_queue, ^{
-                  column = p;
-                  shared_lexer->line++;
-              });
-        }}
-	goto st169;
-tr288:
-#line 218 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
-	goto st169;
-tr291:
-#line 210 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr292:
 #line 211 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr293:
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
+tr218:
 #line 209 "turtle.rl"
+	{{p = (( shared_lexer->env.te))-1;}{ lexer_emit_u8_token(BLANK_LITERAL); }}
+	goto st188;
+tr260:
+#line 258 "turtle.rl"
+	{ shared_lexer->env.te = p+1;}
+	goto st188;
+tr262:
+#line 245 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr266:
+#line 240 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_ROUND);  }}
+	goto st188;
+tr267:
+#line 241 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_ROUND);  }}
+	goto st188;
+tr269:
+#line 235 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(COMMA); }}
+	goto st188;
+tr273:
+#line 236 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(SEMICOLON); }}
+	goto st188;
+tr279:
+#line 238 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_SQUARE); }}
+	goto st188;
+tr280:
+#line 239 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_SQUARE); }}
+	goto st188;
+tr286:
+#line 242 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(L_CURLY);  }}
+	goto st188;
+tr287:
+#line 243 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_token_const(R_CURLY);  }}
+	goto st188;
+tr302:
+#line 245 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr303:
+#line 258 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;}
+	goto st188;
+tr307:
+#line 222 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
+	goto st188;
+tr309:
+#line 251 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{
+              dispatch_sync(shared_lexer->event_queue, ^{
+                  shared_lexer->line++;
+              });
+        }}
+	goto st188;
+tr313:
+#line 223 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(STRING_LITERAL); }}
+	goto st188;
+tr316:
+#line 215 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(DECIMAL_LITERAL, var(ts), var(te) - var(ts)); }}
+	goto st188;
+tr317:
+#line 216 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_token( DOUBLE_LITERAL, var(ts), var(te) - var(ts)); }}
+	goto st188;
+tr318:
+#line 214 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); }}
-	goto st169;
-tr295:
-#line 229 "turtle.rl"
+	goto st188;
+tr320:
+#line 234 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{ lexer_emit_token_const(DOT); }}
-	goto st169;
-tr296:
-#line 202 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(QNAME,         var(ts),     var(te) - var(ts)); }}
-	goto st169;
-tr300:
+	goto st188;
+tr321:
+#line 88 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_finish(shared_lexer->string);
+            }
+    }
+#line 210 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(QNAME); }}
+	goto st188;
+tr325:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-#line 203 "turtle.rl"
-	{ shared_lexer->env.te = p+1;{
-                lexer_emit_u8_token(IRIREF);
-                //lexer_emit_token(IRIREF,        var(ts) +1, (var(te) - 1) - (var(ts) + 1));
-        }}
-	goto st169;
-tr306:
-#line 223 "turtle.rl"
+#line 211 "turtle.rl"
+	{ shared_lexer->env.te = p+1;{ lexer_emit_u8_token(IRIREF); }}
+	goto st188;
+tr331:
+#line 228 "turtle.rl"
 	{ shared_lexer->env.te = p;p--;{
               // '@'. VALUE
               lexer_emit_token(LANGTAG, var(ts)+1, var(te) - (var(ts)+1));
         }}
-	goto st169;
-tr317:
-#line 220 "turtle.rl"
+	goto st188;
+tr342:
+#line 225 "turtle.rl"
 	{ shared_lexer->env.te = p+1;{
               lexer_emit_token_const(HAT);
         }}
-	goto st169;
-tr319:
-#line 201 "turtle.rl"
-	{ shared_lexer->env.te = p;p--;{ lexer_emit_token(BLANK_LITERAL, var(ts) +2,  var(te) - (var(ts) +2)); }}
-	goto st169;
-st169:
+	goto st188;
+tr344:
+#line 88 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_finish(shared_lexer->string);
+            }
+    }
+#line 209 "turtle.rl"
+	{ shared_lexer->env.te = p;p--;{ lexer_emit_u8_token(BLANK_LITERAL); }}
+	goto st188;
+st188:
 #line 1 "NONE"
 	{ shared_lexer->env.ts = 0;}
 	if ( ++p == pe )
-		goto _test_eof169;
-case 169:
+		goto _test_eof188;
+case 188:
 #line 1 "NONE"
 	{ shared_lexer->env.ts = p;}
-#line 5499 "lexer2.c"
+#line 7128 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto st170;
-		case 13u: goto tr238;
-		case 34u: goto tr239;
-		case 35u: goto tr240;
-		case 39u: goto tr241;
-		case 40u: goto tr242;
-		case 41u: goto tr243;
-		case 44u: goto tr245;
-		case 46u: goto st181;
-		case 58u: goto tr173;
-		case 59u: goto tr248;
-		case 60u: goto tr249;
-		case 64u: goto st185;
-		case 66u: goto tr252;
-		case 80u: goto tr253;
-		case 91u: goto tr254;
-		case 93u: goto tr255;
-		case 94u: goto st199;
-		case 95u: goto tr257;
-		case 97u: goto tr258;
-		case 98u: goto tr252;
-		case 102u: goto tr259;
-		case 112u: goto tr253;
-		case 116u: goto tr260;
-		case 123u: goto tr261;
-		case 125u: goto tr262;
-		case 195u: goto tr263;
-		case 203u: goto tr265;
-		case 205u: goto tr266;
-		case 223u: goto tr265;
-		case 224u: goto tr267;
-		case 225u: goto tr268;
-		case 226u: goto tr269;
-		case 227u: goto tr270;
-		case 237u: goto tr272;
-		case 239u: goto tr273;
-		case 240u: goto tr274;
-		case 243u: goto tr276;
+		case 10u: goto st189;
+		case 13u: goto tr262;
+		case 34u: goto tr263;
+		case 35u: goto tr264;
+		case 39u: goto tr265;
+		case 40u: goto tr266;
+		case 41u: goto tr267;
+		case 44u: goto tr269;
+		case 46u: goto st200;
+		case 58u: goto tr272;
+		case 59u: goto tr273;
+		case 60u: goto tr274;
+		case 64u: goto st204;
+		case 66u: goto tr277;
+		case 80u: goto tr278;
+		case 91u: goto tr279;
+		case 93u: goto tr280;
+		case 94u: goto st218;
+		case 95u: goto tr282;
+		case 97u: goto tr283;
+		case 98u: goto tr277;
+		case 102u: goto tr284;
+		case 112u: goto tr278;
+		case 116u: goto tr285;
+		case 123u: goto tr286;
+		case 125u: goto tr287;
+		case 195u: goto tr288;
+		case 203u: goto tr290;
+		case 205u: goto tr291;
+		case 223u: goto tr290;
+		case 224u: goto tr292;
+		case 225u: goto tr293;
+		case 226u: goto tr294;
+		case 227u: goto tr295;
+		case 237u: goto tr297;
+		case 239u: goto tr298;
+		case 240u: goto tr299;
+		case 243u: goto tr301;
 	}
 	if ( (*p) < 99u ) {
 		if ( (*p) < 48u ) {
 			if ( 43u <= (*p) && (*p) <= 45u )
-				goto tr244;
+				goto tr268;
 		} else if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr251;
+				goto tr276;
 		} else
-			goto tr247;
+			goto tr271;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 206u ) {
 			if ( 196u <= (*p) && (*p) <= 202u )
-				goto tr264;
+				goto tr289;
 		} else if ( (*p) > 222u ) {
 			if ( (*p) > 236u ) {
 				if ( 241u <= (*p) && (*p) <= 242u )
-					goto tr275;
+					goto tr300;
 			} else if ( (*p) >= 228u )
-				goto tr271;
+				goto tr296;
 		} else
-			goto tr264;
+			goto tr289;
 	} else
-		goto tr251;
-	goto tr236;
-st170:
+		goto tr276;
+	goto tr260;
+st189:
 	if ( ++p == pe )
-		goto _test_eof170;
-case 170:
+		goto _test_eof189;
+case 189:
 	if ( (*p) == 13u )
-		goto tr238;
-	goto tr277;
-tr239:
+		goto tr262;
+	goto tr302;
+tr263:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st171;
-st171:
+	goto st190;
+st190:
 	if ( ++p == pe )
-		goto _test_eof171;
-case 171:
-#line 5579 "lexer2.c"
+		goto _test_eof190;
+case 190:
+#line 7208 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto tr278;
-		case 13u: goto tr278;
-		case 34u: goto tr280;
-		case 39u: goto tr278;
-		case 92u: goto tr281;
+		case 10u: goto tr303;
+		case 13u: goto tr303;
+		case 34u: goto tr305;
+		case 92u: goto tr306;
 	}
-	goto tr279;
+	goto tr304;
 tr1:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -5654,27 +7281,26 @@ tr22:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st0;
-tr279:
+tr304:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -5684,12 +7310,11 @@ st0:
 	if ( ++p == pe )
 		goto _test_eof0;
 case 0:
-#line 5688 "lexer2.c"
+#line 7314 "lexer2.c"
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
 		case 34u: goto tr2;
-		case 39u: goto tr0;
 		case 92u: goto st1;
 	}
 	goto tr1;
@@ -5698,23 +7323,24 @@ tr24:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st1;
-tr281:
+tr306:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st1;
 st1:
 	if ( ++p == pe )
 		goto _test_eof1;
 case 1:
-#line 5718 "lexer2.c"
+#line 7344 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr4;
 		case 39u: goto tr5;
@@ -5751,7 +7377,7 @@ st3:
 	if ( ++p == pe )
 		goto _test_eof3;
 case 3:
-#line 5755 "lexer2.c"
+#line 7381 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st4;
@@ -5810,7 +7436,7 @@ st7:
 	if ( ++p == pe )
 		goto _test_eof7;
 case 7:
-#line 5814 "lexer2.c"
+#line 7440 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st8;
@@ -5854,7 +7480,6 @@ case 10:
 		case 10u: goto tr0;
 		case 13u: goto tr0;
 		case 34u: goto tr23;
-		case 39u: goto tr0;
 		case 92u: goto tr24;
 	}
 	goto tr22;
@@ -5871,29 +7496,30 @@ case 11:
 	} else
 		goto tr25;
 	goto tr0;
-tr280:
+tr305:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-	goto st172;
-st172:
+	goto st191;
+st191:
 	if ( ++p == pe )
-		goto _test_eof172;
-case 172:
-#line 5894 "lexer2.c"
+		goto _test_eof191;
+case 191:
+#line 7520 "lexer2.c"
 	if ( (*p) == 34u )
 		goto st12;
-	goto tr282;
+	goto tr307;
 st12:
 	if ( ++p == pe )
 		goto _test_eof12;
@@ -5904,9 +7530,8 @@ case 12:
 	}
 	goto tr27;
 tr30:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -5973,13 +7598,12 @@ tr53:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -5989,11 +7613,11 @@ tr27:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6003,7 +7627,7 @@ st13:
 	if ( ++p == pe )
 		goto _test_eof13;
 case 13:
-#line 6007 "lexer2.c"
+#line 7631 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr31;
 		case 92u: goto st16;
@@ -6013,9 +7637,10 @@ tr28:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6023,7 +7648,7 @@ tr28:
     }
 	goto st14;
 tr31:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6035,11 +7660,11 @@ tr54:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6050,7 +7675,7 @@ st14:
 	if ( ++p == pe )
 		goto _test_eof14;
 case 14:
-#line 6054 "lexer2.c"
+#line 7679 "lexer2.c"
 	if ( (*p) == 34u )
 		goto st15;
 	goto tr26;
@@ -6066,7 +7691,7 @@ tr55:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
@@ -6075,14 +7700,15 @@ tr29:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st16;
 st16:
 	if ( ++p == pe )
 		goto _test_eof16;
 case 16:
-#line 6086 "lexer2.c"
+#line 7712 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr35;
 		case 39u: goto tr36;
@@ -6119,7 +7745,7 @@ st18:
 	if ( ++p == pe )
 		goto _test_eof18;
 case 18:
-#line 6123 "lexer2.c"
+#line 7749 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st19;
@@ -6178,7 +7804,7 @@ st22:
 	if ( ++p == pe )
 		goto _test_eof22;
 case 22:
-#line 6182 "lexer2.c"
+#line 7808 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st23;
@@ -6236,17 +7862,17 @@ case 26:
 	} else
 		goto tr56;
 	goto tr26;
-tr240:
+tr264:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st173;
-st173:
+	goto st192;
+st192:
 	if ( ++p == pe )
-		goto _test_eof173;
-case 173:
-#line 6248 "lexer2.c"
+		goto _test_eof192;
+case 192:
+#line 7874 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto st174;
+		case 10u: goto st193;
 		case 13u: goto tr59;
 	}
 	goto st27;
@@ -6255,38 +7881,36 @@ st27:
 		goto _test_eof27;
 case 27:
 	switch( (*p) ) {
-		case 10u: goto st174;
+		case 10u: goto st193;
 		case 13u: goto tr59;
 	}
 	goto st27;
-st174:
+st193:
 	if ( ++p == pe )
-		goto _test_eof174;
-case 174:
+		goto _test_eof193;
+case 193:
 	if ( (*p) == 13u )
 		goto tr59;
-	goto tr284;
-tr241:
+	goto tr309;
+tr265:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st175;
-st175:
+	goto st194;
+st194:
 	if ( ++p == pe )
-		goto _test_eof175;
-case 175:
-#line 6278 "lexer2.c"
+		goto _test_eof194;
+case 194:
+#line 7904 "lexer2.c"
 	switch( (*p) ) {
-		case 10u: goto tr278;
-		case 13u: goto tr278;
-		case 34u: goto tr278;
-		case 39u: goto tr286;
-		case 92u: goto tr287;
+		case 10u: goto tr303;
+		case 13u: goto tr303;
+		case 39u: goto tr311;
+		case 92u: goto tr312;
 	}
-	goto tr285;
+	goto tr310;
 tr60:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6353,27 +7977,26 @@ tr81:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st28;
-tr285:
+tr310:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6383,11 +8006,10 @@ st28:
 	if ( ++p == pe )
 		goto _test_eof28;
 case 28:
-#line 6387 "lexer2.c"
+#line 8010 "lexer2.c"
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
-		case 34u: goto tr0;
 		case 39u: goto tr61;
 		case 92u: goto st29;
 	}
@@ -6397,23 +8019,24 @@ tr83:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st29;
-tr287:
+tr312:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st29;
 st29:
 	if ( ++p == pe )
 		goto _test_eof29;
 case 29:
-#line 6417 "lexer2.c"
+#line 8040 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr63;
 		case 39u: goto tr64;
@@ -6450,7 +8073,7 @@ st31:
 	if ( ++p == pe )
 		goto _test_eof31;
 case 31:
-#line 6454 "lexer2.c"
+#line 8077 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st32;
@@ -6509,7 +8132,7 @@ st35:
 	if ( ++p == pe )
 		goto _test_eof35;
 case 35:
-#line 6513 "lexer2.c"
+#line 8136 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st36;
@@ -6552,7 +8175,6 @@ case 38:
 	switch( (*p) ) {
 		case 10u: goto tr0;
 		case 13u: goto tr0;
-		case 34u: goto tr0;
 		case 39u: goto tr82;
 		case 92u: goto tr83;
 	}
@@ -6570,29 +8192,30 @@ case 39:
 	} else
 		goto tr84;
 	goto tr0;
-tr286:
+tr311:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
             }
     }
-	goto st176;
-st176:
+	goto st195;
+st195:
 	if ( ++p == pe )
-		goto _test_eof176;
-case 176:
-#line 6593 "lexer2.c"
+		goto _test_eof195;
+case 195:
+#line 8216 "lexer2.c"
 	if ( (*p) == 39u )
 		goto st40;
-	goto tr288;
+	goto tr313;
 st40:
 	if ( ++p == pe )
 		goto _test_eof40;
@@ -6603,9 +8226,8 @@ case 40:
 	}
 	goto tr86;
 tr89:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6672,13 +8294,12 @@ tr112:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6688,11 +8309,11 @@ tr86:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -6702,7 +8323,7 @@ st41:
 	if ( ++p == pe )
 		goto _test_eof41;
 case 41:
-#line 6706 "lexer2.c"
+#line 8327 "lexer2.c"
 	switch( (*p) ) {
 		case 39u: goto tr90;
 		case 92u: goto st44;
@@ -6712,9 +8333,10 @@ tr87:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6722,7 +8344,7 @@ tr87:
     }
 	goto st42;
 tr90:
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6734,11 +8356,11 @@ tr113:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 87 "turtle.rl"
+#line 88 "turtle.rl"
 	{
             if (shared_lexer->string) {
                 string_finish(shared_lexer->string);
@@ -6749,7 +8371,7 @@ st42:
 	if ( ++p == pe )
 		goto _test_eof42;
 case 42:
-#line 6753 "lexer2.c"
+#line 8375 "lexer2.c"
 	if ( (*p) == 39u )
 		goto st43;
 	goto tr85;
@@ -6765,7 +8387,7 @@ tr114:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
@@ -6774,14 +8396,15 @@ tr88:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st44;
 st44:
 	if ( ++p == pe )
 		goto _test_eof44;
 case 44:
-#line 6785 "lexer2.c"
+#line 8408 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr94;
 		case 39u: goto tr95;
@@ -6818,7 +8441,7 @@ st46:
 	if ( ++p == pe )
 		goto _test_eof46;
 case 46:
-#line 6822 "lexer2.c"
+#line 8445 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st47;
@@ -6877,7 +8500,7 @@ st50:
 	if ( ++p == pe )
 		goto _test_eof50;
 case 50:
-#line 6881 "lexer2.c"
+#line 8504 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st51;
@@ -6935,20 +8558,20 @@ case 54:
 	} else
 		goto tr115;
 	goto tr85;
-tr244:
+tr268:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st177;
-st177:
+	goto st196;
+st196:
 	if ( ++p == pe )
-		goto _test_eof177;
-case 177:
-#line 6947 "lexer2.c"
+		goto _test_eof196;
+case 196:
+#line 8570 "lexer2.c"
 	if ( (*p) == 46u )
 		goto st55;
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto tr247;
-	goto tr278;
+		goto tr271;
+	goto tr303;
 st55:
 	if ( ++p == pe )
 		goto _test_eof55;
@@ -6959,21 +8582,21 @@ case 55:
 tr116:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 210 "turtle.rl"
+#line 215 "turtle.rl"
 	{ shared_lexer->env.act = 9;}
-	goto st178;
-st178:
+	goto st197;
+st197:
 	if ( ++p == pe )
-		goto _test_eof178;
-case 178:
-#line 6970 "lexer2.c"
+		goto _test_eof197;
+case 197:
+#line 8593 "lexer2.c"
 	switch( (*p) ) {
 		case 69u: goto st56;
 		case 101u: goto st56;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
-	goto tr291;
+	goto tr316;
 st56:
 	if ( ++p == pe )
 		goto _test_eof56;
@@ -6983,41 +8606,41 @@ case 56:
 		case 45u: goto st57;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
+		goto st198;
 	goto tr117;
 st57:
 	if ( ++p == pe )
 		goto _test_eof57;
 case 57:
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
+		goto st198;
 	goto tr117;
-st179:
+st198:
 	if ( ++p == pe )
-		goto _test_eof179;
-case 179:
+		goto _test_eof198;
+case 198:
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto st179;
-	goto tr292;
-tr247:
+		goto st198;
+	goto tr317;
+tr271:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 209 "turtle.rl"
+#line 214 "turtle.rl"
 	{ shared_lexer->env.act = 8;}
-	goto st180;
-st180:
+	goto st199;
+st199:
 	if ( ++p == pe )
-		goto _test_eof180;
-case 180:
-#line 7013 "lexer2.c"
+		goto _test_eof199;
+case 199:
+#line 8636 "lexer2.c"
 	switch( (*p) ) {
 		case 46u: goto st58;
 		case 69u: goto st56;
 		case 101u: goto st56;
 	}
 	if ( 48u <= (*p) && (*p) <= 57u )
-		goto tr247;
-	goto tr293;
+		goto tr271;
+	goto tr318;
 st58:
 	if ( ++p == pe )
 		goto _test_eof58;
@@ -7029,38 +8652,60 @@ case 58:
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
 	goto tr120;
-st181:
+st200:
 	if ( ++p == pe )
-		goto _test_eof181;
-case 181:
+		goto _test_eof200;
+case 200:
 	if ( 48u <= (*p) && (*p) <= 57u )
 		goto tr116;
-	goto tr295;
+	goto tr320;
 tr173:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st182;
-st182:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st201;
+tr272:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st201;
+st201:
 	if ( ++p == pe )
-		goto _test_eof182;
-case 182:
-#line 7048 "lexer2.c"
+		goto _test_eof201;
+case 201:
+#line 8693 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
-		case 92u: goto st62;
+		case 37u: goto tr125;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 205u: goto st86;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st87;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 205u: goto tr322;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr323;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 196u ) {
 		if ( (*p) < 65u ) {
@@ -7074,32 +8719,50 @@ case 182:
 	} else if ( (*p) > 202u ) {
 		if ( (*p) < 228u ) {
 			if ( 206u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
-		goto st64;
-	goto tr296;
+		goto tr129;
+	goto tr321;
+tr125:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st59;
 st59:
 	if ( ++p == pe )
 		goto _test_eof59;
 case 59:
+#line 8744 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
-			goto st60;
+			goto tr123;
 	} else if ( (*p) > 70u ) {
 		if ( 97u <= (*p) && (*p) <= 102u )
-			goto st60;
+			goto tr123;
 	} else
-		goto st60;
+		goto tr123;
 	goto tr122;
+tr123:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st60;
 st60:
 	if ( ++p == pe )
 		goto _test_eof60;
 case 60:
+#line 8766 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto tr124;
@@ -7112,32 +8775,38 @@ case 60:
 tr124:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st183;
-st183:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st202;
+st202:
 	if ( ++p == pe )
-		goto _test_eof183;
-case 183:
-#line 7121 "lexer2.c"
+		goto _test_eof202;
+case 202:
+#line 8790 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
+		case 37u: goto tr125;
 		case 45u: goto tr124;
-		case 46u: goto st61;
-		case 92u: goto st62;
+		case 46u: goto tr126;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
 		case 183u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 204u: goto st66;
-		case 205u: goto st67;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st70;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 204u: goto tr131;
+		case 205u: goto tr132;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr135;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 58u ) {
@@ -7148,39 +8817,48 @@ case 183:
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
 		goto tr124;
-	goto tr296;
+	goto tr321;
+tr126:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st61;
 st61:
 	if ( ++p == pe )
 		goto _test_eof61;
 case 61:
+#line 8842 "lexer2.c"
 	switch( (*p) ) {
-		case 37u: goto st59;
+		case 37u: goto tr125;
 		case 45u: goto tr124;
-		case 46u: goto st61;
-		case 92u: goto st62;
+		case 46u: goto tr126;
+		case 92u: goto tr127;
 		case 95u: goto tr124;
 		case 183u: goto tr124;
-		case 195u: goto st63;
-		case 203u: goto st65;
-		case 204u: goto st66;
-		case 205u: goto st67;
-		case 223u: goto st65;
-		case 224u: goto st68;
-		case 225u: goto st69;
-		case 226u: goto st70;
-		case 227u: goto st75;
-		case 237u: goto st78;
-		case 239u: goto st79;
-		case 240u: goto st82;
-		case 243u: goto st85;
+		case 195u: goto tr128;
+		case 203u: goto tr130;
+		case 204u: goto tr131;
+		case 205u: goto tr132;
+		case 223u: goto tr130;
+		case 224u: goto tr133;
+		case 225u: goto tr134;
+		case 226u: goto tr135;
+		case 227u: goto tr136;
+		case 237u: goto tr138;
+		case 239u: goto tr139;
+		case 240u: goto tr140;
+		case 243u: goto tr142;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 58u ) {
@@ -7191,19 +8869,28 @@ case 61:
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st64;
+				goto tr129;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st84;
+				goto tr141;
 		} else
-			goto st77;
+			goto tr137;
 	} else
 		goto tr124;
 	goto tr122;
+tr127:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st62;
 st62:
 	if ( ++p == pe )
 		goto _test_eof62;
 case 62:
+#line 8894 "lexer2.c"
 	switch( (*p) ) {
 		case 33u: goto tr124;
 		case 59u: goto tr124;
@@ -7217,10 +8904,19 @@ case 62:
 	} else if ( (*p) >= 35u )
 		goto tr124;
 	goto tr122;
+tr128:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st63;
 st63:
 	if ( ++p == pe )
 		goto _test_eof63;
 case 63:
+#line 8920 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
 			goto tr124;
@@ -7230,253 +8926,486 @@ case 63:
 	} else
 		goto tr124;
 	goto tr122;
+tr129:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st64;
 st64:
 	if ( ++p == pe )
 		goto _test_eof64;
 case 64:
+#line 8942 "lexer2.c"
 	goto tr124;
+tr130:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st65;
 st65:
 	if ( ++p == pe )
 		goto _test_eof65;
 case 65:
+#line 8956 "lexer2.c"
 	if ( 192u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr131:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st66;
 st66:
 	if ( ++p == pe )
 		goto _test_eof66;
 case 66:
+#line 8972 "lexer2.c"
 	if ( 128u <= (*p) )
 		goto tr124;
 	goto tr122;
+tr132:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st67;
 st67:
 	if ( ++p == pe )
 		goto _test_eof67;
 case 67:
+#line 8988 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr122;
 	goto tr124;
+tr133:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st68;
 st68:
 	if ( ++p == pe )
 		goto _test_eof68;
 case 68:
+#line 9004 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st66;
+		goto tr131;
 	if ( 161u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr134:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st69;
 st69:
 	if ( ++p == pe )
 		goto _test_eof69;
 case 69:
+#line 9022 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st65;
+		goto tr130;
 	if ( 192u <= (*p) )
 		goto tr122;
-	goto st64;
+	goto tr129;
+tr135:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st70;
 st70:
 	if ( ++p == pe )
 		goto _test_eof70;
 case 70:
+#line 9040 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st71;
-		case 129u: goto st72;
-		case 134u: goto st73;
-		case 176u: goto st66;
-		case 191u: goto st74;
+		case 128u: goto tr143;
+		case 129u: goto tr144;
+		case 134u: goto tr145;
+		case 176u: goto tr131;
+		case 191u: goto tr146;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st64;
+			goto tr129;
 	} else if ( (*p) >= 130u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr143:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st71;
 st71:
 	if ( ++p == pe )
 		goto _test_eof71;
 case 71:
+#line 9066 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
 			goto tr124;
 	} else if ( (*p) >= 140u )
 		goto tr124;
 	goto tr122;
+tr144:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st72;
 st72:
 	if ( ++p == pe )
 		goto _test_eof72;
 case 72:
+#line 9085 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr122;
 	goto tr124;
+tr145:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st73;
 st73:
 	if ( ++p == pe )
 		goto _test_eof73;
 case 73:
+#line 9101 "lexer2.c"
 	if ( 144u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr146:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st74;
 st74:
 	if ( ++p == pe )
 		goto _test_eof74;
 case 74:
+#line 9117 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr136:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st75;
 st75:
 	if ( ++p == pe )
 		goto _test_eof75;
 case 75:
+#line 9133 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st76;
+		goto tr147;
 	if ( 129u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr147:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st76;
 st76:
 	if ( ++p == pe )
 		goto _test_eof76;
 case 76:
+#line 9151 "lexer2.c"
 	if ( 129u <= (*p) )
 		goto tr124;
 	goto tr122;
+tr137:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st77;
 st77:
 	if ( ++p == pe )
 		goto _test_eof77;
 case 77:
-	goto st64;
+#line 9167 "lexer2.c"
+	goto tr129;
+tr138:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st78;
 st78:
 	if ( ++p == pe )
 		goto _test_eof78;
 case 78:
+#line 9181 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st65;
+		goto tr130;
 	if ( 160u <= (*p) )
 		goto tr122;
-	goto st64;
+	goto tr129;
+tr139:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st79;
 st79:
 	if ( ++p == pe )
 		goto _test_eof79;
 case 79:
+#line 9199 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st66;
-		case 183u: goto st80;
-		case 191u: goto st81;
+		case 164u: goto tr131;
+		case 183u: goto tr148;
+		case 191u: goto tr149;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr148:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st80;
 st80:
 	if ( ++p == pe )
 		goto _test_eof80;
 case 80:
+#line 9220 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
 		goto tr122;
 	goto tr124;
+tr149:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st81;
 st81:
 	if ( ++p == pe )
 		goto _test_eof81;
 case 81:
+#line 9236 "lexer2.c"
 	if ( 190u <= (*p) )
 		goto tr122;
 	goto tr124;
+tr140:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st82;
 st82:
 	if ( ++p == pe )
 		goto _test_eof82;
 case 82:
+#line 9252 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st83;
+		goto tr150;
 	if ( 145u <= (*p) )
-		goto st77;
+		goto tr137;
 	goto tr122;
+tr150:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st83;
 st83:
 	if ( ++p == pe )
 		goto _test_eof83;
 case 83:
+#line 9270 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st66;
+		goto tr131;
 	if ( 129u <= (*p) )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr141:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st84;
 st84:
 	if ( ++p == pe )
 		goto _test_eof84;
 case 84:
-	goto st77;
+#line 9288 "lexer2.c"
+	goto tr137;
+tr142:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st85;
 st85:
 	if ( ++p == pe )
 		goto _test_eof85;
 case 85:
+#line 9302 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st69;
+		goto tr134;
 	if ( 176u <= (*p) )
 		goto tr122;
-	goto st77;
+	goto tr137;
+tr322:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st86;
 st86:
 	if ( ++p == pe )
 		goto _test_eof86;
 case 86:
+#line 9320 "lexer2.c"
 	if ( (*p) > 189u ) {
 		if ( 191u <= (*p) )
 			goto tr124;
 	} else if ( (*p) >= 176u )
 		goto tr124;
 	goto tr122;
+tr323:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st87;
 st87:
 	if ( ++p == pe )
 		goto _test_eof87;
 case 87:
+#line 9339 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st88;
-		case 129u: goto st89;
-		case 134u: goto st73;
-		case 176u: goto st66;
-		case 191u: goto st74;
+		case 128u: goto tr151;
+		case 129u: goto tr152;
+		case 134u: goto tr145;
+		case 176u: goto tr131;
+		case 191u: goto tr146;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st64;
+			goto tr129;
 	} else if ( (*p) >= 130u )
-		goto st64;
+		goto tr129;
 	goto tr122;
+tr151:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st88;
 st88:
 	if ( ++p == pe )
 		goto _test_eof88;
 case 88:
+#line 9365 "lexer2.c"
 	if ( 140u <= (*p) && (*p) <= 141u )
 		goto tr124;
 	goto tr122;
+tr152:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st89;
 st89:
 	if ( ++p == pe )
 		goto _test_eof89;
 case 89:
+#line 9381 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr124;
 	goto tr122;
-tr249:
+tr274:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-	goto st184;
-st184:
+	goto st203;
+st203:
 	if ( ++p == pe )
-		goto _test_eof184;
-case 184:
-#line 7463 "lexer2.c"
+		goto _test_eof203;
+case 203:
+#line 9393 "lexer2.c"
 	switch( (*p) ) {
-		case 34u: goto tr278;
-		case 60u: goto tr278;
-		case 62u: goto tr300;
-		case 92u: goto tr301;
-		case 94u: goto tr278;
-		case 96u: goto tr278;
-		case 123u: goto tr278;
-		case 125u: goto tr278;
+		case 34u: goto tr303;
+		case 60u: goto tr303;
+		case 62u: goto tr325;
+		case 92u: goto tr326;
+		case 94u: goto tr303;
+		case 96u: goto tr303;
+		case 123u: goto tr303;
+		case 125u: goto tr303;
 	}
 	if ( (*p) <= 32u )
-		goto tr278;
-	goto tr299;
+		goto tr303;
+	goto tr324;
 tr153:
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -7487,27 +9416,26 @@ tr166:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
     }
 	goto st90;
-tr299:
+tr324:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
-#line 93 "turtle.rl"
+#line 94 "turtle.rl"
 	{
-       // printf("%c", fc);
             if (shared_lexer->string) {
                 string_append_char(&shared_lexer->string, (*p));
             }
@@ -7517,7 +9445,7 @@ st90:
 	if ( ++p == pe )
 		goto _test_eof90;
 case 90:
-#line 7521 "lexer2.c"
+#line 9449 "lexer2.c"
 	switch( (*p) ) {
 		case 34u: goto tr0;
 		case 60u: goto tr0;
@@ -7536,23 +9464,24 @@ tr168:
 	{
         uint32_t codepoint = hex(mark, p - mark);
         mark = NULL;
-        if (shared_lexer->string)
+        if (likely(shared_lexer->string))
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
 	goto st91;
-tr301:
+tr326:
 #line 82 "turtle.rl"
 	{
         if (shared_lexer->string != NULL)
-                shared_lexer->string = string_new();
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
     }
 	goto st91;
 st91:
 	if ( ++p == pe )
 		goto _test_eof91;
 case 91:
-#line 7556 "lexer2.c"
+#line 9485 "lexer2.c"
 	switch( (*p) ) {
 		case 85u: goto st92;
 		case 117u: goto st101;
@@ -7581,7 +9510,7 @@ st93:
 	if ( ++p == pe )
 		goto _test_eof93;
 case 93:
-#line 7585 "lexer2.c"
+#line 9514 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st94;
@@ -7640,7 +9569,7 @@ st97:
 	if ( ++p == pe )
 		goto _test_eof97;
 case 97:
-#line 7644 "lexer2.c"
+#line 9573 "lexer2.c"
 	if ( (*p) < 65u ) {
 		if ( 48u <= (*p) && (*p) <= 57u )
 			goto st98;
@@ -7706,50 +9635,50 @@ case 101:
 	} else
 		goto tr169;
 	goto tr0;
-st185:
+st204:
 	if ( ++p == pe )
-		goto _test_eof185;
-case 185:
+		goto _test_eof204;
+case 204:
 	switch( (*p) ) {
-		case 98u: goto tr303;
-		case 112u: goto tr304;
+		case 98u: goto tr328;
+		case 112u: goto tr329;
 	}
 	if ( (*p) > 90u ) {
 		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
+			goto tr327;
 	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr278;
-tr302:
+		goto tr327;
+	goto tr303;
+tr327:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
+#line 228 "turtle.rl"
 	{ shared_lexer->env.act = 17;}
-	goto st186;
-tr309:
+	goto st205;
+tr334:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 198 "turtle.rl"
+#line 206 "turtle.rl"
 	{ shared_lexer->env.act = 3;}
-	goto st186;
-tr314:
+	goto st205;
+tr339:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 196 "turtle.rl"
+#line 204 "turtle.rl"
 	{ shared_lexer->env.act = 1;}
-	goto st186;
-st186:
+	goto st205;
+st205:
 	if ( ++p == pe )
-		goto _test_eof186;
-case 186:
-#line 7746 "lexer2.c"
+		goto _test_eof205;
+case 205:
+#line 9675 "lexer2.c"
 	if ( (*p) == 45u )
 		goto st102;
 	if ( (*p) > 90u ) {
 		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
+			goto tr327;
 	} else if ( (*p) >= 65u )
-		goto tr302;
+		goto tr327;
 	goto tr117;
 st102:
 	if ( ++p == pe )
@@ -7767,14 +9696,14 @@ case 102:
 tr170:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
+#line 228 "turtle.rl"
 	{ shared_lexer->env.act = 17;}
-	goto st187;
-st187:
+	goto st206;
+st206:
 	if ( ++p == pe )
-		goto _test_eof187;
-case 187:
-#line 7778 "lexer2.c"
+		goto _test_eof206;
+case 206:
+#line 9707 "lexer2.c"
 	if ( (*p) == 45u )
 		goto st102;
 	if ( (*p) < 65u ) {
@@ -7785,929 +9714,1272 @@ case 187:
 			goto tr170;
 	} else
 		goto tr170;
-	goto tr306;
-tr303:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st188;
-st188:
-	if ( ++p == pe )
-		goto _test_eof188;
-case 188:
-#line 7800 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 97u: goto tr307;
-	}
-	if ( (*p) > 90u ) {
-		if ( 98u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr307:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st189;
-st189:
-	if ( ++p == pe )
-		goto _test_eof189;
-case 189:
-#line 7821 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 115u: goto tr308;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr308:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st190;
-st190:
-	if ( ++p == pe )
-		goto _test_eof190;
-case 190:
-#line 7842 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 101u: goto tr309;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr304:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st191;
-st191:
-	if ( ++p == pe )
-		goto _test_eof191;
-case 191:
-#line 7863 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 114u: goto tr310;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr310:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st192;
-st192:
-	if ( ++p == pe )
-		goto _test_eof192;
-case 192:
-#line 7884 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 101u: goto tr311;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr311:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st193;
-st193:
-	if ( ++p == pe )
-		goto _test_eof193;
-case 193:
-#line 7905 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 102u: goto tr312;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr312:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st194;
-st194:
-	if ( ++p == pe )
-		goto _test_eof194;
-case 194:
-#line 7926 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 105u: goto tr313;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr313:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 223 "turtle.rl"
-	{ shared_lexer->env.act = 17;}
-	goto st195;
-st195:
-	if ( ++p == pe )
-		goto _test_eof195;
-case 195:
-#line 7947 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st102;
-		case 120u: goto tr314;
-	}
-	if ( (*p) > 90u ) {
-		if ( 97u <= (*p) && (*p) <= 122u )
-			goto tr302;
-	} else if ( (*p) >= 65u )
-		goto tr302;
-	goto tr306;
-tr198:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 199 "turtle.rl"
-	{ shared_lexer->env.act = 4;}
-	goto st196;
-tr202:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 197 "turtle.rl"
-	{ shared_lexer->env.act = 2;}
-	goto st196;
-tr235:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 212 "turtle.rl"
-	{ shared_lexer->env.act = 11;}
-	goto st196;
-tr251:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st196;
-tr258:
+	goto tr331;
+tr328:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
 #line 228 "turtle.rl"
-	{ shared_lexer->env.act = 18;}
-	goto st196;
-st196:
+	{ shared_lexer->env.act = 17;}
+	goto st207;
+st207:
 	if ( ++p == pe )
-		goto _test_eof196;
-case 196:
-#line 7992 "lexer2.c"
+		goto _test_eof207;
+case 207:
+#line 9729 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto st102;
+		case 97u: goto tr332;
+	}
+	if ( (*p) > 90u ) {
+		if ( 98u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr332:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st208;
+st208:
+	if ( ++p == pe )
+		goto _test_eof208;
+case 208:
+#line 9750 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 115u: goto tr333;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr333:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st209;
+st209:
+	if ( ++p == pe )
+		goto _test_eof209;
+case 209:
+#line 9771 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 101u: goto tr334;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr329:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st210;
+st210:
+	if ( ++p == pe )
+		goto _test_eof210;
+case 210:
+#line 9792 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 114u: goto tr335;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr335:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st211;
+st211:
+	if ( ++p == pe )
+		goto _test_eof211;
+case 211:
+#line 9813 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 101u: goto tr336;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr336:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st212;
+st212:
+	if ( ++p == pe )
+		goto _test_eof212;
+case 212:
+#line 9834 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 102u: goto tr337;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr337:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st213;
+st213:
+	if ( ++p == pe )
+		goto _test_eof213;
+case 213:
+#line 9855 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 105u: goto tr338;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr338:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 228 "turtle.rl"
+	{ shared_lexer->env.act = 17;}
+	goto st214;
+st214:
+	if ( ++p == pe )
+		goto _test_eof214;
+case 214:
+#line 9876 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto st102;
+		case 120u: goto tr339;
+	}
+	if ( (*p) > 90u ) {
+		if ( 97u <= (*p) && (*p) <= 122u )
+			goto tr327;
+	} else if ( (*p) >= 65u )
+		goto tr327;
+	goto tr331;
+tr198:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 207 "turtle.rl"
+	{ shared_lexer->env.act = 4;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st215;
+tr202:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 205 "turtle.rl"
+	{ shared_lexer->env.act = 2;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st215;
+tr259:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 217 "turtle.rl"
+	{ shared_lexer->env.act = 11;}
+	goto st215;
+tr276:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st215;
+tr283:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 233 "turtle.rl"
+	{ shared_lexer->env.act = 18;}
+	goto st215;
+st215:
+	if ( ++p == pe )
+		goto _test_eof215;
+case 215:
+#line 9963 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr171:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st103;
 st103:
 	if ( ++p == pe )
 		goto _test_eof103;
 case 103:
+#line 10014 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr172:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st104;
 st104:
 	if ( ++p == pe )
 		goto _test_eof104;
 case 104:
+#line 10065 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 95u: goto st103;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 95u: goto tr171;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr174:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st105;
 st105:
 	if ( ++p == pe )
 		goto _test_eof105;
 case 105:
+#line 10115 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 182u ) {
 		if ( 184u <= (*p) )
-			goto st103;
+			goto tr171;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr175:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st106;
 st106:
 	if ( ++p == pe )
 		goto _test_eof106;
 case 106:
-	goto st103;
+#line 10137 "lexer2.c"
+	goto tr171;
+tr176:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st107;
 st107:
 	if ( ++p == pe )
 		goto _test_eof107;
 case 107:
+#line 10151 "lexer2.c"
 	if ( 192u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr177:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st108;
 st108:
 	if ( ++p == pe )
 		goto _test_eof108;
 case 108:
+#line 10167 "lexer2.c"
 	if ( 128u <= (*p) )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr178:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st109;
 st109:
 	if ( ++p == pe )
 		goto _test_eof109;
 case 109:
+#line 10183 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr179:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st110;
 st110:
 	if ( ++p == pe )
 		goto _test_eof110;
 case 110:
+#line 10199 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st108;
+		goto tr177;
 	if ( 161u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr180:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st111;
 st111:
 	if ( ++p == pe )
 		goto _test_eof111;
 case 111:
+#line 10217 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st107;
+		goto tr176;
 	if ( 192u <= (*p) )
 		goto tr117;
-	goto st106;
+	goto tr175;
+tr181:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st112;
 st112:
 	if ( ++p == pe )
 		goto _test_eof112;
 case 112:
+#line 10235 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st113;
-		case 129u: goto st114;
-		case 134u: goto st115;
-		case 176u: goto st108;
-		case 191u: goto st116;
+		case 128u: goto tr189;
+		case 129u: goto tr190;
+		case 134u: goto tr191;
+		case 176u: goto tr177;
+		case 191u: goto tr192;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st106;
+			goto tr175;
 	} else if ( (*p) >= 130u )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr189:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st113;
 st113:
 	if ( ++p == pe )
 		goto _test_eof113;
 case 113:
+#line 10261 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) >= 140u )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr190:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st114;
 st114:
 	if ( ++p == pe )
 		goto _test_eof114;
 case 114:
+#line 10280 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr191:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st115;
 st115:
 	if ( ++p == pe )
 		goto _test_eof115;
 case 115:
+#line 10296 "lexer2.c"
 	if ( 144u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr192:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st116;
 st116:
 	if ( ++p == pe )
 		goto _test_eof116;
 case 116:
+#line 10312 "lexer2.c"
 	if ( 176u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr182:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st117;
 st117:
 	if ( ++p == pe )
 		goto _test_eof117;
 case 117:
+#line 10328 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st118;
+		goto tr193;
 	if ( 129u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr193:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st118;
 st118:
 	if ( ++p == pe )
 		goto _test_eof118;
 case 118:
+#line 10346 "lexer2.c"
 	if ( 129u <= (*p) )
-		goto st103;
+		goto tr171;
 	goto tr117;
+tr183:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st119;
 st119:
 	if ( ++p == pe )
 		goto _test_eof119;
 case 119:
-	goto st106;
+#line 10362 "lexer2.c"
+	goto tr175;
+tr184:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st120;
 st120:
 	if ( ++p == pe )
 		goto _test_eof120;
 case 120:
+#line 10376 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st107;
+		goto tr176;
 	if ( 160u <= (*p) )
 		goto tr117;
-	goto st106;
+	goto tr175;
+tr185:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st121;
 st121:
 	if ( ++p == pe )
 		goto _test_eof121;
 case 121:
+#line 10394 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st108;
-		case 183u: goto st122;
-		case 191u: goto st123;
+		case 164u: goto tr177;
+		case 183u: goto tr194;
+		case 191u: goto tr195;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr194:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st122;
 st122:
 	if ( ++p == pe )
 		goto _test_eof122;
 case 122:
+#line 10415 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr195:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st123;
 st123:
 	if ( ++p == pe )
 		goto _test_eof123;
 case 123:
+#line 10431 "lexer2.c"
 	if ( 190u <= (*p) )
 		goto tr117;
-	goto st103;
+	goto tr171;
+tr186:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st124;
 st124:
 	if ( ++p == pe )
 		goto _test_eof124;
 case 124:
+#line 10447 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st125;
+		goto tr196;
 	if ( 145u <= (*p) )
-		goto st119;
+		goto tr183;
 	goto tr117;
+tr196:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st125;
 st125:
 	if ( ++p == pe )
 		goto _test_eof125;
 case 125:
+#line 10465 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st108;
+		goto tr177;
 	if ( 129u <= (*p) )
-		goto st106;
+		goto tr175;
 	goto tr117;
+tr187:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st126;
 st126:
 	if ( ++p == pe )
 		goto _test_eof126;
 case 126:
-	goto st119;
+#line 10483 "lexer2.c"
+	goto tr183;
+tr188:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st127;
 st127:
 	if ( ++p == pe )
 		goto _test_eof127;
 case 127:
+#line 10497 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st111;
+		goto tr180;
 	if ( 176u <= (*p) )
 		goto tr117;
-	goto st119;
-tr252:
+	goto tr183;
+tr277:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
 	{ shared_lexer->env.act = 30;}
-	goto st197;
-st197:
+	goto st216;
+st216:
 	if ( ++p == pe )
-		goto _test_eof197;
-case 197:
-#line 8317 "lexer2.c"
+		goto _test_eof216;
+case 216:
+#line 10525 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 65u: goto st128;
-		case 95u: goto st103;
-		case 97u: goto st128;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 65u: goto tr340;
+		case 95u: goto tr171;
+		case 97u: goto tr340;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 98u ) {
 		if ( (*p) > 57u ) {
 			if ( 66u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
-	goto tr278;
+		goto tr171;
+	goto tr303;
+tr340:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st128;
 st128:
 	if ( ++p == pe )
 		goto _test_eof128;
 case 128:
+#line 10578 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 83u: goto st129;
-		case 95u: goto st103;
-		case 115u: goto st129;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 83u: goto tr197;
+		case 95u: goto tr171;
+		case 115u: goto tr197;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr197:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st129;
 st129:
 	if ( ++p == pe )
 		goto _test_eof129;
 case 129:
+#line 10631 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
 		case 69u: goto tr198;
-		case 95u: goto st103;
+		case 95u: goto tr171;
 		case 101u: goto tr198;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
-tr253:
+tr278:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
 	{ shared_lexer->env.act = 30;}
-	goto st198;
-st198:
+	goto st217;
+st217:
 	if ( ++p == pe )
-		goto _test_eof198;
-case 198:
-#line 8456 "lexer2.c"
+		goto _test_eof217;
+case 217:
+#line 10694 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 82u: goto st130;
-		case 95u: goto st103;
-		case 114u: goto st130;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 82u: goto tr341;
+		case 95u: goto tr171;
+		case 114u: goto tr341;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
-	goto tr278;
+		goto tr171;
+	goto tr303;
+tr341:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st130;
 st130:
 	if ( ++p == pe )
 		goto _test_eof130;
 case 130:
+#line 10747 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 69u: goto st131;
-		case 95u: goto st103;
-		case 101u: goto st131;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 69u: goto tr199;
+		case 95u: goto tr171;
+		case 101u: goto tr199;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr199:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st131;
 st131:
 	if ( ++p == pe )
 		goto _test_eof131;
 case 131:
+#line 10800 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 70u: goto st132;
-		case 95u: goto st103;
-		case 102u: goto st132;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 70u: goto tr200;
+		case 95u: goto tr171;
+		case 102u: goto tr200;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr200:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st132;
 st132:
 	if ( ++p == pe )
 		goto _test_eof132;
 case 132:
+#line 10853 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
-		case 73u: goto st133;
-		case 95u: goto st103;
-		case 105u: goto st133;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 73u: goto tr201;
+		case 95u: goto tr171;
+		case 105u: goto tr201;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
+tr201:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st133;
 st133:
 	if ( ++p == pe )
 		goto _test_eof133;
 case 133:
+#line 10906 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
+		case 45u: goto tr171;
+		case 46u: goto tr172;
 		case 58u: goto tr173;
 		case 88u: goto tr202;
-		case 95u: goto st103;
+		case 95u: goto tr171;
 		case 120u: goto tr202;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
+				goto tr171;
 		} else if ( (*p) >= 48u )
-			goto st103;
+			goto tr171;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
+				goto tr175;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
+				goto tr187;
 		} else
-			goto st119;
+			goto tr183;
 	} else
-		goto st103;
+		goto tr171;
 	goto tr0;
-st199:
+st218:
 	if ( ++p == pe )
-		goto _test_eof199;
-case 199:
+		goto _test_eof218;
+case 218:
 	if ( (*p) == 94u )
-		goto tr317;
-	goto tr278;
-tr257:
+		goto tr342;
+	goto tr303;
+tr282:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st200;
-st200:
+	goto st219;
+st219:
 	if ( ++p == pe )
-		goto _test_eof200;
-case 200:
-#line 8690 "lexer2.c"
+		goto _test_eof219;
+case 219:
+#line 10962 "lexer2.c"
 	if ( (*p) == 58u )
 		goto st134;
-	goto tr278;
+	goto tr303;
 st134:
 	if ( ++p == pe )
 		goto _test_eof134;
 case 134:
 	switch( (*p) ) {
 		case 95u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 205u: goto st159;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st160;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 195u: goto tr204;
+		case 203u: goto tr206;
+		case 205u: goto tr207;
+		case 223u: goto tr206;
+		case 224u: goto tr208;
+		case 225u: goto tr209;
+		case 226u: goto tr210;
+		case 227u: goto tr211;
+		case 237u: goto tr213;
+		case 239u: goto tr214;
+		case 240u: goto tr215;
+		case 243u: goto tr217;
 	}
 	if ( (*p) < 196u ) {
 		if ( (*p) < 65u ) {
@@ -8721,854 +10993,1811 @@ case 134:
 	} else if ( (*p) > 202u ) {
 		if ( (*p) < 228u ) {
 			if ( 206u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr205;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr216;
 		} else
-			goto st150;
+			goto tr212;
 	} else
-		goto st137;
+		goto tr205;
 	goto tr0;
+tr219:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st220;
 tr203:
 #line 1 "NONE"
 	{ shared_lexer->env.te = p+1;}
-#line 201 "turtle.rl"
-	{ shared_lexer->env.act = 5;}
-	goto st201;
-st201:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st220;
+st220:
 	if ( ++p == pe )
-		goto _test_eof201;
-case 201:
-#line 8744 "lexer2.c"
+		goto _test_eof220;
+case 220:
+#line 11036 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto tr203;
-		case 46u: goto st135;
-		case 95u: goto tr203;
-		case 183u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 204u: goto st139;
-		case 205u: goto st140;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st143;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 45u: goto tr219;
+		case 46u: goto tr220;
+		case 95u: goto tr219;
+		case 183u: goto tr219;
+		case 195u: goto tr221;
+		case 203u: goto tr223;
+		case 204u: goto tr224;
+		case 205u: goto tr225;
+		case 223u: goto tr223;
+		case 224u: goto tr226;
+		case 225u: goto tr227;
+		case 226u: goto tr228;
+		case 227u: goto tr229;
+		case 237u: goto tr231;
+		case 239u: goto tr232;
+		case 240u: goto tr233;
+		case 243u: goto tr235;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr203;
+				goto tr219;
 		} else if ( (*p) >= 48u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr222;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr234;
 		} else
-			goto st150;
+			goto tr230;
 	} else
-		goto tr203;
-	goto tr319;
+		goto tr219;
+	goto tr344;
+tr220:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st135;
 st135:
 	if ( ++p == pe )
 		goto _test_eof135;
 case 135:
+#line 11086 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto tr203;
-		case 46u: goto st135;
-		case 95u: goto tr203;
-		case 183u: goto tr203;
-		case 195u: goto st136;
-		case 203u: goto st138;
-		case 204u: goto st139;
-		case 205u: goto st140;
-		case 223u: goto st138;
-		case 224u: goto st141;
-		case 225u: goto st142;
-		case 226u: goto st143;
-		case 227u: goto st148;
-		case 237u: goto st151;
-		case 239u: goto st152;
-		case 240u: goto st155;
-		case 243u: goto st158;
+		case 45u: goto tr219;
+		case 46u: goto tr220;
+		case 95u: goto tr219;
+		case 183u: goto tr219;
+		case 195u: goto tr221;
+		case 203u: goto tr223;
+		case 204u: goto tr224;
+		case 205u: goto tr225;
+		case 223u: goto tr223;
+		case 224u: goto tr226;
+		case 225u: goto tr227;
+		case 226u: goto tr228;
+		case 227u: goto tr229;
+		case 237u: goto tr231;
+		case 239u: goto tr232;
+		case 240u: goto tr233;
+		case 243u: goto tr235;
 	}
 	if ( (*p) < 97u ) {
 		if ( (*p) > 57u ) {
 			if ( 65u <= (*p) && (*p) <= 90u )
-				goto tr203;
+				goto tr219;
 		} else if ( (*p) >= 48u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 122u ) {
 		if ( (*p) < 228u ) {
 			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st137;
+				goto tr222;
 		} else if ( (*p) > 236u ) {
 			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st157;
+				goto tr234;
 		} else
-			goto st150;
+			goto tr230;
 	} else
-		goto tr203;
+		goto tr219;
 	goto tr218;
+tr221:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st136;
 st136:
 	if ( ++p == pe )
 		goto _test_eof136;
 case 136:
+#line 11136 "lexer2.c"
 	if ( (*p) < 152u ) {
 		if ( 128u <= (*p) && (*p) <= 150u )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) > 182u ) {
 		if ( 184u <= (*p) )
-			goto tr203;
+			goto tr219;
 	} else
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr222:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st137;
 st137:
 	if ( ++p == pe )
 		goto _test_eof137;
 case 137:
-	goto tr203;
+#line 11158 "lexer2.c"
+	goto tr219;
+tr223:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st138;
 st138:
 	if ( ++p == pe )
 		goto _test_eof138;
 case 138:
+#line 11172 "lexer2.c"
 	if ( 192u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr224:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st139;
 st139:
 	if ( ++p == pe )
 		goto _test_eof139;
 case 139:
+#line 11188 "lexer2.c"
 	if ( 128u <= (*p) )
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr225:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st140;
 st140:
 	if ( ++p == pe )
 		goto _test_eof140;
 case 140:
+#line 11204 "lexer2.c"
 	if ( (*p) == 190u )
 		goto tr218;
-	goto tr203;
+	goto tr219;
+tr226:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st141;
 st141:
 	if ( ++p == pe )
 		goto _test_eof141;
 case 141:
+#line 11220 "lexer2.c"
 	if ( (*p) == 160u )
-		goto st139;
+		goto tr224;
 	if ( 161u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr227:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st142;
 st142:
 	if ( ++p == pe )
 		goto _test_eof142;
 case 142:
+#line 11238 "lexer2.c"
 	if ( (*p) == 191u )
-		goto st138;
+		goto tr223;
 	if ( 192u <= (*p) )
-		goto tr117;
-	goto st137;
+		goto tr218;
+	goto tr222;
+tr228:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st143;
 st143:
 	if ( ++p == pe )
 		goto _test_eof143;
 case 143:
+#line 11256 "lexer2.c"
 	switch( (*p) ) {
-		case 128u: goto st144;
-		case 129u: goto st145;
-		case 134u: goto st146;
-		case 176u: goto st139;
-		case 191u: goto st147;
+		case 128u: goto tr236;
+		case 129u: goto tr237;
+		case 134u: goto tr238;
+		case 176u: goto tr224;
+		case 191u: goto tr239;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st137;
+			goto tr222;
 	} else if ( (*p) >= 130u )
-		goto st137;
+		goto tr222;
 	goto tr218;
+tr236:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st144;
 st144:
 	if ( ++p == pe )
 		goto _test_eof144;
 case 144:
+#line 11282 "lexer2.c"
 	if ( (*p) > 141u ) {
 		if ( 191u <= (*p) )
-			goto tr203;
+			goto tr219;
 	} else if ( (*p) >= 140u )
-		goto tr203;
+		goto tr219;
 	goto tr218;
+tr237:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st145;
 st145:
 	if ( ++p == pe )
 		goto _test_eof145;
 case 145:
+#line 11301 "lexer2.c"
 	if ( 129u <= (*p) && (*p) <= 175u )
 		goto tr218;
-	goto tr203;
+	goto tr219;
+tr238:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st146;
 st146:
 	if ( ++p == pe )
 		goto _test_eof146;
 case 146:
+#line 11317 "lexer2.c"
 	if ( 144u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr239:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st147;
 st147:
 	if ( ++p == pe )
 		goto _test_eof147;
 case 147:
+#line 11333 "lexer2.c"
 	if ( 176u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr229:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st148;
 st148:
 	if ( ++p == pe )
 		goto _test_eof148;
 case 148:
+#line 11349 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st149;
+		goto tr240;
 	if ( 129u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr240:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st149;
 st149:
 	if ( ++p == pe )
 		goto _test_eof149;
 case 149:
+#line 11367 "lexer2.c"
 	if ( 129u <= (*p) )
-		goto tr203;
-	goto tr117;
+		goto tr219;
+	goto tr218;
+tr230:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st150;
 st150:
 	if ( ++p == pe )
 		goto _test_eof150;
 case 150:
-	goto st137;
+#line 11383 "lexer2.c"
+	goto tr222;
+tr231:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st151;
 st151:
 	if ( ++p == pe )
 		goto _test_eof151;
 case 151:
+#line 11397 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st138;
+		goto tr223;
 	if ( 160u <= (*p) )
-		goto tr117;
-	goto st137;
+		goto tr218;
+	goto tr222;
+tr232:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st152;
 st152:
 	if ( ++p == pe )
 		goto _test_eof152;
 case 152:
+#line 11415 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st139;
-		case 183u: goto st153;
-		case 191u: goto st154;
+		case 164u: goto tr224;
+		case 183u: goto tr241;
+		case 191u: goto tr242;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr241:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st153;
 st153:
 	if ( ++p == pe )
 		goto _test_eof153;
 case 153:
+#line 11436 "lexer2.c"
 	if ( 144u <= (*p) && (*p) <= 175u )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr242:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st154;
 st154:
 	if ( ++p == pe )
 		goto _test_eof154;
 case 154:
+#line 11452 "lexer2.c"
 	if ( 190u <= (*p) )
-		goto tr117;
-	goto tr203;
+		goto tr218;
+	goto tr219;
+tr233:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st155;
 st155:
 	if ( ++p == pe )
 		goto _test_eof155;
 case 155:
+#line 11468 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st156;
+		goto tr243;
 	if ( 145u <= (*p) )
-		goto st150;
-	goto tr117;
+		goto tr230;
+	goto tr218;
+tr243:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st156;
 st156:
 	if ( ++p == pe )
 		goto _test_eof156;
 case 156:
+#line 11486 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st139;
+		goto tr224;
 	if ( 129u <= (*p) )
-		goto st137;
-	goto tr117;
+		goto tr222;
+	goto tr218;
+tr234:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st157;
 st157:
 	if ( ++p == pe )
 		goto _test_eof157;
 case 157:
-	goto st150;
+#line 11504 "lexer2.c"
+	goto tr230;
+tr235:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st158;
 st158:
 	if ( ++p == pe )
 		goto _test_eof158;
 case 158:
+#line 11518 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st142;
+		goto tr227;
 	if ( 176u <= (*p) )
-		goto tr117;
-	goto st150;
+		goto tr218;
+	goto tr230;
+tr204:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st159;
 st159:
 	if ( ++p == pe )
 		goto _test_eof159;
 case 159:
-	if ( (*p) > 189u ) {
-		if ( 191u <= (*p) )
-			goto tr203;
-	} else if ( (*p) >= 176u )
-		goto tr203;
+#line 11542 "lexer2.c"
+	if ( (*p) < 152u ) {
+		if ( 128u <= (*p) && (*p) <= 150u )
+			goto tr219;
+	} else if ( (*p) > 182u ) {
+		if ( 184u <= (*p) )
+			goto tr219;
+	} else
+		goto tr219;
 	goto tr0;
+tr245:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st160;
+tr205:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st160;
 st160:
 	if ( ++p == pe )
 		goto _test_eof160;
 case 160:
-	switch( (*p) ) {
-		case 128u: goto st161;
-		case 129u: goto st162;
-		case 134u: goto st146;
-		case 176u: goto st139;
-		case 191u: goto st147;
-	}
-	if ( (*p) > 133u ) {
-		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st137;
-	} else if ( (*p) >= 130u )
-		goto st137;
-	goto tr0;
+#line 11578 "lexer2.c"
+	goto tr219;
+tr246:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st161;
+tr206:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st161;
 st161:
 	if ( ++p == pe )
 		goto _test_eof161;
 case 161:
-	if ( 140u <= (*p) && (*p) <= 141u )
-		goto tr203;
-	goto tr0;
+#line 11606 "lexer2.c"
+	if ( 192u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr207:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st162;
 st162:
 	if ( ++p == pe )
 		goto _test_eof162;
 case 162:
-	if ( 176u <= (*p) )
-		goto tr203;
+#line 11628 "lexer2.c"
+	if ( (*p) > 189u ) {
+		if ( 191u <= (*p) )
+			goto tr219;
+	} else if ( (*p) >= 176u )
+		goto tr219;
 	goto tr0;
-tr259:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st202;
-st202:
-	if ( ++p == pe )
-		goto _test_eof202;
-case 202:
-#line 9067 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 97u: goto st163;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 98u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr278;
+tr208:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st163;
 st163:
 	if ( ++p == pe )
 		goto _test_eof163;
 case 163:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 108u: goto st164;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
+#line 11653 "lexer2.c"
+	if ( (*p) == 160u )
+		goto tr244;
+	if ( 161u <= (*p) )
+		goto tr245;
 	goto tr0;
+tr244:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st164;
 st164:
 	if ( ++p == pe )
 		goto _test_eof164;
 case 164:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 115u: goto st165;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
+#line 11671 "lexer2.c"
+	if ( 128u <= (*p) )
+		goto tr219;
 	goto tr0;
+tr256:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st165;
+tr209:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st165;
 st165:
 	if ( ++p == pe )
 		goto _test_eof165;
 case 165:
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 101u: goto tr235;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr0;
-tr260:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st203;
-st203:
-	if ( ++p == pe )
-		goto _test_eof203;
-case 203:
-#line 9246 "lexer2.c"
-	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 114u: goto st166;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr278;
+#line 11701 "lexer2.c"
+	if ( (*p) == 191u )
+		goto tr246;
+	if ( 192u <= (*p) )
+		goto tr0;
+	goto tr245;
+tr210:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st166;
 st166:
 	if ( ++p == pe )
 		goto _test_eof166;
 case 166:
+#line 11725 "lexer2.c"
 	switch( (*p) ) {
-		case 45u: goto st103;
-		case 46u: goto st104;
-		case 58u: goto tr173;
-		case 95u: goto st103;
-		case 117u: goto st165;
-		case 183u: goto st103;
-		case 195u: goto st105;
-		case 203u: goto st107;
-		case 204u: goto st108;
-		case 205u: goto st109;
-		case 223u: goto st107;
-		case 224u: goto st110;
-		case 225u: goto st111;
-		case 226u: goto st112;
-		case 227u: goto st117;
-		case 237u: goto st120;
-		case 239u: goto st121;
-		case 240u: goto st124;
-		case 243u: goto st127;
-	}
-	if ( (*p) < 97u ) {
-		if ( (*p) > 57u ) {
-			if ( 65u <= (*p) && (*p) <= 90u )
-				goto st103;
-		} else if ( (*p) >= 48u )
-			goto st103;
-	} else if ( (*p) > 122u ) {
-		if ( (*p) < 228u ) {
-			if ( 196u <= (*p) && (*p) <= 222u )
-				goto st106;
-		} else if ( (*p) > 236u ) {
-			if ( 241u <= (*p) && (*p) <= 242u )
-				goto st126;
-		} else
-			goto st119;
-	} else
-		goto st103;
-	goto tr0;
-tr263:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st204;
-st204:
-	if ( ++p == pe )
-		goto _test_eof204;
-case 204:
-#line 9339 "lexer2.c"
-	if ( (*p) < 152u ) {
-		if ( 128u <= (*p) && (*p) <= 150u )
-			goto st103;
-	} else if ( (*p) > 182u ) {
-		if ( 184u <= (*p) )
-			goto st103;
-	} else
-		goto st103;
-	goto tr278;
-tr264:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st205;
-st205:
-	if ( ++p == pe )
-		goto _test_eof205;
-case 205:
-#line 9359 "lexer2.c"
-	goto st103;
-tr265:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st206;
-st206:
-	if ( ++p == pe )
-		goto _test_eof206;
-case 206:
-#line 9371 "lexer2.c"
-	if ( 192u <= (*p) )
-		goto tr278;
-	goto st103;
-tr266:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st207;
-st207:
-	if ( ++p == pe )
-		goto _test_eof207;
-case 207:
-#line 9385 "lexer2.c"
-	if ( (*p) > 189u ) {
-		if ( 191u <= (*p) )
-			goto st103;
-	} else if ( (*p) >= 176u )
-		goto st103;
-	goto tr278;
-tr267:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st208;
-st208:
-	if ( ++p == pe )
-		goto _test_eof208;
-case 208:
-#line 9402 "lexer2.c"
-	if ( (*p) == 160u )
-		goto st108;
-	if ( 161u <= (*p) )
-		goto st106;
-	goto tr278;
-tr268:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st209;
-st209:
-	if ( ++p == pe )
-		goto _test_eof209;
-case 209:
-#line 9418 "lexer2.c"
-	if ( (*p) == 191u )
-		goto st107;
-	if ( 192u <= (*p) )
-		goto tr278;
-	goto st106;
-tr269:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st210;
-st210:
-	if ( ++p == pe )
-		goto _test_eof210;
-case 210:
-#line 9434 "lexer2.c"
-	switch( (*p) ) {
-		case 128u: goto st167;
-		case 129u: goto st168;
-		case 134u: goto st115;
-		case 176u: goto st108;
-		case 191u: goto st116;
+		case 128u: goto tr247;
+		case 129u: goto tr248;
+		case 134u: goto tr249;
+		case 176u: goto tr244;
+		case 191u: goto tr250;
 	}
 	if ( (*p) > 133u ) {
 		if ( 177u <= (*p) && (*p) <= 190u )
-			goto st106;
+			goto tr245;
 	} else if ( (*p) >= 130u )
-		goto st106;
-	goto tr278;
+		goto tr245;
+	goto tr0;
+tr247:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st167;
 st167:
 	if ( ++p == pe )
 		goto _test_eof167;
 case 167:
+#line 11751 "lexer2.c"
 	if ( 140u <= (*p) && (*p) <= 141u )
-		goto st103;
+		goto tr219;
 	goto tr0;
+tr248:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st168;
 st168:
 	if ( ++p == pe )
 		goto _test_eof168;
 case 168:
+#line 11767 "lexer2.c"
 	if ( 176u <= (*p) )
-		goto st103;
+		goto tr219;
 	goto tr0;
-tr270:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st211;
-st211:
+tr249:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st169;
+st169:
 	if ( ++p == pe )
-		goto _test_eof211;
-case 211:
-#line 9472 "lexer2.c"
+		goto _test_eof169;
+case 169:
+#line 11783 "lexer2.c"
+	if ( 144u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr250:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st170;
+st170:
+	if ( ++p == pe )
+		goto _test_eof170;
+case 170:
+#line 11799 "lexer2.c"
+	if ( 176u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr211:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st171;
+st171:
+	if ( ++p == pe )
+		goto _test_eof171;
+case 171:
+#line 11821 "lexer2.c"
 	if ( (*p) == 128u )
-		goto st118;
+		goto tr251;
 	if ( 129u <= (*p) )
-		goto st106;
-	goto tr278;
-tr271:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st212;
-st212:
+		goto tr245;
+	goto tr0;
+tr251:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st172;
+st172:
 	if ( ++p == pe )
-		goto _test_eof212;
-case 212:
-#line 9488 "lexer2.c"
-	goto st106;
-tr272:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st213;
-st213:
+		goto _test_eof172;
+case 172:
+#line 11839 "lexer2.c"
+	if ( 129u <= (*p) )
+		goto tr219;
+	goto tr0;
+tr255:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st173;
+tr212:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st173;
+st173:
 	if ( ++p == pe )
-		goto _test_eof213;
-case 213:
-#line 9500 "lexer2.c"
+		goto _test_eof173;
+case 173:
+#line 11869 "lexer2.c"
+	goto tr245;
+tr213:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st174;
+st174:
+	if ( ++p == pe )
+		goto _test_eof174;
+case 174:
+#line 11889 "lexer2.c"
 	if ( (*p) == 159u )
-		goto st107;
+		goto tr246;
 	if ( 160u <= (*p) )
-		goto tr278;
-	goto st106;
-tr273:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st214;
-st214:
+		goto tr0;
+	goto tr245;
+tr214:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st175;
+st175:
 	if ( ++p == pe )
-		goto _test_eof214;
-case 214:
-#line 9516 "lexer2.c"
+		goto _test_eof175;
+case 175:
+#line 11913 "lexer2.c"
 	switch( (*p) ) {
-		case 164u: goto st108;
-		case 183u: goto st122;
-		case 191u: goto st123;
+		case 164u: goto tr244;
+		case 183u: goto tr252;
+		case 191u: goto tr253;
 	}
 	if ( 165u <= (*p) && (*p) <= 190u )
-		goto st106;
-	goto tr278;
-tr274:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st215;
-st215:
+		goto tr245;
+	goto tr0;
+tr252:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st176;
+st176:
 	if ( ++p == pe )
-		goto _test_eof215;
-case 215:
-#line 9535 "lexer2.c"
+		goto _test_eof176;
+case 176:
+#line 11934 "lexer2.c"
+	if ( 144u <= (*p) && (*p) <= 175u )
+		goto tr0;
+	goto tr219;
+tr253:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st177;
+st177:
+	if ( ++p == pe )
+		goto _test_eof177;
+case 177:
+#line 11950 "lexer2.c"
+	if ( 190u <= (*p) )
+		goto tr0;
+	goto tr219;
+tr215:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st178;
+st178:
+	if ( ++p == pe )
+		goto _test_eof178;
+case 178:
+#line 11972 "lexer2.c"
 	if ( (*p) == 144u )
-		goto st125;
+		goto tr254;
 	if ( 145u <= (*p) )
-		goto st119;
-	goto tr278;
-tr275:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st216;
-st216:
+		goto tr255;
+	goto tr0;
+tr254:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st179;
+st179:
 	if ( ++p == pe )
-		goto _test_eof216;
-case 216:
-#line 9551 "lexer2.c"
-	goto st119;
-tr276:
-#line 1 "NONE"
-	{ shared_lexer->env.te = p+1;}
-#line 254 "turtle.rl"
-	{ shared_lexer->env.act = 30;}
-	goto st217;
-st217:
+		goto _test_eof179;
+case 179:
+#line 11990 "lexer2.c"
+	if ( (*p) == 128u )
+		goto tr244;
+	if ( 129u <= (*p) )
+		goto tr245;
+	goto tr0;
+tr216:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st180;
+st180:
 	if ( ++p == pe )
-		goto _test_eof217;
-case 217:
-#line 9563 "lexer2.c"
+		goto _test_eof180;
+case 180:
+#line 12014 "lexer2.c"
+	goto tr255;
+tr217:
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st181;
+st181:
+	if ( ++p == pe )
+		goto _test_eof181;
+case 181:
+#line 12034 "lexer2.c"
 	if ( (*p) == 175u )
-		goto st111;
+		goto tr256;
 	if ( 176u <= (*p) )
-		goto tr278;
-	goto st119;
+		goto tr0;
+	goto tr255;
+tr284:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st221;
+st221:
+	if ( ++p == pe )
+		goto _test_eof221;
+case 221:
+#line 12062 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 97u: goto tr345;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
 	}
-	_test_eof169:  shared_lexer->env.cs = 169; goto _test_eof; 
-	_test_eof170:  shared_lexer->env.cs = 170; goto _test_eof; 
-	_test_eof171:  shared_lexer->env.cs = 171; goto _test_eof; 
+	if ( (*p) < 98u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr303;
+tr345:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st182;
+st182:
+	if ( ++p == pe )
+		goto _test_eof182;
+case 182:
+#line 12114 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 108u: goto tr257;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr257:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st183;
+st183:
+	if ( ++p == pe )
+		goto _test_eof183;
+case 183:
+#line 12166 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 115u: goto tr258;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr258:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st184;
+st184:
+	if ( ++p == pe )
+		goto _test_eof184;
+case 184:
+#line 12218 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 101u: goto tr259;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr285:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st222;
+st222:
+	if ( ++p == pe )
+		goto _test_eof222;
+case 222:
+#line 12280 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 114u: goto tr346;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr303;
+tr346:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st185;
+st185:
+	if ( ++p == pe )
+		goto _test_eof185;
+case 185:
+#line 12332 "lexer2.c"
+	switch( (*p) ) {
+		case 45u: goto tr171;
+		case 46u: goto tr172;
+		case 58u: goto tr173;
+		case 95u: goto tr171;
+		case 117u: goto tr258;
+		case 183u: goto tr171;
+		case 195u: goto tr174;
+		case 203u: goto tr176;
+		case 204u: goto tr177;
+		case 205u: goto tr178;
+		case 223u: goto tr176;
+		case 224u: goto tr179;
+		case 225u: goto tr180;
+		case 226u: goto tr181;
+		case 227u: goto tr182;
+		case 237u: goto tr184;
+		case 239u: goto tr185;
+		case 240u: goto tr186;
+		case 243u: goto tr188;
+	}
+	if ( (*p) < 97u ) {
+		if ( (*p) > 57u ) {
+			if ( 65u <= (*p) && (*p) <= 90u )
+				goto tr171;
+		} else if ( (*p) >= 48u )
+			goto tr171;
+	} else if ( (*p) > 122u ) {
+		if ( (*p) < 228u ) {
+			if ( 196u <= (*p) && (*p) <= 222u )
+				goto tr175;
+		} else if ( (*p) > 236u ) {
+			if ( 241u <= (*p) && (*p) <= 242u )
+				goto tr187;
+		} else
+			goto tr183;
+	} else
+		goto tr171;
+	goto tr0;
+tr288:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st223;
+st223:
+	if ( ++p == pe )
+		goto _test_eof223;
+case 223:
+#line 12394 "lexer2.c"
+	if ( (*p) < 152u ) {
+		if ( 128u <= (*p) && (*p) <= 150u )
+			goto tr171;
+	} else if ( (*p) > 182u ) {
+		if ( 184u <= (*p) )
+			goto tr171;
+	} else
+		goto tr171;
+	goto tr303;
+tr289:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st224;
+st224:
+	if ( ++p == pe )
+		goto _test_eof224;
+case 224:
+#line 12426 "lexer2.c"
+	goto tr171;
+tr290:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st225;
+st225:
+	if ( ++p == pe )
+		goto _test_eof225;
+case 225:
+#line 12450 "lexer2.c"
+	if ( 192u <= (*p) )
+		goto tr303;
+	goto tr171;
+tr291:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st226;
+st226:
+	if ( ++p == pe )
+		goto _test_eof226;
+case 226:
+#line 12476 "lexer2.c"
+	if ( (*p) > 189u ) {
+		if ( 191u <= (*p) )
+			goto tr171;
+	} else if ( (*p) >= 176u )
+		goto tr171;
+	goto tr303;
+tr292:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st227;
+st227:
+	if ( ++p == pe )
+		goto _test_eof227;
+case 227:
+#line 12505 "lexer2.c"
+	if ( (*p) == 160u )
+		goto tr177;
+	if ( 161u <= (*p) )
+		goto tr175;
+	goto tr303;
+tr293:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st228;
+st228:
+	if ( ++p == pe )
+		goto _test_eof228;
+case 228:
+#line 12533 "lexer2.c"
+	if ( (*p) == 191u )
+		goto tr176;
+	if ( 192u <= (*p) )
+		goto tr303;
+	goto tr175;
+tr294:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st229;
+st229:
+	if ( ++p == pe )
+		goto _test_eof229;
+case 229:
+#line 12561 "lexer2.c"
+	switch( (*p) ) {
+		case 128u: goto tr347;
+		case 129u: goto tr348;
+		case 134u: goto tr191;
+		case 176u: goto tr177;
+		case 191u: goto tr192;
+	}
+	if ( (*p) > 133u ) {
+		if ( 177u <= (*p) && (*p) <= 190u )
+			goto tr175;
+	} else if ( (*p) >= 130u )
+		goto tr175;
+	goto tr303;
+tr347:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st186;
+st186:
+	if ( ++p == pe )
+		goto _test_eof186;
+case 186:
+#line 12587 "lexer2.c"
+	if ( 140u <= (*p) && (*p) <= 141u )
+		goto tr171;
+	goto tr0;
+tr348:
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+	goto st187;
+st187:
+	if ( ++p == pe )
+		goto _test_eof187;
+case 187:
+#line 12603 "lexer2.c"
+	if ( 176u <= (*p) )
+		goto tr171;
+	goto tr0;
+tr295:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st230;
+st230:
+	if ( ++p == pe )
+		goto _test_eof230;
+case 230:
+#line 12629 "lexer2.c"
+	if ( (*p) == 128u )
+		goto tr193;
+	if ( 129u <= (*p) )
+		goto tr175;
+	goto tr303;
+tr296:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st231;
+st231:
+	if ( ++p == pe )
+		goto _test_eof231;
+case 231:
+#line 12657 "lexer2.c"
+	goto tr175;
+tr297:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st232;
+st232:
+	if ( ++p == pe )
+		goto _test_eof232;
+case 232:
+#line 12681 "lexer2.c"
+	if ( (*p) == 159u )
+		goto tr176;
+	if ( 160u <= (*p) )
+		goto tr303;
+	goto tr175;
+tr298:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st233;
+st233:
+	if ( ++p == pe )
+		goto _test_eof233;
+case 233:
+#line 12709 "lexer2.c"
+	switch( (*p) ) {
+		case 164u: goto tr177;
+		case 183u: goto tr194;
+		case 191u: goto tr195;
+	}
+	if ( 165u <= (*p) && (*p) <= 190u )
+		goto tr175;
+	goto tr303;
+tr299:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st234;
+st234:
+	if ( ++p == pe )
+		goto _test_eof234;
+case 234:
+#line 12740 "lexer2.c"
+	if ( (*p) == 144u )
+		goto tr196;
+	if ( 145u <= (*p) )
+		goto tr183;
+	goto tr303;
+tr300:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st235;
+st235:
+	if ( ++p == pe )
+		goto _test_eof235;
+case 235:
+#line 12768 "lexer2.c"
+	goto tr183;
+tr301:
+#line 1 "NONE"
+	{ shared_lexer->env.te = p+1;}
+#line 82 "turtle.rl"
+	{
+        if (shared_lexer->string != NULL)
+                string_dealloc(shared_lexer->string);
+        shared_lexer->string = string_new();
+    }
+#line 94 "turtle.rl"
+	{
+            if (shared_lexer->string) {
+                string_append_char(&shared_lexer->string, (*p));
+            }
+    }
+#line 258 "turtle.rl"
+	{ shared_lexer->env.act = 30;}
+	goto st236;
+st236:
+	if ( ++p == pe )
+		goto _test_eof236;
+case 236:
+#line 12792 "lexer2.c"
+	if ( (*p) == 175u )
+		goto tr180;
+	if ( 176u <= (*p) )
+		goto tr303;
+	goto tr183;
+	}
+	_test_eof188:  shared_lexer->env.cs = 188; goto _test_eof; 
+	_test_eof189:  shared_lexer->env.cs = 189; goto _test_eof; 
+	_test_eof190:  shared_lexer->env.cs = 190; goto _test_eof; 
 	_test_eof0:  shared_lexer->env.cs = 0; goto _test_eof; 
 	_test_eof1:  shared_lexer->env.cs = 1; goto _test_eof; 
 	_test_eof2:  shared_lexer->env.cs = 2; goto _test_eof; 
@@ -9581,7 +12810,7 @@ case 217:
 	_test_eof9:  shared_lexer->env.cs = 9; goto _test_eof; 
 	_test_eof10:  shared_lexer->env.cs = 10; goto _test_eof; 
 	_test_eof11:  shared_lexer->env.cs = 11; goto _test_eof; 
-	_test_eof172:  shared_lexer->env.cs = 172; goto _test_eof; 
+	_test_eof191:  shared_lexer->env.cs = 191; goto _test_eof; 
 	_test_eof12:  shared_lexer->env.cs = 12; goto _test_eof; 
 	_test_eof13:  shared_lexer->env.cs = 13; goto _test_eof; 
 	_test_eof14:  shared_lexer->env.cs = 14; goto _test_eof; 
@@ -9597,10 +12826,10 @@ case 217:
 	_test_eof24:  shared_lexer->env.cs = 24; goto _test_eof; 
 	_test_eof25:  shared_lexer->env.cs = 25; goto _test_eof; 
 	_test_eof26:  shared_lexer->env.cs = 26; goto _test_eof; 
-	_test_eof173:  shared_lexer->env.cs = 173; goto _test_eof; 
+	_test_eof192:  shared_lexer->env.cs = 192; goto _test_eof; 
 	_test_eof27:  shared_lexer->env.cs = 27; goto _test_eof; 
-	_test_eof174:  shared_lexer->env.cs = 174; goto _test_eof; 
-	_test_eof175:  shared_lexer->env.cs = 175; goto _test_eof; 
+	_test_eof193:  shared_lexer->env.cs = 193; goto _test_eof; 
+	_test_eof194:  shared_lexer->env.cs = 194; goto _test_eof; 
 	_test_eof28:  shared_lexer->env.cs = 28; goto _test_eof; 
 	_test_eof29:  shared_lexer->env.cs = 29; goto _test_eof; 
 	_test_eof30:  shared_lexer->env.cs = 30; goto _test_eof; 
@@ -9613,7 +12842,7 @@ case 217:
 	_test_eof37:  shared_lexer->env.cs = 37; goto _test_eof; 
 	_test_eof38:  shared_lexer->env.cs = 38; goto _test_eof; 
 	_test_eof39:  shared_lexer->env.cs = 39; goto _test_eof; 
-	_test_eof176:  shared_lexer->env.cs = 176; goto _test_eof; 
+	_test_eof195:  shared_lexer->env.cs = 195; goto _test_eof; 
 	_test_eof40:  shared_lexer->env.cs = 40; goto _test_eof; 
 	_test_eof41:  shared_lexer->env.cs = 41; goto _test_eof; 
 	_test_eof42:  shared_lexer->env.cs = 42; goto _test_eof; 
@@ -9629,19 +12858,19 @@ case 217:
 	_test_eof52:  shared_lexer->env.cs = 52; goto _test_eof; 
 	_test_eof53:  shared_lexer->env.cs = 53; goto _test_eof; 
 	_test_eof54:  shared_lexer->env.cs = 54; goto _test_eof; 
-	_test_eof177:  shared_lexer->env.cs = 177; goto _test_eof; 
+	_test_eof196:  shared_lexer->env.cs = 196; goto _test_eof; 
 	_test_eof55:  shared_lexer->env.cs = 55; goto _test_eof; 
-	_test_eof178:  shared_lexer->env.cs = 178; goto _test_eof; 
+	_test_eof197:  shared_lexer->env.cs = 197; goto _test_eof; 
 	_test_eof56:  shared_lexer->env.cs = 56; goto _test_eof; 
 	_test_eof57:  shared_lexer->env.cs = 57; goto _test_eof; 
-	_test_eof179:  shared_lexer->env.cs = 179; goto _test_eof; 
-	_test_eof180:  shared_lexer->env.cs = 180; goto _test_eof; 
+	_test_eof198:  shared_lexer->env.cs = 198; goto _test_eof; 
+	_test_eof199:  shared_lexer->env.cs = 199; goto _test_eof; 
 	_test_eof58:  shared_lexer->env.cs = 58; goto _test_eof; 
-	_test_eof181:  shared_lexer->env.cs = 181; goto _test_eof; 
-	_test_eof182:  shared_lexer->env.cs = 182; goto _test_eof; 
+	_test_eof200:  shared_lexer->env.cs = 200; goto _test_eof; 
+	_test_eof201:  shared_lexer->env.cs = 201; goto _test_eof; 
 	_test_eof59:  shared_lexer->env.cs = 59; goto _test_eof; 
 	_test_eof60:  shared_lexer->env.cs = 60; goto _test_eof; 
-	_test_eof183:  shared_lexer->env.cs = 183; goto _test_eof; 
+	_test_eof202:  shared_lexer->env.cs = 202; goto _test_eof; 
 	_test_eof61:  shared_lexer->env.cs = 61; goto _test_eof; 
 	_test_eof62:  shared_lexer->env.cs = 62; goto _test_eof; 
 	_test_eof63:  shared_lexer->env.cs = 63; goto _test_eof; 
@@ -9671,7 +12900,7 @@ case 217:
 	_test_eof87:  shared_lexer->env.cs = 87; goto _test_eof; 
 	_test_eof88:  shared_lexer->env.cs = 88; goto _test_eof; 
 	_test_eof89:  shared_lexer->env.cs = 89; goto _test_eof; 
-	_test_eof184:  shared_lexer->env.cs = 184; goto _test_eof; 
+	_test_eof203:  shared_lexer->env.cs = 203; goto _test_eof; 
 	_test_eof90:  shared_lexer->env.cs = 90; goto _test_eof; 
 	_test_eof91:  shared_lexer->env.cs = 91; goto _test_eof; 
 	_test_eof92:  shared_lexer->env.cs = 92; goto _test_eof; 
@@ -9684,19 +12913,19 @@ case 217:
 	_test_eof99:  shared_lexer->env.cs = 99; goto _test_eof; 
 	_test_eof100:  shared_lexer->env.cs = 100; goto _test_eof; 
 	_test_eof101:  shared_lexer->env.cs = 101; goto _test_eof; 
-	_test_eof185:  shared_lexer->env.cs = 185; goto _test_eof; 
-	_test_eof186:  shared_lexer->env.cs = 186; goto _test_eof; 
+	_test_eof204:  shared_lexer->env.cs = 204; goto _test_eof; 
+	_test_eof205:  shared_lexer->env.cs = 205; goto _test_eof; 
 	_test_eof102:  shared_lexer->env.cs = 102; goto _test_eof; 
-	_test_eof187:  shared_lexer->env.cs = 187; goto _test_eof; 
-	_test_eof188:  shared_lexer->env.cs = 188; goto _test_eof; 
-	_test_eof189:  shared_lexer->env.cs = 189; goto _test_eof; 
-	_test_eof190:  shared_lexer->env.cs = 190; goto _test_eof; 
-	_test_eof191:  shared_lexer->env.cs = 191; goto _test_eof; 
-	_test_eof192:  shared_lexer->env.cs = 192; goto _test_eof; 
-	_test_eof193:  shared_lexer->env.cs = 193; goto _test_eof; 
-	_test_eof194:  shared_lexer->env.cs = 194; goto _test_eof; 
-	_test_eof195:  shared_lexer->env.cs = 195; goto _test_eof; 
-	_test_eof196:  shared_lexer->env.cs = 196; goto _test_eof; 
+	_test_eof206:  shared_lexer->env.cs = 206; goto _test_eof; 
+	_test_eof207:  shared_lexer->env.cs = 207; goto _test_eof; 
+	_test_eof208:  shared_lexer->env.cs = 208; goto _test_eof; 
+	_test_eof209:  shared_lexer->env.cs = 209; goto _test_eof; 
+	_test_eof210:  shared_lexer->env.cs = 210; goto _test_eof; 
+	_test_eof211:  shared_lexer->env.cs = 211; goto _test_eof; 
+	_test_eof212:  shared_lexer->env.cs = 212; goto _test_eof; 
+	_test_eof213:  shared_lexer->env.cs = 213; goto _test_eof; 
+	_test_eof214:  shared_lexer->env.cs = 214; goto _test_eof; 
+	_test_eof215:  shared_lexer->env.cs = 215; goto _test_eof; 
 	_test_eof103:  shared_lexer->env.cs = 103; goto _test_eof; 
 	_test_eof104:  shared_lexer->env.cs = 104; goto _test_eof; 
 	_test_eof105:  shared_lexer->env.cs = 105; goto _test_eof; 
@@ -9722,18 +12951,18 @@ case 217:
 	_test_eof125:  shared_lexer->env.cs = 125; goto _test_eof; 
 	_test_eof126:  shared_lexer->env.cs = 126; goto _test_eof; 
 	_test_eof127:  shared_lexer->env.cs = 127; goto _test_eof; 
-	_test_eof197:  shared_lexer->env.cs = 197; goto _test_eof; 
+	_test_eof216:  shared_lexer->env.cs = 216; goto _test_eof; 
 	_test_eof128:  shared_lexer->env.cs = 128; goto _test_eof; 
 	_test_eof129:  shared_lexer->env.cs = 129; goto _test_eof; 
-	_test_eof198:  shared_lexer->env.cs = 198; goto _test_eof; 
+	_test_eof217:  shared_lexer->env.cs = 217; goto _test_eof; 
 	_test_eof130:  shared_lexer->env.cs = 130; goto _test_eof; 
 	_test_eof131:  shared_lexer->env.cs = 131; goto _test_eof; 
 	_test_eof132:  shared_lexer->env.cs = 132; goto _test_eof; 
 	_test_eof133:  shared_lexer->env.cs = 133; goto _test_eof; 
-	_test_eof199:  shared_lexer->env.cs = 199; goto _test_eof; 
-	_test_eof200:  shared_lexer->env.cs = 200; goto _test_eof; 
+	_test_eof218:  shared_lexer->env.cs = 218; goto _test_eof; 
+	_test_eof219:  shared_lexer->env.cs = 219; goto _test_eof; 
 	_test_eof134:  shared_lexer->env.cs = 134; goto _test_eof; 
-	_test_eof201:  shared_lexer->env.cs = 201; goto _test_eof; 
+	_test_eof220:  shared_lexer->env.cs = 220; goto _test_eof; 
 	_test_eof135:  shared_lexer->env.cs = 135; goto _test_eof; 
 	_test_eof136:  shared_lexer->env.cs = 136; goto _test_eof; 
 	_test_eof137:  shared_lexer->env.cs = 137; goto _test_eof; 
@@ -9762,35 +12991,54 @@ case 217:
 	_test_eof160:  shared_lexer->env.cs = 160; goto _test_eof; 
 	_test_eof161:  shared_lexer->env.cs = 161; goto _test_eof; 
 	_test_eof162:  shared_lexer->env.cs = 162; goto _test_eof; 
-	_test_eof202:  shared_lexer->env.cs = 202; goto _test_eof; 
 	_test_eof163:  shared_lexer->env.cs = 163; goto _test_eof; 
 	_test_eof164:  shared_lexer->env.cs = 164; goto _test_eof; 
 	_test_eof165:  shared_lexer->env.cs = 165; goto _test_eof; 
-	_test_eof203:  shared_lexer->env.cs = 203; goto _test_eof; 
 	_test_eof166:  shared_lexer->env.cs = 166; goto _test_eof; 
-	_test_eof204:  shared_lexer->env.cs = 204; goto _test_eof; 
-	_test_eof205:  shared_lexer->env.cs = 205; goto _test_eof; 
-	_test_eof206:  shared_lexer->env.cs = 206; goto _test_eof; 
-	_test_eof207:  shared_lexer->env.cs = 207; goto _test_eof; 
-	_test_eof208:  shared_lexer->env.cs = 208; goto _test_eof; 
-	_test_eof209:  shared_lexer->env.cs = 209; goto _test_eof; 
-	_test_eof210:  shared_lexer->env.cs = 210; goto _test_eof; 
 	_test_eof167:  shared_lexer->env.cs = 167; goto _test_eof; 
 	_test_eof168:  shared_lexer->env.cs = 168; goto _test_eof; 
-	_test_eof211:  shared_lexer->env.cs = 211; goto _test_eof; 
-	_test_eof212:  shared_lexer->env.cs = 212; goto _test_eof; 
-	_test_eof213:  shared_lexer->env.cs = 213; goto _test_eof; 
-	_test_eof214:  shared_lexer->env.cs = 214; goto _test_eof; 
-	_test_eof215:  shared_lexer->env.cs = 215; goto _test_eof; 
-	_test_eof216:  shared_lexer->env.cs = 216; goto _test_eof; 
-	_test_eof217:  shared_lexer->env.cs = 217; goto _test_eof; 
+	_test_eof169:  shared_lexer->env.cs = 169; goto _test_eof; 
+	_test_eof170:  shared_lexer->env.cs = 170; goto _test_eof; 
+	_test_eof171:  shared_lexer->env.cs = 171; goto _test_eof; 
+	_test_eof172:  shared_lexer->env.cs = 172; goto _test_eof; 
+	_test_eof173:  shared_lexer->env.cs = 173; goto _test_eof; 
+	_test_eof174:  shared_lexer->env.cs = 174; goto _test_eof; 
+	_test_eof175:  shared_lexer->env.cs = 175; goto _test_eof; 
+	_test_eof176:  shared_lexer->env.cs = 176; goto _test_eof; 
+	_test_eof177:  shared_lexer->env.cs = 177; goto _test_eof; 
+	_test_eof178:  shared_lexer->env.cs = 178; goto _test_eof; 
+	_test_eof179:  shared_lexer->env.cs = 179; goto _test_eof; 
+	_test_eof180:  shared_lexer->env.cs = 180; goto _test_eof; 
+	_test_eof181:  shared_lexer->env.cs = 181; goto _test_eof; 
+	_test_eof221:  shared_lexer->env.cs = 221; goto _test_eof; 
+	_test_eof182:  shared_lexer->env.cs = 182; goto _test_eof; 
+	_test_eof183:  shared_lexer->env.cs = 183; goto _test_eof; 
+	_test_eof184:  shared_lexer->env.cs = 184; goto _test_eof; 
+	_test_eof222:  shared_lexer->env.cs = 222; goto _test_eof; 
+	_test_eof185:  shared_lexer->env.cs = 185; goto _test_eof; 
+	_test_eof223:  shared_lexer->env.cs = 223; goto _test_eof; 
+	_test_eof224:  shared_lexer->env.cs = 224; goto _test_eof; 
+	_test_eof225:  shared_lexer->env.cs = 225; goto _test_eof; 
+	_test_eof226:  shared_lexer->env.cs = 226; goto _test_eof; 
+	_test_eof227:  shared_lexer->env.cs = 227; goto _test_eof; 
+	_test_eof228:  shared_lexer->env.cs = 228; goto _test_eof; 
+	_test_eof229:  shared_lexer->env.cs = 229; goto _test_eof; 
+	_test_eof186:  shared_lexer->env.cs = 186; goto _test_eof; 
+	_test_eof187:  shared_lexer->env.cs = 187; goto _test_eof; 
+	_test_eof230:  shared_lexer->env.cs = 230; goto _test_eof; 
+	_test_eof231:  shared_lexer->env.cs = 231; goto _test_eof; 
+	_test_eof232:  shared_lexer->env.cs = 232; goto _test_eof; 
+	_test_eof233:  shared_lexer->env.cs = 233; goto _test_eof; 
+	_test_eof234:  shared_lexer->env.cs = 234; goto _test_eof; 
+	_test_eof235:  shared_lexer->env.cs = 235; goto _test_eof; 
+	_test_eof236:  shared_lexer->env.cs = 236; goto _test_eof; 
 
 	_test_eof: {}
 	if ( p == eof )
 	{
 	switch (  shared_lexer->env.cs ) {
-	case 170: goto tr277;
-	case 171: goto tr278;
+	case 189: goto tr302;
+	case 190: goto tr303;
 	case 0: goto tr0;
 	case 1: goto tr0;
 	case 2: goto tr0;
@@ -9803,7 +13051,7 @@ case 217:
 	case 9: goto tr0;
 	case 10: goto tr0;
 	case 11: goto tr0;
-	case 172: goto tr282;
+	case 191: goto tr307;
 	case 12: goto tr26;
 	case 13: goto tr26;
 	case 14: goto tr26;
@@ -9819,10 +13067,10 @@ case 217:
 	case 24: goto tr26;
 	case 25: goto tr26;
 	case 26: goto tr26;
-	case 173: goto tr278;
+	case 192: goto tr303;
 	case 27: goto tr0;
-	case 174: goto tr284;
-	case 175: goto tr278;
+	case 193: goto tr309;
+	case 194: goto tr303;
 	case 28: goto tr0;
 	case 29: goto tr0;
 	case 30: goto tr0;
@@ -9835,7 +13083,7 @@ case 217:
 	case 37: goto tr0;
 	case 38: goto tr0;
 	case 39: goto tr0;
-	case 176: goto tr288;
+	case 195: goto tr313;
 	case 40: goto tr85;
 	case 41: goto tr85;
 	case 42: goto tr85;
@@ -9851,19 +13099,19 @@ case 217:
 	case 52: goto tr85;
 	case 53: goto tr85;
 	case 54: goto tr85;
-	case 177: goto tr278;
+	case 196: goto tr303;
 	case 55: goto tr0;
-	case 178: goto tr291;
+	case 197: goto tr316;
 	case 56: goto tr117;
 	case 57: goto tr117;
-	case 179: goto tr292;
-	case 180: goto tr293;
+	case 198: goto tr317;
+	case 199: goto tr318;
 	case 58: goto tr120;
-	case 181: goto tr295;
-	case 182: goto tr296;
+	case 200: goto tr320;
+	case 201: goto tr321;
 	case 59: goto tr122;
 	case 60: goto tr122;
-	case 183: goto tr296;
+	case 202: goto tr321;
 	case 61: goto tr122;
 	case 62: goto tr122;
 	case 63: goto tr122;
@@ -9893,7 +13141,7 @@ case 217:
 	case 87: goto tr122;
 	case 88: goto tr122;
 	case 89: goto tr122;
-	case 184: goto tr278;
+	case 203: goto tr303;
 	case 90: goto tr0;
 	case 91: goto tr0;
 	case 92: goto tr0;
@@ -9906,19 +13154,19 @@ case 217:
 	case 99: goto tr0;
 	case 100: goto tr0;
 	case 101: goto tr0;
-	case 185: goto tr278;
-	case 186: goto tr117;
+	case 204: goto tr303;
+	case 205: goto tr117;
 	case 102: goto tr117;
-	case 187: goto tr306;
-	case 188: goto tr306;
-	case 189: goto tr306;
-	case 190: goto tr306;
-	case 191: goto tr306;
-	case 192: goto tr306;
-	case 193: goto tr306;
-	case 194: goto tr306;
-	case 195: goto tr306;
-	case 196: goto tr117;
+	case 206: goto tr331;
+	case 207: goto tr331;
+	case 208: goto tr331;
+	case 209: goto tr331;
+	case 210: goto tr331;
+	case 211: goto tr331;
+	case 212: goto tr331;
+	case 213: goto tr331;
+	case 214: goto tr331;
+	case 215: goto tr117;
 	case 103: goto tr117;
 	case 104: goto tr117;
 	case 105: goto tr117;
@@ -9944,74 +13192,93 @@ case 217:
 	case 125: goto tr117;
 	case 126: goto tr117;
 	case 127: goto tr117;
-	case 197: goto tr278;
+	case 216: goto tr303;
 	case 128: goto tr0;
 	case 129: goto tr0;
-	case 198: goto tr278;
+	case 217: goto tr303;
 	case 130: goto tr0;
 	case 131: goto tr0;
 	case 132: goto tr0;
 	case 133: goto tr0;
-	case 199: goto tr278;
-	case 200: goto tr278;
+	case 218: goto tr303;
+	case 219: goto tr303;
 	case 134: goto tr0;
-	case 201: goto tr319;
+	case 220: goto tr344;
 	case 135: goto tr218;
-	case 136: goto tr117;
-	case 137: goto tr117;
-	case 138: goto tr117;
-	case 139: goto tr117;
+	case 136: goto tr218;
+	case 137: goto tr218;
+	case 138: goto tr218;
+	case 139: goto tr218;
 	case 140: goto tr218;
-	case 141: goto tr117;
-	case 142: goto tr117;
+	case 141: goto tr218;
+	case 142: goto tr218;
 	case 143: goto tr218;
 	case 144: goto tr218;
 	case 145: goto tr218;
-	case 146: goto tr117;
-	case 147: goto tr117;
-	case 148: goto tr117;
-	case 149: goto tr117;
-	case 150: goto tr117;
-	case 151: goto tr117;
-	case 152: goto tr117;
-	case 153: goto tr117;
-	case 154: goto tr117;
-	case 155: goto tr117;
-	case 156: goto tr117;
-	case 157: goto tr117;
-	case 158: goto tr117;
+	case 146: goto tr218;
+	case 147: goto tr218;
+	case 148: goto tr218;
+	case 149: goto tr218;
+	case 150: goto tr218;
+	case 151: goto tr218;
+	case 152: goto tr218;
+	case 153: goto tr218;
+	case 154: goto tr218;
+	case 155: goto tr218;
+	case 156: goto tr218;
+	case 157: goto tr218;
+	case 158: goto tr218;
 	case 159: goto tr0;
 	case 160: goto tr0;
 	case 161: goto tr0;
 	case 162: goto tr0;
-	case 202: goto tr278;
 	case 163: goto tr0;
 	case 164: goto tr0;
 	case 165: goto tr0;
-	case 203: goto tr278;
 	case 166: goto tr0;
-	case 204: goto tr278;
-	case 205: goto tr278;
-	case 206: goto tr278;
-	case 207: goto tr278;
-	case 208: goto tr278;
-	case 209: goto tr278;
-	case 210: goto tr278;
 	case 167: goto tr0;
 	case 168: goto tr0;
-	case 211: goto tr278;
-	case 212: goto tr278;
-	case 213: goto tr278;
-	case 214: goto tr278;
-	case 215: goto tr278;
-	case 216: goto tr278;
-	case 217: goto tr278;
+	case 169: goto tr0;
+	case 170: goto tr0;
+	case 171: goto tr0;
+	case 172: goto tr0;
+	case 173: goto tr0;
+	case 174: goto tr0;
+	case 175: goto tr0;
+	case 176: goto tr0;
+	case 177: goto tr0;
+	case 178: goto tr0;
+	case 179: goto tr0;
+	case 180: goto tr0;
+	case 181: goto tr0;
+	case 221: goto tr303;
+	case 182: goto tr0;
+	case 183: goto tr0;
+	case 184: goto tr0;
+	case 222: goto tr303;
+	case 185: goto tr0;
+	case 223: goto tr303;
+	case 224: goto tr303;
+	case 225: goto tr303;
+	case 226: goto tr303;
+	case 227: goto tr303;
+	case 228: goto tr303;
+	case 229: goto tr303;
+	case 186: goto tr0;
+	case 187: goto tr0;
+	case 230: goto tr303;
+	case 231: goto tr303;
+	case 232: goto tr303;
+	case 233: goto tr303;
+	case 234: goto tr303;
+	case 235: goto tr303;
+	case 236: goto tr303;
 	}
 	}
 
 	}
 
-#line 509 "turtle.rl"
+#line 510 "turtle.rl"
         /* clang-format on */
         handler( ARDP_SUCCESS );
 }
@@ -10051,7 +13318,6 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
                }
 
                status = ardp_lexer_process_block( p, len, mark, eof );
-
                if (shared_lexer->env.cs == turtle_error ) {
                         status = ARDP_LEXER_GENERIC_ERROR;
                         break;
@@ -10065,14 +13331,16 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
         }
 
         dispatch_queue_t *q = &shared_lexer->lexer_queue;
+        dispatch_queue_t *e = &shared_lexer->event_queue;
 
         // Optimalization to free CPU operations
-        while(   !dispatch_queue_isempty(*q)
-              || !dispatch_queue_isempty(shared_lexer->event_queue))
-                usleep(5);
+        while(!dispatch_queue_isempty(*q) || !dispatch_queue_isempty(*e))
+                usleep(25);
+
         return status;
 }
-
+/*}}}*/
+/* ardp_lexer_process_reader_old()  {{{ */
 void ardp_lexer_process_reader_old( lexer_reader reader,
                                        void *_Nullable reader_args,
                                        completation_block handler )

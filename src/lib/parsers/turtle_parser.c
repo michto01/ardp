@@ -20,10 +20,11 @@
         #include <ardp/lexer.h>
         #include <ardp/util.h>            // Various utilities
         #include <ardp/parser.h>          // Parser internals
-#line 46 "./turtle_parser.y"
 
-
-#define YYERROR do { fprintf(stderr, "\n\nERROR\n\n");  }while(0)
+#define YYERROR do {                                                               \
+                        fprintf(stderr, "\n\nERROR\n\n");                          \
+                        p->stats.n_errors++;                                       \
+                }while(0)
 
 const uint8_t *const xsd_uri    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#";
 
@@ -42,7 +43,7 @@ const uint8_t *const rdfInteger = (uint8_t*) XSD"integer";
 const uint8_t *const rdfDecimal = (uint8_t*) XSD"decimal";
 const uint8_t *const rdfString  = (uint8_t*) XSD"string";
 
-#line 46 "./turtle_parser.c"
+#line 47 "./turtle_parser.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -99,6 +100,7 @@ const uint8_t *const rdfString  = (uint8_t*) XSD"string";
 typedef union {
   int yyinit;
   ParseTOKENTYPE yy0;
+  datatype_sys_t* yy8;
 } YYMINORTYPE;
 #ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
@@ -833,62 +835,84 @@ static void yy_reduce(
       case 3: /* statement ::= directive */
 #line 76 "./turtle_parser.y"
 { p->stats.n_directives++; }
-#line 837 "./turtle_parser.c"
+#line 839 "./turtle_parser.c"
         break;
       case 9: /* prefixID ::= PREFIX COLON IRIREF DOT */
 #line 87 "./turtle_parser.y"
 {
         if(p->cb.add_namespace(":",yymsp[-1].minor.yy0)) {
+                string_dealloc(yymsp[-1].minor.yy0);
                 YYERROR;
         }
+        string_dealloc(yymsp[-1].minor.yy0);
 }
-#line 846 "./turtle_parser.c"
+#line 850 "./turtle_parser.c"
         break;
       case 10: /* prefixID ::= PREFIX QNAME IRIREF DOT */
-#line 92 "./turtle_parser.y"
+#line 94 "./turtle_parser.y"
 {
         if(p->cb.add_namespace(yymsp[-2].minor.yy0,yymsp[-1].minor.yy0)) {
+                string_dealloc(yymsp[-2].minor.yy0);
+                string_dealloc(yymsp[-1].minor.yy0);
                 YYERROR;
         }
-}
-#line 855 "./turtle_parser.c"
-        break;
-      case 11: /* base ::= BASE IRIREF DOT */
-#line 99 "./turtle_parser.y"
-{
-        if (p->cb.rebase(yymsp[-1].minor.yy0))
-                YYERROR;
+        string_dealloc(yymsp[-2].minor.yy0);
+        string_dealloc(yymsp[-1].minor.yy0);
 }
 #line 863 "./turtle_parser.c"
         break;
-      case 12: /* sparqlBase ::= SPARQL_BASE IRIREF */
+      case 11: /* base ::= BASE IRIREF DOT */
 #line 105 "./turtle_parser.y"
 {
-        if (p->cb.rebase(yymsp[0].minor.yy0))
+        if (p->cb.rebase(yymsp[-1].minor.yy0)) {
+                string_dealloc(yymsp[-1].minor.yy0);
                 YYERROR;
+        }
+        string_dealloc(yymsp[-1].minor.yy0);
 }
-#line 871 "./turtle_parser.c"
+#line 874 "./turtle_parser.c"
+        break;
+      case 12: /* sparqlBase ::= SPARQL_BASE IRIREF */
+#line 114 "./turtle_parser.y"
+{
+        if (p->cb.rebase(yymsp[0].minor.yy0)) {
+                string_dealloc(yymsp[0].minor.yy0);
+                YYERROR;
+        }
+        string_dealloc(yymsp[0].minor.yy0);
+}
+#line 885 "./turtle_parser.c"
         break;
       case 13: /* sparqlPrefix ::= SPARQL_PREFIX COLON IRIREF */
-#line 111 "./turtle_parser.y"
+#line 123 "./turtle_parser.y"
 {
-        if (p->cb.add_namespace(string_create(":"), yymsp[0].minor.yy0)) {
+        utf8 colon = string_create(":");
+        if (p->cb.add_namespace(colon, yymsp[0].minor.yy0)) {
+                string_dealloc(colon);
+                string_dealloc(yymsp[0].minor.yy0);
                 YYERROR;
         }
+        string_dealloc(colon);
+        string_dealloc(yymsp[0].minor.yy0);
 }
-#line 880 "./turtle_parser.c"
+#line 899 "./turtle_parser.c"
         break;
       case 14: /* sparqlPrefix ::= SPARQL_PREFIX QNAME IRIREF */
-#line 116 "./turtle_parser.y"
+#line 133 "./turtle_parser.y"
 {
         if (p->cb.add_namespace(yymsp[-1].minor.yy0,yymsp[0].minor.yy0)) {
+                string_dealloc(yymsp[-1].minor.yy0);
+                string_dealloc(yymsp[0].minor.yy0);
                 YYERROR;
         }
+
+        string_dealloc(yymsp[-1].minor.yy0);
+        string_dealloc(yymsp[0].minor.yy0);
 }
-#line 889 "./turtle_parser.c"
+#line 913 "./turtle_parser.c"
         break;
       case 15: /* triples ::= subject predicateObjectList */
-#line 123 "./turtle_parser.y"
+#line 145 "./turtle_parser.y"
 {
 
         if (yymsp[-1].minor.yy0 && yymsp[0].minor.yy0) {
@@ -902,15 +926,15 @@ static void yy_reduce(
                 }
         }
 
-        if (yymsp[0].minor.yy0)
-                sequence_free(yymsp[0].minor.yy0);
         if (yymsp[-1].minor.yy0)
                 rdf_term_free(yymsp[-1].minor.yy0);
+        if (yymsp[0].minor.yy0)
+                sequence_free(yymsp[0].minor.yy0);
 }
-#line 911 "./turtle_parser.c"
+#line 935 "./turtle_parser.c"
         break;
       case 16: /* triples ::= blankNodePropertyList predicateObjectList_astr */
-#line 141 "./turtle_parser.y"
+#line 163 "./turtle_parser.y"
 {
 
         if (yymsp[-1].minor.yy0 && yymsp[0].minor.yy0) {
@@ -923,12 +947,12 @@ static void yy_reduce(
                 }
         }
 
-        if (yymsp[0].minor.yy0)
-                sequence_free(yymsp[0].minor.yy0);
         if (yymsp[-1].minor.yy0)
                 rdf_term_free(yymsp[-1].minor.yy0);
+        if (yymsp[0].minor.yy0)
+                sequence_free(yymsp[0].minor.yy0);
 }
-#line 932 "./turtle_parser.c"
+#line 956 "./turtle_parser.c"
         break;
       case 17: /* predicateObjectList_astr ::= predicateObjectList */
       case 28: /* verb ::= predicate */ yytestcase(yyruleno==28);
@@ -945,19 +969,20 @@ static void yy_reduce(
       case 40: /* literal ::= numericalLiteral */ yytestcase(yyruleno==40);
       case 41: /* literal ::= booleanLiteral */ yytestcase(yyruleno==41);
       case 55: /* string ::= STRING_LITERAL */ yytestcase(yyruleno==55);
-#line 159 "./turtle_parser.y"
+#line 181 "./turtle_parser.y"
 { yygotominor.yy0 = yymsp[0].minor.yy0; }
-#line 951 "./turtle_parser.c"
+#line 975 "./turtle_parser.c"
         break;
       case 18: /* predicateObjectList_astr ::= */
       case 21: /* predicateObjectList_ast ::= */ yytestcase(yyruleno==21);
       case 23: /* predicateObjectList_qst ::= SEMICOLON */ yytestcase(yyruleno==23);
-#line 160 "./turtle_parser.y"
+      case 27: /* objectList_ast ::= */ yytestcase(yyruleno==27);
+#line 182 "./turtle_parser.y"
 { yygotominor.yy0 = NULL; }
-#line 958 "./turtle_parser.c"
+#line 983 "./turtle_parser.c"
         break;
       case 19: /* predicateObjectList ::= verb objectList predicateObjectList_ast */
-#line 163 "./turtle_parser.y"
+#line 185 "./turtle_parser.y"
 {
         if (yymsp[-2].minor.yy0 && yymsp[-1].minor.yy0) {
                 for (size_t i = 0; i < sequence_size(yymsp[-1].minor.yy0); i++) {
@@ -969,17 +994,16 @@ static void yy_reduce(
                 /* @TODO: double copy -> should be optimalized */
                 if (yymsp[0].minor.yy0) {
                         while ( sequence_size(yymsp[0].minor.yy0) ) {
-                                struct rdf_statement* t = (struct rdf_statement*)
+                                struct rdf_statement* t2 = (struct rdf_statement*)
                                                                 sequence_unshift(yymsp[0].minor.yy0);
-                                if (sequence_push(yymsp[-1].minor.yy0, t)) {
+                                if (sequence_push(yymsp[-1].minor.yy0, t2)) {
                                         sequence_free(yymsp[-1].minor.yy0);
                                         sequence_free(yymsp[0].minor.yy0);
                                         rdf_term_free(yymsp[-2].minor.yy0);
                                         YYERROR;
                                 }
                         }
-
-                        sequence_free(yymsp[-1].minor.yy0);
+                        sequence_free(yymsp[0].minor.yy0);
                 }
 
                 if (yymsp[-2].minor.yy0)
@@ -987,11 +1011,18 @@ static void yy_reduce(
 
                 yygotominor.yy0 = yymsp[-1].minor.yy0;
         }
+        else {
+                if (yymsp[0].minor.yy0)
+                        yygotominor.yy0 = yymsp[0].minor.yy0;
+                else
+                        yygotominor.yy0 = NULL;
+        }
+
 }
-#line 992 "./turtle_parser.c"
+#line 1023 "./turtle_parser.c"
         break;
       case 20: /* predicateObjectList_ast ::= predicateObjectList_ast predicateObjectList_qst */
-#line 194 "./turtle_parser.y"
+#line 222 "./turtle_parser.y"
 {
         if (!yymsp[-1].minor.yy0) {
                 if (yymsp[0].minor.yy0)
@@ -1012,10 +1043,10 @@ static void yy_reduce(
                 yygotominor.yy0 = yymsp[-1].minor.yy0;
         }
 }
-#line 1016 "./turtle_parser.c"
+#line 1047 "./turtle_parser.c"
         break;
       case 22: /* predicateObjectList_qst ::= SEMICOLON verb objectList */
-#line 216 "./turtle_parser.y"
+#line 244 "./turtle_parser.y"
 {
         if (yymsp[-1].minor.yy0 && yymsp[0].minor.yy0) {
                 /* non-empty property list */
@@ -1029,14 +1060,14 @@ static void yy_reduce(
                 yygotominor.yy0 = NULL;
         }
 }
-#line 1033 "./turtle_parser.c"
+#line 1064 "./turtle_parser.c"
         break;
       case 24: /* objectList ::= object objectList_ast */
-#line 232 "./turtle_parser.y"
+#line 260 "./turtle_parser.y"
 {
         struct rdf_statement* triple = rdf_statement_from_nodes(NULL, NULL, yymsp[-1].minor.yy0, NULL);
         if (!yymsp[0].minor.yy0) {
-                yygotominor.yy0 = sequence_create();
+                yygotominor.yy0 = sequence_create((sequence_free_handler)&rdf_statement_free, NULL, NULL);
                 if (!yygotominor.yy0)
                         YYERROR; /* failed to  create sequence. */
                 if ( sequence_push(yygotominor.yy0, triple) ) {
@@ -1048,28 +1079,30 @@ static void yy_reduce(
                 sequence_shift(yygotominor.yy0, triple); /* prepend object to the sequence */
         }
 }
-#line 1052 "./turtle_parser.c"
+#line 1083 "./turtle_parser.c"
         break;
       case 25: /* objectList_ast ::= objectList_ast COMMA object */
-#line 247 "./turtle_parser.y"
+#line 275 "./turtle_parser.y"
 {
         struct rdf_statement* triple = rdf_statement_from_nodes(NULL, NULL, yymsp[0].minor.yy0, NULL);
         if (!yymsp[-2].minor.yy0) {
-                yygotominor.yy0 = sequence_create();
+                yygotominor.yy0 = sequence_create((sequence_free_handler) &rdf_statement_free, NULL, NULL);
                 if (!yygotominor.yy0)
                         YYERROR;
+        } else {
+                yygotominor.yy0 = yymsp[-2].minor.yy0;
         }
         sequence_push(yygotominor.yy0, triple);
 }
-#line 1065 "./turtle_parser.c"
+#line 1098 "./turtle_parser.c"
         break;
       case 26: /* objectList_ast ::= objectList_ast COMMA */
-#line 259 "./turtle_parser.y"
+#line 289 "./turtle_parser.y"
 { /* Custom handling of ES */ yygotominor.yy0 = yymsp[-1].minor.yy0; }
-#line 1070 "./turtle_parser.c"
+#line 1103 "./turtle_parser.c"
         break;
       case 29: /* verb ::= A */
-#line 264 "./turtle_parser.y"
+#line 294 "./turtle_parser.y"
 {
         utf8 s = string_create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
         yygotominor.yy0 = rdf_term_from_uri(s);
@@ -1077,13 +1110,15 @@ static void yy_reduce(
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1081 "./turtle_parser.c"
+#line 1114 "./turtle_parser.c"
         break;
       case 42: /* blankNodePropertyList ::= L_SQUARE predicateObjectList R_SQUARE */
-#line 294 "./turtle_parser.y"
+#line 324 "./turtle_parser.y"
 {
 
-        yygotominor.yy0 = rdf_term_from_blank(p->cb.generate_bnode());
+        utf8 s = p->cb.generate_bnode();
+        yygotominor.yy0 = rdf_term_from_blank(s);
+        string_dealloc(s);
 
         if (!yygotominor.yy0) {
                 sequence_free(yymsp[-1].minor.yy0);
@@ -1102,10 +1137,10 @@ static void yy_reduce(
                 }
         }
 }
-#line 1106 "./turtle_parser.c"
+#line 1141 "./turtle_parser.c"
         break;
       case 43: /* collection ::= L_CURLY collection_ast R_CURLY */
-#line 317 "./turtle_parser.y"
+#line 349 "./turtle_parser.y"
 {
         if (!yymsp[-1].minor.yy0) {
                 utf8 s = string_create(rdfNil);
@@ -1225,13 +1260,13 @@ static void yy_reduce(
                 }
         }
 }
-#line 1229 "./turtle_parser.c"
+#line 1264 "./turtle_parser.c"
         break;
       case 44: /* collection_ast ::= collection_ast object */
-#line 436 "./turtle_parser.y"
+#line 468 "./turtle_parser.y"
 {
         if (!yymsp[-1].minor.yy0) {
-                yymsp[-1].minor.yy0 = sequence_create();
+                yymsp[-1].minor.yy0 = sequence_create((sequence_free_handler)&rdf_statement_free, NULL, NULL);
                 if (!yymsp[-1].minor.yy0)
                         YYERROR;
         }
@@ -1250,137 +1285,184 @@ static void yy_reduce(
 
         yygotominor.yy0 = yymsp[-1].minor.yy0;
 }
-#line 1254 "./turtle_parser.c"
+#line 1289 "./turtle_parser.c"
         break;
       case 45: /* collection_ast ::= */
-#line 457 "./turtle_parser.y"
+#line 489 "./turtle_parser.y"
 { yygotominor.yy0 = NULL;  }
-#line 1259 "./turtle_parser.c"
+#line 1294 "./turtle_parser.c"
         break;
       case 46: /* numericalLiteral ::= INTEGER_LITERAL */
-#line 461 "./turtle_parser.y"
+#line 493 "./turtle_parser.y"
 {
-        yygotominor.yy0 = rdf_term_from_literal(string_create(yymsp[0].minor.yy0), NULL, string_create(rdfInteger));
+        yygotominor.yy0 = rdf_term_from_literal(yymsp[0].minor.yy0, NULL, string_create(rdfInteger));
+        string_dealloc(yymsp[0].minor.yy0);
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1268 "./turtle_parser.c"
+#line 1304 "./turtle_parser.c"
         break;
       case 47: /* numericalLiteral ::= DECIMAL_LITERAL */
-#line 466 "./turtle_parser.y"
+#line 499 "./turtle_parser.y"
 {
-        yygotominor.yy0 = rdf_term_from_literal(string_create(yymsp[0].minor.yy0), NULL, string_create(rdfDecimal));
+        yygotominor.yy0 = rdf_term_from_literal(yymsp[0].minor.yy0, NULL, string_create(rdfDecimal));
+        string_dealloc(yymsp[0].minor.yy0);
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1277 "./turtle_parser.c"
+#line 1314 "./turtle_parser.c"
         break;
       case 48: /* numericalLiteral ::= DOUBLE_LITERAL */
-#line 471 "./turtle_parser.y"
+#line 505 "./turtle_parser.y"
 {
-        yygotominor.yy0 = rdf_term_from_literal(string_create(yymsp[0].minor.yy0), NULL, string_create(rdfDouble));
+        yygotominor.yy0 = rdf_term_from_literal(yymsp[0].minor.yy0, NULL, string_create(rdfDouble));
+        string_dealloc(yymsp[0].minor.yy0);
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1286 "./turtle_parser.c"
+#line 1324 "./turtle_parser.c"
         break;
       case 49: /* rdfLiteral ::= string rdfLiteral_qst */
-#line 478 "./turtle_parser.y"
+#line 513 "./turtle_parser.y"
 {
-        if (!yymsp[0].minor.yy0)
+        if (!yymsp[0].minor.yy8) {
                 yygotominor.yy0 = rdf_term_from_literal(yymsp[-1].minor.yy0,NULL,NULL);
-        else
-                yygotominor.yy0 = rdf_term_from_literal(yymsp[-1].minor.yy0,/*((yymsp[0].minor.yy0.type == 1))? yymsp[0].minor.yy0.value.lang:*/NULL,
-                                               /* ((yymsp[0].minor.yy0.type == 2))? yymsp[0].minor.yy0.value.iri :*/ NULL );
+        } else {
+                yygotominor.yy0 = rdf_term_from_literal(yymsp[-1].minor.yy0, yymsp[0].minor.yy8->langtag, yymsp[0].minor.yy8->datatype);
+                string_dealloc(yymsp[0].minor.yy8->langtag);
+                string_dealloc(yymsp[0].minor.yy8->datatype);
+                free(yymsp[0].minor.yy8);
+        }
+        string_dealloc(yymsp[-1].minor.yy0);
 
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1300 "./turtle_parser.c"
+#line 1342 "./turtle_parser.c"
         break;
       case 50: /* rdfLiteral_qst ::= rdfLiteral_opt */
-#line 489 "./turtle_parser.y"
-{yygotominor.yy0 = yymsp[0].minor.yy0;}
-#line 1305 "./turtle_parser.c"
+#line 531 "./turtle_parser.y"
+{yygotominor.yy8 = yymsp[0].minor.yy8;}
+#line 1347 "./turtle_parser.c"
         break;
       case 51: /* rdfLiteral_qst ::= */
-#line 490 "./turtle_parser.y"
-{yygotominor.yy0 = NULL;}
-#line 1310 "./turtle_parser.c"
+#line 532 "./turtle_parser.y"
+{yygotominor.yy8 = NULL;}
+#line 1352 "./turtle_parser.c"
         break;
       case 52: /* rdfLiteral_opt ::= LANGTAG */
-#line 493 "./turtle_parser.y"
-{ yygotominor.yy0/*.type = 1; yygotominor.yy0.value.lang*/ = yymsp[0].minor.yy0; }
-#line 1315 "./turtle_parser.c"
+#line 534 "./turtle_parser.y"
+{
+        if (yymsp[0].minor.yy0) {
+                datatype_sys_t *s = calloc(1, sizeof(struct _datatype_sys_t));
+                if (s) {
+                        s->datatype = NULL;
+                        s->langtag  = yymsp[0].minor.yy0;
+                        yygotominor.yy8 = s;
+                } else {
+                        string_dealloc(yymsp[0].minor.yy0);
+                        yygotominor.yy8 = NULL;
+                }
+        } else {
+                yygotominor.yy8 = NULL;
+        }
+}
+#line 1371 "./turtle_parser.c"
         break;
       case 53: /* rdfLiteral_opt ::= HAT iri */
-#line 494 "./turtle_parser.y"
-{ yygotominor.yy0/*.type = 2; yygotominor.yy0.value.iri*/  = yymsp[0].minor.yy0; }
-#line 1320 "./turtle_parser.c"
+#line 549 "./turtle_parser.y"
+{
+        if (yymsp[0].minor.yy0) {
+                datatype_sys_t *s = calloc(1, sizeof(struct _datatype_sys_t));
+                if (s) {
+                        struct rdf_term *t = yymsp[0].minor.yy0;
+                        if (t->type == RDF_TERM_URI)
+                                s->datatype = string_copy(t->value.uri);
+                        else
+                                s->datatype = NULL;
+                        s->langtag = NULL;
+                        yygotominor.yy8 = s;
+                        rdf_term_free(yymsp[0].minor.yy0);
+                } else {
+                        rdf_term_free(yymsp[0].minor.yy0);
+                        yygotominor.yy8 = NULL;
+                }
+        } else {
+                yygotominor.yy8 = NULL;
+        }
+}
+#line 1395 "./turtle_parser.c"
         break;
       case 54: /* booleanLiteral ::= BOOLEAN_LITERAL */
-#line 497 "./turtle_parser.y"
+#line 571 "./turtle_parser.y"
 {
-        yygotominor.yy0 = rdf_term_from_literal(string_create(yymsp[0].minor.yy0), NULL, string_create(rdfBoolean));
+        yygotominor.yy0 = rdf_term_from_literal(yymsp[0].minor.yy0, NULL, string_create(rdfBoolean));
+        string_dealloc(yymsp[0].minor.yy0);
+
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1329 "./turtle_parser.c"
+#line 1406 "./turtle_parser.c"
         break;
       case 56: /* iri ::= IRIREF */
-#line 507 "./turtle_parser.y"
+#line 583 "./turtle_parser.y"
 {
         if (yymsp[0].minor.yy0) {
-                yygotominor.yy0 =  rdf_term_from_uri(yymsp[0].minor.yy0);
-                string_dealloc(yymsp[0].minor.yy0);
-
-                if (!yygotominor.yy0)
-                        YYERROR;
-
-        } else {
-                yygotominor.yy0 = NULL;
-        }
-}
-#line 1345 "./turtle_parser.c"
-        break;
-      case 57: /* iri ::= QNAME */
-#line 519 "./turtle_parser.y"
-{
-        if (yymsp[0].minor.yy0) {
-                //TODO: qname qualification
-
                 yygotominor.yy0 = rdf_term_from_uri(yymsp[0].minor.yy0);
                 string_dealloc(yymsp[0].minor.yy0);
 
                 if (!yygotominor.yy0)
                         YYERROR;
+
         } else {
                 yygotominor.yy0 = NULL;
         }
 }
-#line 1362 "./turtle_parser.c"
+#line 1422 "./turtle_parser.c"
+        break;
+      case 57: /* iri ::= QNAME */
+#line 595 "./turtle_parser.y"
+{
+        if (yymsp[0].minor.yy0) {
+                yygotominor.yy0 = rdf_term_from_curie(yymsp[0].minor.yy0);
+                string_dealloc(yymsp[0].minor.yy0);
+
+                if (!yygotominor.yy0)
+                        YYERROR;
+        } else {
+                yygotominor.yy0 = NULL;
+        }
+}
+#line 1437 "./turtle_parser.c"
         break;
       case 58: /* blankNode ::= BLANK_LITERAL */
-#line 534 "./turtle_parser.y"
+#line 608 "./turtle_parser.y"
 {
-        if (!yymsp[0].minor.yy0)
-                yygotominor.yy0 = rdf_term_from_blank(p->cb.generate_bnode());
-        else
+        if (!yymsp[0].minor.yy0) {
+                utf8 s = p->cb.generate_bnode();
+                yygotominor.yy0 = rdf_term_from_blank(s);
+                string_dealloc(s);
+        } else {
                 yygotominor.yy0 = rdf_term_from_blank(yymsp[0].minor.yy0);
-        if (!yygotominor.yy0)
-                YYERROR;
-}
-#line 1374 "./turtle_parser.c"
-        break;
-      case 59: /* blankNode ::= anon */
-#line 542 "./turtle_parser.y"
-{
-        yygotominor.yy0 = rdf_term_from_blank(p->cb.generate_bnode());
+                string_dealloc(yymsp[0].minor.yy0);
+        }
 
         if (!yygotominor.yy0)
                 YYERROR;
 }
-#line 1384 "./turtle_parser.c"
+#line 1454 "./turtle_parser.c"
+        break;
+      case 59: /* blankNode ::= anon */
+#line 621 "./turtle_parser.y"
+{
+        utf8 s = p->cb.generate_bnode();
+        yygotominor.yy0 = rdf_term_from_blank(s);
+        string_dealloc(s);
+
+        if (!yygotominor.yy0)
+                YYERROR;
+}
+#line 1466 "./turtle_parser.c"
         break;
       default:
       /* (0) turtleDoc ::= statements */ yytestcase(yyruleno==0);
@@ -1391,7 +1473,6 @@ static void yy_reduce(
       /* (6) directive ::= base */ yytestcase(yyruleno==6);
       /* (7) directive ::= sparqlPrefix */ yytestcase(yyruleno==7);
       /* (8) directive ::= sparqlBase */ yytestcase(yyruleno==8);
-      /* (27) objectList_ast ::= */ yytestcase(yyruleno==27);
       /* (60) anon ::= L_SQUARE R_SQUARE */ yytestcase(yyruleno==60);
         break;
   };
@@ -1438,11 +1519,11 @@ static void yy_parse_failed(
   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
-#line 32 "./turtle_parser.y"
+#line 55 "./turtle_parser.y"
 
-        fprintf(stderr, "Parser failure\n"); /*parser->error.code = 1;*/
+        fprintf(stderr, "Parser encountered error.\n"); /*parser->error.code = 1;*/
         fprintf(stderr, "\n\nFinal status: (%lu) t, (%lu) d, (%lu) e\n", p->stats.n_triples, p->stats.n_directives, p->stats.n_errors);
-#line 1446 "./turtle_parser.c"
+#line 1527 "./turtle_parser.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 #endif /* YYNOERRORRECOVERY */
@@ -1457,11 +1538,11 @@ static void yy_syntax_error(
 ){
   ParseARG_FETCH;
 #define TOKEN (yyminor.yy0)
-#line 39 "./turtle_parser.y"
+#line 62 "./turtle_parser.y"
 
         p->stats.n_errors++;
         fprintf(stderr, "Syntax error: %s\n", NULL); /*parser->error.code = 2;*/
-#line 1465 "./turtle_parser.c"
+#line 1546 "./turtle_parser.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1480,10 +1561,10 @@ static void yy_accept(
   while( yypParser->yyidx>=0 ) yy_pop_parser_stack(yypParser);
   /* Here code is inserted which will be executed whenever the
   ** parser accepts */
-#line 36 "./turtle_parser.y"
+#line 59 "./turtle_parser.y"
 
         fprintf(stderr, "\n\nFinal status: (%lu) t, (%lu) d, (%lu) e\n", p->stats.n_triples, p->stats.n_directives, p->stats.n_errors);
-#line 1487 "./turtle_parser.c"
+#line 1568 "./turtle_parser.c"
   ParseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

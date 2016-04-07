@@ -39,8 +39,6 @@
  *  size = N
  *  cap. = C
  *  @endverbatim
- *
- *
  */
 struct sequence {
         /*!
@@ -68,9 +66,25 @@ struct sequence {
          */
         void *context;
 
-        void (*print)();
-        void (*error)();
-        void (*free)();
+        /*!
+         * @fn print
+         * Print item in debug
+         *
+         * @deprecated Not used anymore
+         */
+        void (*print)(void *data);
+
+        void (*error)(void *data);
+
+        /*!
+         * @fn free
+         * Handler to free item.
+         *
+         * @param[in] data Data to be freed.
+         *
+         * @note Should do nothing if item is NULL;
+         */
+        void (*free)(void *data);
         /*! } @endsection */
 };
 
@@ -82,13 +96,24 @@ void weir_function(v)
 }
 */
 
+typedef void (*sequence_error_handler)(void *data);
+typedef void (*sequence_free_handler)(void *data);
+typedef void (*sequence_print_handler)(void *data);
+
+
 /*! @fn    sequence_create
  *  @brief Create empty new container for the sequence.
+ *
+ *  @param[in] f Handler to free the items.
+ *  @param[in] e Handler for error.
+ *  @param[in] p Print handler in debug.
  *
  *  @return Sequence, NULL if error.
  *  @todo   Code for the handlers (print,error,free)
  */
-struct sequence* sequence_create();
+struct sequence* sequence_create(sequence_free_handler  f,
+                                 sequence_error_handler e,
+                                 sequence_print_handler p);
 
 /*! @fn    sequence_size
  *  @brief Get size (# of objects) of sequence.
@@ -170,7 +195,7 @@ int sequence_shift(struct sequence* seq, void *data);
 void* sequence_unshift(struct sequence* seq);
 
 /*! @fn    sequence_free
- *  @breif Destroy sequence.
+ *  @brief Destroy sequence.
  *
  *  @param[in] seq Sequence to destroy.
  *

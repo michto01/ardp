@@ -75,19 +75,18 @@ int main( int argc, char** argv )
         ardp_parser_create(); //creates the parser shared opaque instance
         //ardp_parser_trace();
 
-        //Configure the lexer for turtle
-        {
+        { //Configure the lexer for turtle
                 struct ardp_lexer_config cfg;
 
-                cfg.logging.level = DEBUG;
+                cfg.logging.level   = DEBUG;
                 cfg.logging.eprintf = &lexer_error;
 
                 __block int (^stoken)(int, utf8, size_t, size_t) = ^int(int type, utf8 value, size_t line, size_t col){
-                        //printf("[ %d == %s]\n", type,value);
-                        ardp_parser_exec(type, value ? value : 0);
+                        fprintf(stderr, "(type: %d, line: %ld, col: %ld, value: %s)\n", type, line, col, value);
+                        //ardp_parser_exec(type, value ? value : 0);
                         return ARDP_SUCCESS;
                 };
-               cfg.cb.stoken = stoken;
+                cfg.cb.stoken = stoken;
 
                 status = ardp_lexer_init(&cfg);
 
@@ -95,7 +94,8 @@ int main( int argc, char** argv )
                         die("Initialization error!");
         }
 
-        void* file = gzopen( "../../../tests/nt/nt-syntax-subm-01.nt", "rb" );
+        //void* file = gzopen( "../../../tests/ttl/connectivity-of-lod-datasets.ttl", "rb" );
+        void* file = gzopen( "../../../tests/ttl/british-national-bibliography.ttl", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);
 

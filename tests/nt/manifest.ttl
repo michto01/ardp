@@ -7,7 +7,7 @@
 
 @prefix rdft:   <http://www.w3.org/ns/rdftest#> .
 
-<>  rdf:type mf:Manifest ;
+<#>  rdf:type mf:Manifest ;
     mf:name "N-Triples tests" ;
     mf:entries
     (

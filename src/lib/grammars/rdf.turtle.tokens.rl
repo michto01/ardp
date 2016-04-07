@@ -129,8 +129,6 @@
               ;
 
 
-    QNAME     = PN_PREFIX? ':' PN_LOCAL?
-              ;
 
     ##> operational tokens
 
@@ -160,7 +158,6 @@
 
     ##> String literals
 
-    COMMENT  = '#' (any - EOL)* EOL;
+    COMMENT  = '#' :>> (any - EOL)* EOL;
 
-    BLANK_NODE_LABEL = '_:' . (PN_CHARS_U | digit) ((PN_CHARS | '.')* PN_CHARS)?;
 }%%
