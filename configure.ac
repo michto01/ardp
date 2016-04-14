@@ -87,7 +87,7 @@ AC_CACHE_CHECK([type of operating system we're going to host on],
     ardp_cv_link_all_option="-Wl,-all_load"
     ardp_cv_no_link_all_option="-Wl,-noall_load"
     ardp_cv_os_type="Darwin"
-    ardp_cv_platform_type="Unix" ;;
+    ardp_cv_platform_type="Darwin" ;;
   *-*-*bsd*)
     ardp_cv_link_all_option="-Wl,--whole-archive"
     ardp_cv_no_link_all_option="-Wl,--no-whole-archive"
@@ -163,17 +163,29 @@ dnl# Set the "ARDP_ON_*" variables based on ardp_cv_platform_type
 dnl# This is used by lib/Support to determine the basic kind of implementation
 dnl# to use.
 case $ardp_cv_platform_type in
+  Darwin)
+    AC_DEFINE([ARDP_ON_OSX],[1],[Define if this is OSX platform])
+    AC_SUBST(ARDP_ON_OSX,[1])
+    AC_SUBST(ARDP_ON_UNIX,[0])
+    AC_SUBST(ARDP_ON_WIN32,[0])
+    ;;
   Unix)
     AC_DEFINE([ARDP_ON_UNIX],[1],[Define if this is Unixish platform])
+    AC_SUBST(ARDP_ON_OSX, [0])
     AC_SUBST(ARDP_ON_UNIX,[1])
     AC_SUBST(ARDP_ON_WIN32,[0])
     ;;
   Win32)
     AC_DEFINE([ARDP_ON_WIN32],[1],[Define if this is Win32-ish platform])
+    AC_SUBST(ARDP_ON_OSX, [0])
     AC_SUBST(ARDP_ON_UNIX,[0])
     AC_SUBST(ARDP_ON_WIN32,[1])
     ;;
 esac
+
+AM_CONDITIONAL([ARDP_ON_UNIX], [test x$ardp_cv_platform_type = xUnix])
+AM_CONDITIONAL([ARDP_ON_OSX], [test x$ardp_cv_platform_type = xDarwin])
+AM_CONDITIONAL([ARDP_ON_WIN32], [test x$ardp_cv_platform_type = xWin32])
 
 # ADD ARCH + CROSS_COMPILE to the target
 

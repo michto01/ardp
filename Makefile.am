@@ -5,8 +5,13 @@ AUTOMAKE_OPTIONS = foreign
 # Autoconf knows where to find them.
 #ACLOCAL_AMFLAGS = -I m4
 
+#force clang
 CC=clang
-AM_CFLAGS = -fblocks $(AM_CFLAGS)
+AM_CFLAGS = $(AM_CFLAGS)
+
+if ARDP_ON_UNIX
+	AM_CFLAGS += -fblocks -lBlocksRuntime -ldispatch
+endif
 
 SUBDIRS = src \
           doc \
