@@ -8,7 +8,7 @@ before_install:
   - brew install ragel
 
 script:
-  - ./configure && make CFLAGS=\"-ldispatch -lBlocksRuntime -fblocks\"
+  - ./configure && make
   - make check
 
 env:
