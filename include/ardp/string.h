@@ -62,6 +62,23 @@ static inline struct string_header *string_hdr( utf8 str ) {
         return &( ( string_header_t * )str )[-1];
 }
 
+/*!
+ * @fn    ssechr
+ * @brief Locate first occurrence of character in string
+ *
+ * @param[in] s  C string.
+ * @param[in] ch Character to be located. It is passed
+ * as its int promotion, but it is internally converted back to char for the
+ * comparison.
+ *
+ * @note The terminating null-character is considered part of the C string.
+ * Therefore, it can also be located in order to retrieve a pointer to the end
+ * of a string.
+ *
+ * @return position of first character matched, NULL if not found.
+ */
+uint8_t const *ssechr(uint8_t const *s, uint8_t ch);
+
 /**
   * Length of the fat-pointer string
   *

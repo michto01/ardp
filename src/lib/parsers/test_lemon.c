@@ -3,6 +3,9 @@
  * Lemon based interface for the generated code.
  *
  * vim: set syntax=c.doxygen
+ *
+ * @author Tomas Michalek <tomas.michalek.st@vbs.cz>
+ * @date   2016
  */
 #include <stdio.h>
 #include <string.h>
@@ -28,134 +31,216 @@ struct parser* shared_parser_internal;
 /*! Opaque parser used by lemon */
 static void* shared_parser;
 
-
-/* transform_uri() {{{ */
-static inline int term_is_uri(struct rdf_term *t)
+/*!
+ * @fn    u8_concatenate
+ * @brief Cut the string up to start marker.
+ *
+ * @param[in,out] uri Manipulated string.
+ * @param[in] start Marker for the beginining of cut.
+ *
+ * @note The buffer (capacity) remains allocated.
+ *
+ * @return ARDP_SUCCESS, ARDP_FAILURE
+ */
+/* u8_concatenate() {{{ */
+int u8_concatenate(utf8 uri, size_t start)
 {
-        return (t)->type == RDF_TERM_URI;
-}
+        if (!uri)
+                return ARDP_FAILURE;
 
-static inline int term_is_curie(struct rdf_term *t)
+        struct string_header *hdr = string_hdr(uri);
+
+        int64_t len = hdr->length - start;
+        if (len < 0)
+                return ARDP_FAILURE;
+
+        var s = memmove(uri, uri+start, len);
+        if (s) {
+                hdr->length -= start;
+                memset(uri+hdr->length, 0, hdr->capacity - hdr->length);
+                return ARDP_SUCCESS;
+        }
+        return ARDP_FAILURE;
+}
+/*}}}*/
+
+typedef enum {
+        FRONT,
+        BACK
+} dir;
+
+
+/*!
+ * @fn    term_uri_append
+ * @brief Append the string to uri with parameter of direction.
+ *
+ * @param[in] t   Term to process.
+ * @param[in] uri String to append.
+ * @param[in] direction Side of the term to append the uri to.
+ *
+ * @note function is destructive for the uri parameter.
+ */
+/* term_uri_append() {{{*/
+static int term_uri_append(struct rdf_term *t, utf8 uri, dir direction)
 {
-        return (t)->type == RDF_TERM_CURIE;
-}
+        if (!t->value.uri)
+                return ARDP_FAILURE;
 
-static inline int term_is_blank(struct rdf_term *t)
-{
-        return (t)->type == RDF_TERM_BLANK;
-}
+        if (!uri)
+                return ARDP_FAILURE;
 
-static inline int term_is_literal(struct rdf_term *t)
-{
-        return (t)->type == RDF_TERM_LITERAL;
-}
+        int status;
 
-static int uri_has_scheme(struct rdf_term *t)
+        switch(direction) {
+                case FRONT:
+                        status = string_append_str(&uri, t->value.uri);
+                        if (!status) {
+                                string_dealloc(t->value.uri);
+                                t->value.uri = uri;
+                        }
+                        return status;
+                case BACK:
+                        status = string_append_str(&t->value.uri, uri);
+                        string_dealloc(uri);
+                        return status;
+                default:
+                        return ARDP_FAILURE; /* wrong direction */
+        }
+}
+/*}}}*/
+
+/* uri_has_scheme() {{{*/
+static inline int uri_has_scheme(struct rdf_term *t)
 {
         if (!t)
-                return 0;
+                return ARDP_FAILURE;
 
         /* RFC3986: scheme ::= ALPHA *( ALPHA | DIGIT | '+' | '-' | '.' ) */
         if (!term_is_uri(t))
-                return 0;
+                return ARDP_FAILURE;
 
         utf8 uri = t->value.uri;
 
         if (!isalpha(uri[0]))
-                return 0; /* Invalid scheme initial character => URI is relative. */
+                return ARDP_FAILURE; /* Invalid scheme initial character => URI is relative. */
 
+        #pragma loop vectorize
         for(uint8_t c; (c = *++uri) != '\0';) {
                 switch(c) {
                         case ':':
-                                return 1; /* End of scheme */
+                                return ARDP_SUCCESS; /* End of scheme */
                         case '+':
                         case '-':
                         case '.':
                                 break; /* Valid sheme separators*/
                         default:
                                 if (!isalnum(c))
-                                        return 0; /* Invalid scheme character */
+                                        return ARDP_FAILURE; /* Invalid scheme character */
                 }
         }
 
-        return 0;
+        return ARDP_FAILURE;
 }
 
-static int is_relative_uri(struct rdf_term* t)
+static inline int is_relative_uri(struct rdf_term* t)
 {
-        return !uri_has_scheme(t);
+        return uri_has_scheme(t) == ARDP_FAILURE;
 }
-/*
-uint8_t const *ssechr(uint8_t const *s, uint8_t ch)
-{
-        __m128i zero = _mm_setzero_si128();
-        __m128i cx16 = _mm_set1_epi8(ch); // (ch) replicated 16 times.
-        while (1) {
-                __m128i  x = _mm_loadu_si128((__m128i const *)s);
-                unsigned u = _mm_movemask_epi8(_mm_cmpeq_epi8(zero, x));
-                unsigned v = _mm_movemask_epi8(_mm_cmpeq_epi8(cx16, x))
-                        & ~u & (u - 1);
-                if (v) return s + ffs(v) - 1;
-                if (u) return  NULL;
-                s += 16;
+/*}}}*/
 
-        }
+/* expand_relative_uri() {{{*/
+static int expand_relative_uri(struct rdf_term *t)
+{
+        if (!term_is_uri(t))
+                return ARDP_FAILURE;
+
+        if (!is_relative_uri(t))
+                return ARDP_FAILURE;
+
+        if (!shared_parser_internal->base)
+                return ARDP_FAILURE;
+
+        return term_uri_append(t, string_copy(shared_parser_internal->base), FRONT);
 }
-*/
+/*}}}*/
+/* extract_prefix() {{{*/
+static inline int extract_prefix(struct rdf_term *t, char **prefix, size_t *loc)
+{
+        const char delim = ':';
+        uint8_t *search = (uint8_t *) strchr((char *)(t)->value.uri, delim);
+        if (search == NULL)
+                return ARDP_FAILURE; // <Doesn't have the delimenete
+
+        ptrdiff_t l = search - t->value.uri;
+
+        *prefix = calloc(1, sizeof(char) * (l + 2)); // ':\0' at the end
+        memcpy(*prefix, t->value.uri, l + 1);
+
+        if (*prefix)
+                *loc = l+1;
+
+        return ARDP_SUCCESS;
+}
+/*}}}*/
+/* expand_curie() {{{*/
 static int expand_curie(struct rdf_term *t)
 {
-        if (!term_is_curie(t))
-                return 0;
+        if (unlikely(!term_is_curie(t)))
+                return ARDP_FAILURE;
 
-        const char delim /*alignas(char)*/ = ':';
+        const char delim = ':';
+        char *dlm  = ":";
 
-        if ((t)->value.uri[0] == delim) {
-                void *value;
-                utf8 uri;
-                int r = map_get(shared_parser_internal->namespaces,":",  &value);
-                uri = (utf8)value;
+        var value;
+        int status;
 
-                if ( r == ARDP_MAP_OK && uri ) {
-                        int ret = string_append(&uri, (t)->value.uri + 1);
-                        string_dealloc((t)->value.uri);
-                        (t)->value.uri = uri;
-                        return ret;
+        struct parser *p = shared_parser_internal;
+
+        if (t->value.uri[0] == delim && string_strlen(t->value.uri) > 1) {
+                status = map_get(p->namespaces, dlm, &value);
+                if (status == ARDP_MAP_OK) {
+                        utf8 s = string_copy((utf8) value);
+                        return term_uri_append(t, s, FRONT);
                 } else {
-                        return 14; // No prefix found.
+                        return ARDP_FAILURE; // No prefix found.
                 }
         }
 
-        uint8_t *search = strchr((t)->value.uri, delim);
+        char *prefix;
+        size_t l;
+        status = extract_prefix(t, &prefix, &l);
 
-        if (search == NULL)
-                return 15; // <Doesn't have the delimenete
+        if (status == ARDP_SUCCESS && prefix) {
+                status = map_get(p->namespaces, prefix, &value);
+                if (status == ARDP_MAP_OK) {
+                        utf8 s = string_copy((utf8) value);
+                        free(prefix);
 
-        ptrdiff_t loc = search - t->value.uri;
-
-        uint8_t *prefix = calloc(1, sizeof(*prefix) + loc + 2); // ':\0' at the end
-        memcpy(prefix, (t)->value.uri, loc + 1);
-
-        var value;
-        utf8 str;
-        int r = map_get(shared_parser_internal->namespaces, prefix, &value);
-
-        if (r == 0) {
-                str = (utf8)value;
-                int ret = string_append(&str, (t)->value.uri + 1);
-                string_dealloc((t)->value.uri);
-                (t)->value.uri = str;
-                return ret;
-        } else {
-                return 14; // No prefix found
+                        u8_concatenate(t->value.uri, l);
+                        return term_uri_append(t, s, FRONT);
+                } else if (status == ARDP_MAP_MISSING) {
+                        //Prefix missing
+                        free(prefix);
+                        return ARDP_FAILURE;
+                }
+                else {
+                        free(prefix);
+                        return ARDP_FAILURE; // No prefix found
+                }
         }
 
-        return 20; // Should not readch here
-}
+        if (prefix)
+                free(prefix);
 
+        return ARDP_FAILURE; // Should not reach here
+}
+/*}}}*/
+
+/* transform_uri() {{{ */
 int transform_uri(struct parser* p, struct rdf_term** t)
 {
         return -1;
-// C11 non-working functions {{{
+//za C11 non-working functions {{{
 #ifdef __STDC_HAS_LIB_EXT1__
 #ifdef __FORCE_DISABLE
 
@@ -182,30 +267,31 @@ int transform_uri(struct parser* p, struct rdf_term** t)
         return 0;
 }
 /*}}}*/
+
 /* _rebase() {{{  */
 static int _rebase(utf8 _Nullable base)
 {
         if (unlikely(!shared_parser_internal))
-                return 10; // No shared parser = panic!
+                return ARDP_FAILURE; // No shared parser = panic!
 
         if (shared_parser_internal->base)
                 string_dealloc(shared_parser_internal->base);
 
         shared_parser_internal->base = string_copy(base);
 
-        return 0;
+        return ARDP_SUCCESS;
 }
 /*}}}*/
 /* _add_namespace() {{{ */
 static int _add_namespace(utf8 _Nullable qname, utf8 _Nullable iri)
 {
         if (unlikely(!shared_parser_internal))
-                return 10; // No shared parser exist
+                return ARDP_FAILURE; // No shared parser exist
 
         if (unlikely(!shared_parser_internal->namespaces))
                 shared_parser_internal->namespaces = map_create(8);
 
-        return map_push(shared_parser_internal->namespaces, qname, iri);
+        return map_push(shared_parser_internal->namespaces, (char *)string_copy(qname), string_copy(iri));
 }
 /*}}}*/
 /* _triple() {{{ */
@@ -226,9 +312,11 @@ int _triple(struct rdf_statement* s)
         if (s->subject) {
                 switch (s->subject->type) {
                         case RDF_TERM_CURIE:
-                                expand_curie(s->subject);
+                                if (shared_parser_internal->extra.expand_curie)
+                                        expand_curie(s->subject);
                         case RDF_TERM_URI:
-                                //transform_uri(shared_parser_internal, &s->subject);
+                                if (shared_parser_internal->extra.expand_iri)
+                                        expand_relative_uri(s->subject);
                                 subject = s->subject->value.uri;
                                 break;
                         case RDF_TERM_BLANK:
@@ -247,9 +335,11 @@ int _triple(struct rdf_statement* s)
         if (s->predicate) {
                 switch (s->predicate->type) {
                         case RDF_TERM_CURIE:
-                                expand_curie(s->predicate);
+                                if (shared_parser_internal->extra.expand_curie)
+                                        expand_curie(s->predicate);
                         case RDF_TERM_URI:
-                                //transform_uri(shared_parser_internal, &s->predicate);
+                                if (shared_parser_internal->extra.expand_iri)
+                                        expand_relative_uri(s->predicate);
                                 predicate = s->predicate->value.uri;
                                 break;
                         case RDF_TERM_BLANK:
@@ -268,9 +358,11 @@ int _triple(struct rdf_statement* s)
         if (s->object) {
                 switch (s->object->type) {
                         case RDF_TERM_CURIE:
-                                expand_curie(s->object);
+                                if (shared_parser_internal->extra.expand_curie)
+                                        expand_curie(s->object);
                         case RDF_TERM_URI:
-                                //transform_uri(shared_parser_internal, &s->object);
+                                if (shared_parser_internal->extra.expand_iri)
+                                        expand_relative_uri(s->object);
                                 object = s->object->value.uri;
                                 break;
                         case RDF_TERM_BLANK:
@@ -329,7 +421,7 @@ utf8 _bnode(void)
 
         snprintf(buf, 20, "%s%llu", prefix, shared_parser_internal->n_bnode++);
 
-        return string_create(buf);
+        return string_create((uint8_t *)buf);
 }
 /*}}}*/
 
@@ -394,12 +486,20 @@ int ardp_parser_create(void)
  *
  * @param[in] type  Numeric categorization of the token.
  * @param[in] value Token actual value.
+ * @param[in] line  Line position of the token.
+ * @param[in] col   Column position of the token.
+ *
+ * @note column recognision is not yet implemented in lexers
  *
  * @note Pre `Lemon` specification, the parser accepts values in void* format,
  *       to allow opaque value handling inside the parser.
  */
-void ardp_parser_exec(int type, void* value)
+void ardp_parser_exec(int type, void* value, size_t line, size_t col)
 {
+        if (likely(shared_parser_internal)) {
+                shared_parser_internal->stats.line = line;
+                shared_parser_internal->stats.column = col;
+        }
         Parse(shared_parser, type, value, shared_parser_internal);
 }
 /*}}}*/
@@ -430,10 +530,50 @@ void ardp_parser_destroy(void)
 }
 /*}}}*/
 
+/* ardp_parser_set_default_base() {{{ */
+int ardp_parser_set_default_base(const char* base)
+{
+        if (unlikely(!shared_parser_internal))
+                return ARDP_FAILURE;
+
+        char realbase[130];
+        realpath(base,realbase);
+
+        char schemabase[255];
+        snprintf(schemabase, 255, "file://%s", realbase);
+
+        shared_parser_internal->base = string_create(schemabase);
+        return ARDP_SUCCESS;
+}
+/*}}}*/
+/* ardp_parser_set_option() {{{*/
+int ardp_parser_set_option(const uint8_t *key, var *value)
+{
+        if (!string_generic_cmp(key, (const uint8_t *) "expand:uri", strlen(key))) {
+                shared_parser_internal->extra.expand_iri = (int) *value;
+                return ARDP_SUCCESS;
+        }
+
+        if (!string_generic_cmp(key, (const uint8_t *) "expand:curie", strlen(key))) {
+                shared_parser_internal->extra.expand_curie = (int) *value;
+                return ARDP_SUCCESS;
+        }
+
+        if (!string_generic_cmp(key, (const uint8_t *) "show:datatype", strlen(key))) {
+                shared_parser_internal->extra.show_datatype = (int) *value;
+                return ARDP_SUCCESS;
+        }
+
+        return ARDP_FAILURE;
+}
+/*}}}*/
+
+/* ardp_parser_trace() {{{*/
 void ardp_parser_trace(void)
 {
         ParseTrace(stdout, "[@parser]: ");
 }
+/*}}}*/
 
 /* TEST-BUILD  {{{ */
 #ifdef TEST_BUILD

@@ -97,6 +97,15 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
             }
     }
 
+    action u8_check {
+                if (shared_lexer->string) {
+                        if (shared_lexer->string[string_strlen(shared_lexer->string)] == '.') {
+                                struct string_header *x = string_hdr(shared_lexer->string);
+                                shared_lexer->string[x->length--] = '\0';
+                        }
+                }
+    }
+
     action mark {
         mark = p;
     }
@@ -108,6 +117,8 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
                 if (!string_append_utf8(&shared_lexer->string, codepoint))
                         shared_lexer->finished = 1;
     }
+
+    # TERMINALS
 
     UCHAR     = '\\' . ( ('u' xdigit{4} >mark %unescape) | ('U' xdigit{8} >mark %unescape) )
               ;
@@ -167,7 +178,7 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     IRI_VALUE = (^([<>{}\"`^\\] | 0x00 .. 0x20) $u8_push | UCHAR )* >u8_create %u8_finish;
 
     #IRIREF    = '<' (PN_CHARS | '.' | ':' | '/' | '\\' | '#' | '@' | '%' | '&' | UCHAR)* '>';
-    IRIREF = '<' IRI_VALUE :>> '>';
+    IRIREF = '<' IRI_VALUE :>> '>' %! { ardp_fprintf(stderr, kARDPColorCyan, "Lexer error on line: %lld, reason: IRI value contains forbidden characters.\n", shared_lexer->line); };
 
     STRING_VALUE_QUOTE             = ( ^(0x22 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
     STRING_VALUE_SINGLE_QUOTE      = ( ^(0x27 | 0x5C | 0xA | 0xD) $u8_push | ECHAR | UCHAR )*;
@@ -181,22 +192,26 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
     STR_LQ   = ( STRING_VALUE_LONG_QUOTE        >u8_create %u8_finish );
     STR_LDQ  = ( STRING_VALUE_LONG_SINGLE_QUOTE >u8_create %u8_finish );
 
-    STRING_LITERAL_QUOTE        = '"' STR_Q :>> '"';
-    STRING_LITERAL_SINGLE_QUOTE = "'" STR_DQ :>> "'";
+    STRING_LITERAL_QUOTE        = '"' STR_Q :>> '"'  %! { ardp_fprintf(stderr, kARDPColorCyan, "Lexer error on line:%lld STRING value contains forbidden characters.\n", shared_lexer->line); };
+    STRING_LITERAL_SINGLE_QUOTE = "'" STR_DQ :>> "'"  %! { ardp_fprintf(stderr, kARDPColorCyan, "Lexer error on line:%lld: String value contains forbidden characters.\n", shared_lexer->line); };
 
     STRING_LITERAL_LONG_QUOTE        = '"""' . STR_LQ :>  '"""';
     STRING_LITERAL_LONG_SINGLE_QUOTE = "'''" . STR_LDQ :> "'''";
 
-    BLANK_NODE_LABEL = '_:' . (
-                                ((PN_CHARS_U | digit) $u8_push)
-                                (((PN_CHARS | '.')* PN_CHARS)? $u8_push) ) >u8_create %u8_finish;
+    BLANK_NODE_LABEL = '_:' >u8_create
+                        (PN_CHARS_U $u8_push | digit $u8_push )
+                              (
+                                (((PN_CHARS | '.')*  (PN_CHARS)) $u8_push)
+                              )?
+
+                        %u8_finish;
 
 
     QNAME     = (PN_PREFIX? ':' PN_LOCAL?) >u8_create %u8_finish $u8_push;
 
 
     #
-    ## Scanner
+    ## Scanner (Lexer with backtracking)
     #
 
     main := |*
@@ -206,9 +221,9 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
         BASE          => { lexer_emit_token_const(BASE); };
         SPARQL_BASE   => { lexer_emit_token_const(SPARQL_BASE); };
 
-        BLANK_NODE_LABEL => { lexer_emit_u8_token(BLANK_LITERAL); };
-        QNAME            => { lexer_emit_u8_token(QNAME); };
-        IRIREF           => { lexer_emit_u8_token(IRIREF); };
+        BLANK_NODE_LABEL  { lexer_emit_u8_token(BLANK_LITERAL); };
+        QNAME             { lexer_emit_u8_token(QNAME); };
+        IRIREF            { lexer_emit_u8_token(IRIREF); };
 
 
         INTEGER { lexer_emit_token(INTEGER_LITERAL, var(ts), var(te) - var(ts)); };
@@ -269,30 +284,24 @@ static uint32_t hex(const unsigned char *src, unsigned int len) {
 /* log() {{{ */
 static void log(int level, const char* message)
 {
-    if (shared_lexer->log.level < level )
-        if (shared_lexer->log.eprintf)
-            dispatch_async( dispatch_get_main_queue(), ^{
+    if (shared_lexer->log.level >= level )
+        if (shared_lexer->log.eprintf) {
                 shared_lexer->log.eprintf(level, message);
-            });
+        }
 }
 /*}}}*/
 /* lexer_emit_u8_token() {{{*/
 static void lexer_emit_u8_token(enum turtle_token_type type)
 {
-        assert(shared_lexer); /* sanity check*/
         if (likely(shared_lexer->cb.stoken)) {
-                __block utf8 s;
+                /*__block*/ utf8 s;
                 if (shared_lexer->string)
                          s = string_copy(shared_lexer->string);
                 else
                          s = NULL;
-
-                fprintf(stderr, "<<%s>>", s);
-
                 dispatch_async( shared_lexer->event_queue, ^{
                         shared_lexer->cb.stoken(type, s, shared_lexer->line, 0);
-                        if (shared_lexer->log.level < NOTICE)
-                                log (DEBUG, "Emitted token (UTF8)");
+                        log (DEBUG, "Emitted token (UTF8)");
                 });
         }
 }
@@ -300,28 +309,25 @@ static void lexer_emit_u8_token(enum turtle_token_type type)
 /* lexer_emit_token() {{{ */
 static void lexer_emit_token( enum turtle_token_type type, uint8_t *_Nullable str, size_t len )
 {
-        assert( shared_lexer ); /* sanity check */
         if (likely(shared_lexer->cb.stoken)) {
-            __block utf8 s = string_create_n(str,len,len);
+                // dispatch_barrier_async(shared_lexer->lexer_queue, ^{
+                        utf8 s = string_create_n(str,len,len);
 
-            dispatch_async( shared_lexer->event_queue, ^{
-                shared_lexer->cb.stoken( type, s, shared_lexer->line, 0);
-                if (shared_lexer->log.level < NOTICE)
-                    log( DEBUG, "Token emmitted" );
-            });
+                        dispatch_async( shared_lexer->event_queue, ^{
+                                shared_lexer->cb.stoken( type, s, shared_lexer->line, 0);
+                                log( DEBUG, "Token emmitted" );
+                        });
+                // });
         }
 }
 /*}}}*/
 /* lexer_emit_token_const() {{{ */
 static void lexer_emit_token_const( enum turtle_token_type type )
 {
-        assert( shared_lexer ); /* sanity check */
         if ( likely(shared_lexer->cb.stoken) ) {
             dispatch_async( shared_lexer->event_queue, ^{
                 shared_lexer->cb.stoken( type, NULL, shared_lexer->line, 0 );
-
-                if (shared_lexer->log.level < NOTICE)
-                    log( DEBUG, "Token emmitted");
+                log( DEBUG, "Token emmitted");
             });
         }
 }
@@ -438,6 +444,8 @@ int ardp_lexer_init( struct ardp_lexer_config *_Nullable cfg)
 void ardp_lexer_destroy()
 {
         if ( shared_lexer isnt NULL ) {
+                if (shared_lexer->string)
+                        string_dealloc(shared_lexer->string);
                 free( shared_lexer );
                 log(INFO, "Freed the shared lexer.");
         }

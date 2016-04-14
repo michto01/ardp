@@ -30,6 +30,7 @@ doc/Makefile
 src/Makefile
 src/*/Makefile
 tests/Makefile
+tests/ttl/*.gz
 scripts/Makefile
 examples/Makefile
 

@@ -22,7 +22,7 @@ struct rdf_term* rdf_term_from_uri(utf8 uri)
 
         if (  string_strlen(uri) == 0 ) {
                 t->type      = RDF_TERM_URI;
-                t->value.uri = string_create_n("null", 4, 4);
+                t->value.uri = string_create_n("", 0, 0);
         } else {
                 t->type      = RDF_TERM_URI;
                 t->value.uri = string_copy(uri);
@@ -128,12 +128,10 @@ void rdf_term_free(struct rdf_term* t)
 
         switch(t->type) {
                 case RDF_TERM_CURIE:
-                case RDF_TERM_URI: {
-                        if (t->value.uri)
-                                string_dealloc(t->value.uri);
+                case RDF_TERM_URI:
+                        string_dealloc(t->value.uri);
                         t->value.uri = NULL;
                         break;
-                }
 
                 case RDF_TERM_BLANK:
                         string_dealloc(t->value.blank);

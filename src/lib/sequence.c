@@ -9,6 +9,7 @@
  */
 
 #include <ardp/sequence.h>
+#include <ardp/util.h>
 
 /* Internal helper function {{{ */
 static int sequence_ensure(struct sequence* seq, size_t capacity, int grow_at_front )
@@ -50,8 +51,7 @@ struct sequence* sequence_create(sequence_free_handler  f,
         assert(f);
 
         struct sequence* seq = calloc(1, sizeof(*seq));
-
-        if (!seq)
+        if (unlikely(!seq))
                 return NULL;
 
         seq->free  = f;
@@ -64,7 +64,7 @@ struct sequence* sequence_create(sequence_free_handler  f,
 /* sequence_size() {{{ */
 size_t sequence_size(struct sequence* seq)
 {
-        if (!seq)
+        if (unlikely(!seq))
                 return 0;
         return seq->size;
 }
@@ -72,25 +72,10 @@ size_t sequence_size(struct sequence* seq)
 /* sequence_free() {{{*/
 void sequence_free( struct sequence* seq )
 {
-        //@FIXME: segfault on deallocating the items
-        //return;
-
-        int i;
-        int j;
         /* TODO: imporove deallocating of the items */
         if(!seq)
                 return;
-/*
-        if(seq->free) {
-                for(i = seq->head, j = seq->head + seq->size; i < j; i++)
-                        if(seq->items[i])
-                                seq->free(seq->items[i]);
-        } else if(seq->context) {
-                for(i = seq->head, j = seq->head + seq->size; i < j; i++)
-                        if(seq->items[i])
-                                 ;//seq->context->free(seq->context, seq->items[i]);
-        }
-*/
+
         size_t n = sequence_size(seq);
         while(n) {
                 seq->free(sequence_unshift(seq));
@@ -108,7 +93,7 @@ void sequence_free( struct sequence* seq )
 /* sequence_set_at() {{{ */
 int sequence_set_at(struct sequence* seq, int idx, void *data)
 {
-        if (!seq)
+        if (unlikely(!seq))
                 return 1;
 
         /* Cannot provide a negative index */
@@ -155,7 +140,7 @@ int sequence_set_at(struct sequence* seq, int idx, void *data)
 /* sequence_get_at()  {{{*/
 void* sequence_get_at(struct sequence* seq, int idx)
 {
-        if (!seq)
+        if (unlikely(!seq))
                 return NULL;
 
         return (idx < 0 || idx > seq->size - 1) ? NULL : seq->items[seq->head+ idx];
@@ -164,8 +149,9 @@ void* sequence_get_at(struct sequence* seq, int idx)
 /* sequence_delete_at() {{{ */
 void* sequence_delete_at(struct sequence* seq, int idx)
 {
-        if(!seq)
+        if(unlikely(!seq))
                 return NULL;
+
         if(idx < 0 || idx > seq->size - 1)
                 return NULL;
 
@@ -179,7 +165,7 @@ void* sequence_delete_at(struct sequence* seq, int idx)
 /* sequence_pop() {{{ */
 void* sequence_pop(struct sequence* seq)
 {
-        if(!seq || !seq->size)
+        if(unlikely(!seq) || unlikely(!seq->size))
                 return NULL;
 
         seq->size--;
@@ -215,7 +201,7 @@ int sequence_push(struct sequence* s, void* data)
 /* sequence_shift() {{{ */
 int sequence_shift(struct sequence* seq, void *data)
 {
-        if(!seq)
+        if(unlikely(!seq))
                 return 1;
 
         if(!seq->head) {
@@ -235,7 +221,7 @@ int sequence_shift(struct sequence* seq, void *data)
 /* sequence_unshift() {{{ */
 void* sequence_unshift(struct sequence* seq)
 {
-        if(!seq || !seq->size)
+        if(unlikely(!seq) || unlikely(!seq->size))
                 return NULL;
 
         size_t i   = seq->head++;

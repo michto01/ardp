@@ -31,7 +31,7 @@
 
     EOL       = '\r'
               | '\n'
-              | '\n' . '\r' #Windows variation of LF
+              | '\r' . '\n' #Windows variation of LF
               ;
 
     WS        = ' '

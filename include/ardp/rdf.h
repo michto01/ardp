@@ -147,6 +147,50 @@ struct rdf_term* rdf_term_from_literal(utf8 literal, utf8 lang, utf8 datatype);
 struct rdf_term* rdf_term_copy(struct rdf_term* t);
 
 /*!
+ * @fn    term_is_uri
+ * @brief Finds if the TERM is URI.
+ *
+ * @param[in] t Term to inspect.
+ */
+static inline int term_is_uri(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_URI;
+}
+
+/*!
+ * @fn    term_is_curie
+ * @brief Finds if the TERM is CURIE.
+ *
+ * @param[in] t Term to inspect.
+ */
+static inline int term_is_curie(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_CURIE;
+}
+
+/*!
+ * @fn    term_is_blank
+ * @brief Finds if the TERM is BLANK NODE.
+ *
+ * @param[in] t Term to inspect.
+ */
+static inline int term_is_blank(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_BLANK;
+}
+
+/*!
+ * @fn    term_is_literal
+ * @brief Finds if the TERM is LITERAL.
+ *
+ * @param[in] t Term to inspect.
+ */
+static inline int term_is_literal(struct rdf_term *t)
+{
+        return (t)->type == RDF_TERM_LITERAL;
+}
+
+/*!
  * @fn    rdf_term_free
  * @brief Free allocated memory.
  *

@@ -33,11 +33,11 @@ dnl# Initialize autoconf and define the package name, version number and
 dnl# address for reporting bugs.
 
 
-AC_INIT(ardp,1.4.5,tomas.michalek.st@vsb.cz)
+AC_INIT(ardp,2.1.3,tomas.michalek.st@vsb.cz)
 
-ARDP_VERSION_MAJOR=1
-ARDP_VERSION_MINOR=4
-ARDP_VERSION_PATCH=5
+ARDP_VERSION_MAJOR=2
+ARDP_VERSION_MINOR=1
+ARDP_VERSION_PATCH=3
 
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MAJOR], $ARDP_VERSION_MAJOR, [Major version of the ARDP API])
 AC_DEFINE_UNQUOTED([ARDP_VERSION_MINOR], $ARDP_VERSION_MINOR, [Minor version of the ARDP API])
@@ -200,6 +200,7 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_MKDIR_P
 
+dnl# PKG_CHECK_MODULES([CHECK], [check >= 0.9.10])
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -223,11 +224,11 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove memset strcasecmp])
 
 AC_CONFIG_FILES([Makefile
-									man/Makefile
+                  man/Makefile
                   doc/Makefile
-									tests/Makefile
+                  tests/Makefile
                   scripts/Makefile
-									examples/Makefile
+                  examples/Makefile
                   src/Makefile
                   src/bin/Makefile
                   src/lib/Makefile
@@ -248,5 +249,5 @@ Configuration for $PACKAGE_NAME ($PACKAGE_VERSION)
   Doxygen........: ${DOXYGEN:-NONE}
 
   You're now ready to build this project! Quick build:
-	make && make install
+        make && make install
 "

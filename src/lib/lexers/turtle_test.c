@@ -82,8 +82,8 @@ int main( int argc, char** argv )
                 cfg.logging.eprintf = &lexer_error;
 
                 __block int (^stoken)(int, utf8, size_t, size_t) = ^int(int type, utf8 value, size_t line, size_t col){
-                        fprintf(stderr, "(type: %d, line: %ld, col: %ld, value: %s)\n", type, line, col, value);
-                        //ardp_parser_exec(type, value ? value : 0);
+                        //fprintf(stderr, "(type: %d, line: %ld, col: %ld, value: %s)\n", type, line, col, value);
+                        ardp_parser_exec(type, value ? value : 0, line, col);
                         return ARDP_SUCCESS;
                 };
                 cfg.cb.stoken = stoken;
@@ -94,8 +94,9 @@ int main( int argc, char** argv )
                         die("Initialization error!");
         }
 
+        void* file = gzopen( "../../../tests/ttl/GND.ttl.gz", "rb" );
         //void* file = gzopen( "../../../tests/ttl/connectivity-of-lod-datasets.ttl", "rb" );
-        void* file = gzopen( "../../../tests/ttl/british-national-bibliography.ttl", "rb" );
+        //void* file = gzopen( "../../../tests/ttl/british-national-bibliography.ttl", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);
 

@@ -15,9 +15,44 @@
 #include <assert.h>
 #include <errno.h>
 
+#if defined(_MSC_VER)
+     /* Microsoft C/C++-compatible compiler */
+     #include <intrin.h>
+#elif defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
+     /* GCC-compatible compiler, targeting x86/x86-64 */
+     #include <immintrin.h>
+#elif defined(__GNUC__) && defined(__ARM_NEON__)
+     /* GCC-compatible compiler, targeting ARM with NEON */
+     #include <arm_neon.h>
+#elif defined(__GNUC__) && defined(__IWMMXT__)
+     /* GCC-compatible compiler, targeting ARM with WMMX */
+     #include <mmintrin.h>
+#elif (defined(__GNUC__) || defined(__xlC__)) && (defined(__VEC__) || defined(__ALTIVEC__))
+     /* XLC or GCC-compatible compiler, targeting PowerPC with VMX/VSX */
+     #include <altivec.h>
+#elif defined(__GNUC__) && defined(__SPE__)
+     /* GCC-compatible compiler, targeting PowerPC with SPE */
+     #include <spe.h>
+#endif
+
 #define MAX_PREALLOC ( 1024 * 1024 )
 #define INITIAL_CAPACITY 8
 
+uint8_t const *ssechr(uint8_t const *s, uint8_t ch)
+{
+        __m128i zero = _mm_setzero_si128();
+        __m128i cx16 = _mm_set1_epi8(ch); // (ch) replicated 16 times.
+        while (1) {
+                __m128i  x = _mm_loadu_si128((__m128i const *)s);
+                unsigned u = _mm_movemask_epi8(_mm_cmpeq_epi8(zero, x));
+                unsigned v = _mm_movemask_epi8(_mm_cmpeq_epi8(cx16, x))
+                        & ~u & (u - 1);
+                if (v) return s + ffs(v) - 1;
+                if (u) return  NULL;
+                s += 16;
+
+        }
+}
 
 /*
  * Length of the string.
@@ -184,7 +219,7 @@ int string_append_str(utf8 *src, utf8 apd)
         if (a->capacity <= len) {
                 struct string_header *s = realloc(a, sizeof(*a) + len);
                 if (s == NULL)
-                        return 1;
+                        return ARDP_FAILURE;
 
                 s->capacity = len - 1;
 
@@ -194,14 +229,15 @@ int string_append_str(utf8 *src, utf8 apd)
 
         memcpy(*src + a->length, apd, b->length);
         a->length += b->length;
-
-        return 0;
+        memset(*src + a->length, 0, a->capacity - a->length + 1);
+        //fprintf(stderr, "[%lu(%lu)[%lu] = %s]", a->length, strlen(*src), string_strlen(*src), *src);
+        return ARDP_SUCCESS;
 }
 
 utf8 string_copy(utf8 src)
 {
         struct string_header *hdr = string_hdr(src);
-        struct string_header *cpy = calloc(1, (sizeof(*hdr) + hdr->capacity+1));
+        struct string_header *cpy = calloc(1, (sizeof(*hdr) + hdr->capacity));
 
         memcpy(cpy, hdr, sizeof(*hdr) + hdr->capacity);
 
@@ -219,9 +255,9 @@ utf8 string_new() {
  * Delete the string.
  */
 void string_dealloc( utf8 self ) {
-        if ( self is NULL )
+        if (self is NULL)
                 return;
-        free( string_hdr( self ) );
+        free(string_hdr(self));
 }
 
 /*
@@ -238,11 +274,11 @@ bool string_resize( utf8 *str, size_t room ) {
 
         cap = len + room;
 
-        if ( cap < MAX_PREALLOC ) {
+        if ( cap < MAX_PREALLOC )
                 cap *= 2;
-        } else {
+        else
                 cap += MAX_PREALLOC;
-        }
+
 
         string_header_t *r = realloc( hdr, sizeof( string_header_t ) + cap + 1 );
 
@@ -335,5 +371,4 @@ int string_generic_cmp(const uint8_t* a, const uint8_t* b, int len)
                     ++offset;
         }
         return 0;
-
 }

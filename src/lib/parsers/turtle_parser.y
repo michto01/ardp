@@ -9,8 +9,8 @@
 /* %name turtle_parser */
 %extra_argument { struct parser* p }
 
-//%token_type { utf8 }
-//%destructor IRIREF { string_dealloc($$); }
+//%token_type       {utf8}
+%token_destructor { string_dealloc($$); }
 
 %include {
         #include <assert.h>
@@ -28,15 +28,19 @@
         #include <ardp/util.h>            // Various utilities
         #include <ardp/parser.h>          // Parser internals
 
+#define YYMALLOCARGTYPE  u64
+
 #define YYERROR do {                                                               \
-                        fprintf(stderr, "\n\nERROR\n\n");                          \
+                        ardp_fprintf(stderr,                                       \
+                                     kARDPColorMagenta,                            \
+                                     "\n[parser error] on line: %lu\n\n", p->stats.line);   \
                         p->stats.n_errors++;                                       \
                 }while(0)
 
 const uint8_t *const xsd_uri    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#";
 
-const uint8_t *const rdfNil     = (uint8_t *) "http://www.nil.org/";
-const uint8_t *const rdfFirst   = (uint8_t *) "http://www.w3.org/2001/XMLSchame#First";
+const uint8_t *const rdfNil     = (uint8_t *) "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
+const uint8_t *const rdfFirst   = (uint8_t *) "http://www.w3.org/2001/XMLSchema#First";
 const uint8_t *const rdfRest    = (uint8_t *) "http://www.w3.org/2001/XMLSchema#Rest";
 
 #define XSD "xsd:"
@@ -50,10 +54,11 @@ const uint8_t *const rdfInteger = (uint8_t*) XSD"integer";
 const uint8_t *const rdfDecimal = (uint8_t*) XSD"decimal";
 const uint8_t *const rdfString  = (uint8_t*) XSD"string";
 
+const uint8_t *const rdfType = (uint8_t *) "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
 }
 
 %parse_failure {
-        fprintf(stderr, "Parser encountered error.\n"); /*parser->error.code = 1;*/
+        ardp_fprintf(stderr, kARDPColorMagenta, "Parser encountered error.\n"); /*parser->error.code = 1;*/
         fprintf(stderr, "\n\nFinal status: (%lu) t, (%lu) d, (%lu) e\n", p->stats.n_triples, p->stats.n_directives, p->stats.n_errors);
 }
 %parse_accept  {
@@ -61,7 +66,19 @@ const uint8_t *const rdfString  = (uint8_t*) XSD"string";
 }
 %syntax_error  {
         p->stats.n_errors++;
-        fprintf(stderr, "Syntax error: %s\n", NULL); /*parser->error.code = 2;*/
+        //int tok = yypParser->yystack[yypParser->yyidx-1].major;
+        ardp_fprintf(stderr, kARDPColorMagenta, "Syntax error on line: %ld near %s" /*" (%s)"*/ ", expected: ", p->stats.line, TOKEN/*, yyTokenName[tok]*/); /*parser->error.code = 2;*/
+        int n = sizeof(yyTokenName) / sizeof(yyTokenName[0]);
+        for (int i = 0; i < n; ++i) {
+                int a = yy_find_shift_action(yypParser, (YYCODETYPE)i);
+                if (a < YYNSTATE + YYNRULE)
+                        ardp_fprintf(stderr, kARDPColorBoldMagenta, "%s ", yyTokenName[i]);
+
+        }
+        fprintf(stderr, "\n");
+}
+%stack_overflow {
+        ardp_fprintf(stderr, kARDPColorMagenta, "Parser stack overflow.\n");
 }
 
 %start_symbol turtleDoc
@@ -75,7 +92,6 @@ statements ::= .
 /* [2] statement ::= directive | triples '.' {{{ */
 statement ::= directive.   { p->stats.n_directives++; }
 statement ::= triples DOT.
-//TODO:statement ::= error(B).    { fprintf(stderr, "Error %d", B); }
 /*}}}*/
 /* [3] directive ::= prefixID | base | sparqlPrefix | sparqlBase {{{ */
 directive ::= prefixID.
@@ -85,18 +101,16 @@ directive ::= sparqlBase.
 /*}}}*/
 /* [4] prefixID ::= '@prefix' PNAME_NS IRIREF '.' {{{ */
 prefixID ::= PREFIX COLON IRIREF(B) DOT. {
-        if(p->cb.add_namespace(":",B)) {
+        if(p->cb.add_namespace((uint8_t *)":",B)) {
                 string_dealloc(B);
                 YYERROR;
+        } else {
+                string_dealloc(B);
         }
-        string_dealloc(B);
 }
 prefixID ::= PREFIX QNAME(A) IRIREF(B) DOT. {
-        if(p->cb.add_namespace(A,B)) {
-                string_dealloc(A);
-                string_dealloc(B);
+        if(p->cb.add_namespace(A,B))
                 YYERROR;
-        }
         string_dealloc(A);
         string_dealloc(B);
 }
@@ -106,8 +120,9 @@ base ::= BASE IRIREF(A) DOT. {
         if (p->cb.rebase(A)) {
                 string_dealloc(A);
                 YYERROR;
+        } else {
+                string_dealloc(A);
         }
-        string_dealloc(A);
 }
 /*}}}*/
 /* [5s] sparqlBase ::= "BASE" IRIREF {{{ */
@@ -115,37 +130,36 @@ sparqlBase ::= SPARQL_BASE IRIREF(A). {
         if (p->cb.rebase(A)) {
                 string_dealloc(A);
                 YYERROR;
+        } else {
+                string_dealloc(A);
         }
-        string_dealloc(A);
 }
 /*}}}*/
 /* [6s] sparqlPrefix ::= "PREFIX" PNAME_NS IRIREF {{{ */
 sparqlPrefix ::= SPARQL_PREFIX COLON IRIREF(B). {
-        utf8 colon = string_create(":");
-        if (p->cb.add_namespace(colon, B)) {
-                string_dealloc(colon);
-                string_dealloc(B);
+        utf8 colon = string_create((uint8_t *)":");
+        if (p->cb.add_namespace(colon, B))
                 YYERROR;
-        }
-        string_dealloc(colon);
+
         string_dealloc(B);
+        string_dealloc(colon);
 }
 sparqlPrefix ::= SPARQL_PREFIX QNAME(A) IRIREF(B). {
         if (p->cb.add_namespace(A,B)) {
                 string_dealloc(A);
                 string_dealloc(B);
                 YYERROR;
+        } else {
+                string_dealloc(A);
+                string_dealloc(B);
         }
-
-        string_dealloc(A);
-        string_dealloc(B);
 }
 /*}}}*/
 /* [6] triples ::= subject predicateObjectList | blankNodePropertyList predicateObjectList?  {{{ */
 triples ::= subject(A) predicateObjectList(B). {
-
         if (A && B) {
                 /* have subject and property list with items */
+                #pragma vectorize enable
                 while ( sequence_size(B) ) {
                         struct rdf_statement* t = (struct rdf_statement*) sequence_unshift(B);
                         t->subject = rdf_term_copy(A);
@@ -181,7 +195,10 @@ triples ::= blankNodePropertyList(A) predicateObjectList_astr(B). {
 predicateObjectList_astr(A) ::= predicateObjectList(B).  { A = B; }
 predicateObjectList_astr(A) ::= . { A = NULL; }
 /*}}}*/
+
 /* [7] predicateObjectList ::= verb objectList (';' (verb objectList)?)* {{{ */
+%type predicateObjectList { struct sequence* }
+%destructor predicateObjectList { sequence_free($$); }
 predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
         if (B && C) {
                 for (size_t i = 0; i < sequence_size(C); i++) {
@@ -205,20 +222,24 @@ predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
                         sequence_free(D);
                 }
 
-                if (B)
-                        rdf_term_free(B);
+                rdf_term_free(B);
 
                 A = C;
-        }
-        else {
+        } else {
+                if (B)
+                        rdf_term_free(B);
+                if (C)
+                        sequence_free(C);
+
                 if (D)
                         A = D;
                 else
                         A = NULL;
         }
-
 }
 // (...)*
+%type predicateObjectList_ast { struct sequence* }
+%destructor predicateObjectList_ast { sequence_free($$); }
 predicateObjectList_ast(A) ::= predicateObjectList_ast(B) predicateObjectList_qst(C). {
         if (!B) {
                 if (C)
@@ -241,6 +262,9 @@ predicateObjectList_ast(A) ::= predicateObjectList_ast(B) predicateObjectList_qs
 }
 predicateObjectList_ast(A) ::= . { A = NULL; }
 // ';' (verb objectList)?
+
+%type predicateObjectList_qst { struct sequence* }
+%destructor predicateObjectList_qst { sequence_free($$); }
 predicateObjectList_qst(A) ::= SEMICOLON verb(B) objectList(C). {
         if (B && C) {
                 /* non-empty property list */
@@ -257,6 +281,8 @@ predicateObjectList_qst(A) ::= SEMICOLON verb(B) objectList(C). {
 predicateObjectList_qst(A) ::= SEMICOLON. { A = NULL; }
 /*}}}*/
 /* [8] objectList ::= object (',' object)* {{{ */
+%type objectList { struct sequence* }
+%destructor objectList { sequence_free($$); }
 objectList(A) ::= object(B) objectList_ast(C). {
         struct rdf_statement* triple = rdf_statement_from_nodes(NULL, NULL, B, NULL);
         if (!C) {
@@ -265,6 +291,7 @@ objectList(A) ::= object(B) objectList_ast(C). {
                         YYERROR; /* failed to  create sequence. */
                 if ( sequence_push(A, triple) ) {
                         sequence_free(A);
+                        rdf_statement_free(triple);
                         YYERROR; /* couldn't push the object into sequence*/
                 }
         } else {
@@ -272,6 +299,8 @@ objectList(A) ::= object(B) objectList_ast(C). {
                 sequence_shift(A, triple); /* prepend object to the sequence */
         }
 }
+%type objectList_ast { struct sequence* }
+%destructor objectList_ast { sequence_free($$); }
 objectList_ast(A) ::= objectList_ast(B) COMMA object(C). {
         struct rdf_statement* triple = rdf_statement_from_nodes(NULL, NULL, C, NULL);
         if (!B) {
@@ -286,13 +315,15 @@ objectList_ast(A) ::= objectList_ast(B) COMMA object(C). {
 /* Parts of Turtle specification do not specify the custom error situations not
  * handled by the grammar. this is one of such cases.
  */
-objectList_ast(A) ::= objectList_ast(B) COMMA . { /* Custom handling of ES */ A = B; }
+//objectList_ast(A) ::= objectList_ast(B) COMMA . { /* Custom handling of ES */ A = B; }
 objectList_ast(A) ::= . { A = NULL; }
 /*}}}*/
 /* [9] verb ::= predicate | 'a' {{{ */
+%type verb { struct rdf_term* }
+%destructor verb { rdf_term_free($$); }
 verb(A) ::= predicate(B). { A = B; }
 verb(A) ::= A. {
-        utf8 s = string_create("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        utf8 s = string_create(rdfType);
         A = rdf_term_from_uri(s);
         string_dealloc(s);
         if (!A)
@@ -300,27 +331,42 @@ verb(A) ::= A. {
 }
 /*}}}*/
 /* [10] subject ::= iri | BlankNode | collection {{{ */
+%type subject { struct rdf_term* }
+%destructor subject { rdf_term_free($$); }
 subject(A) ::= iri(B).        { A = B; }
 subject(A) ::= blankNode(B).  { A = B; }
 subject(A) ::= collection(B). { A = B; }
 /*}}}*/
 /* [11] predicate ::= iri {{{ */
+%type predicate { struct rdf_term* }
+%destructor predicate { rdf_term_free($$); }
 predicate(A) ::= iri(B). { A = B; }
 /*}}}*/
 /* [12] object ::= iri | BlankNode | collection | blankNodePropertyList | literal {{{ */
+%type object { struct rdf_term* }
+%destructor object { rdf_term_free($$); }
 object(A) ::= iri(B).                   { A = B; }
 object(A) ::= blankNode(B).             { A = B; }
 object(A) ::= collection(B).            { A = B; }
 object(A) ::= blankNodePropertyList(B). { A = B; }
 object(A) ::= literal(B).               { A = B; }
+/*object(A) ::= error(B). {
+        A = NULL;
+        ardp_fprintf(stderr, kARDPColorMagenta, "*** Error Near: %s ***\n", B);
+        string_dealloc(B);
+}*/
 /*}}}*/
 
 /* [13] literal ::= RDFLiteral | NumericalLiteral | BooleanLiteral {{{ */
+%type literal { struct rdf_term* }
+%destructor literal { rdf_term_free($$); }
 literal(A) ::= rdfLiteral(B).       { A = B; }
 literal(A) ::= numericalLiteral(B). { A = B; }
 literal(A) ::= booleanLiteral(B).   { A = B; }
 /*}}}*/
 /* [14] blankNodePropertyList ::= '[' predicateObjectList  ']' {{{ */
+%type blankNodePropertyList { struct rdf_term* }
+%destructor blankNodePropertyList { rdf_term_free($$); }
 blankNodePropertyList(A) ::= L_SQUARE predicateObjectList(B) R_SQUARE. {
 
         utf8 s = p->cb.generate_bnode();
@@ -341,11 +387,14 @@ blankNodePropertyList(A) ::= L_SQUARE predicateObjectList(B) R_SQUARE. {
                                 p->cb.statement(s);
                                 rdf_statement_free(s);
                         }
+                        sequence_free(B);
                 }
         }
 }
 /*}}}*/
 /* [15] collection ::= '(' object* ')' {{{ */
+%type collection { struct rdf_term* }
+%destructor collection { rdf_term_free($$); }
 collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
         if (!B) {
                 utf8 s = string_create(rdfNil);
@@ -465,6 +514,9 @@ collection(A) ::= L_CURLY collection_ast(B) R_CURLY. {
                 }
         }
 }
+
+%type collection_ast { struct sequence* }
+%destructor collection_ast { sequence_free($$); }
 collection_ast(A) ::= collection_ast(B) object(C). {
         if (!B) {
                 B = sequence_create((sequence_free_handler)&rdf_statement_free, NULL, NULL);
@@ -487,29 +539,40 @@ collection_ast(A) ::= collection_ast(B) object(C). {
         A = B;
 }
 collection_ast(A) ::= . { A = NULL;  }
+
 /*}}}*/
 
 /* [16] NumericalLiteral ::= INTEGER | DECIMAL | DOUBLE {{{ */
+%type numericalLiteral { struct rdf_term* }
+%destructor numericalLiteral { rdf_term_free($$); }
 numericalLiteral(A) ::= INTEGER_LITERAL(B). {
-        A = rdf_term_from_literal(B, NULL, string_create(rdfInteger));
+        utf8 dt = string_create(rdfInteger);
+        A = rdf_term_from_literal(B, NULL, dt);
+        string_dealloc(dt);
         string_dealloc(B);
         if (!A)
                 YYERROR;
 }
 numericalLiteral(A) ::= DECIMAL_LITERAL(B). {
-        A = rdf_term_from_literal(B, NULL, string_create(rdfDecimal));
+        utf8 dt = string_create(rdfDecimal);
+        A = rdf_term_from_literal(B, NULL, dt);
+        string_dealloc(dt);
         string_dealloc(B);
         if (!A)
                 YYERROR;
 }
 numericalLiteral(A) ::=  DOUBLE_LITERAL(B). {
-        A = rdf_term_from_literal(B, NULL, string_create(rdfDouble));
+        utf8 dt = string_create(rdfDouble);
+        A = rdf_term_from_literal(B, NULL, dt);
+        string_dealloc(dt);
         string_dealloc(B);
         if (!A)
                 YYERROR;
 }
 /*}}}*/
 /* [128s] RDFLiteral ::= String (LANGTAG | '^^' iri)? {{{ */
+%type rdfLiteral { struct rdf_term* }
+%destructor rdfLiteral { rdf_term_free($$); }
 rdfLiteral(A)  ::= string(B) rdfLiteral_qst(C). {
         if (!C) {
                 A = rdf_term_from_literal(B,NULL,NULL);
@@ -527,13 +590,15 @@ rdfLiteral(A)  ::= string(B) rdfLiteral_qst(C). {
 
 %type rdfLiteral_qst { datatype_sys_t* }
 %type rdfLiteral_opt { datatype_sys_t* }
+%destructor rdfLiteral_qst { string_dealloc($$->datatype); string_dealloc($$->langtag); if($$) free($$); }
+%destructor rdfLiteral_opt { string_dealloc($$->datatype); string_dealloc($$->langtag); if($$) free($$); }
 
 rdfLiteral_qst(A) ::= rdfLiteral_opt(X). {A = X;}
 rdfLiteral_qst(A) ::= . {A = NULL;}
 
 rdfLiteral_opt(A) ::= LANGTAG(X). {
         if (X) {
-                datatype_sys_t *s = calloc(1, sizeof(struct _datatype_sys_t));
+                datatype_sys_t *s = calloc(1, sizeof(*s));
                 if (s) {
                         s->datatype = NULL;
                         s->langtag  = X;
@@ -548,7 +613,7 @@ rdfLiteral_opt(A) ::= LANGTAG(X). {
 }
 rdfLiteral_opt(A) ::= HAT iri(X). {
         if (X) {
-                datatype_sys_t *s = calloc(1, sizeof(struct _datatype_sys_t));
+                datatype_sys_t *s = calloc(1, sizeof(*s));
                 if (s) {
                         struct rdf_term *t = X;
                         if (t->type == RDF_TERM_URI)
@@ -568,6 +633,8 @@ rdfLiteral_opt(A) ::= HAT iri(X). {
 }
 /*}}}*/
 /* [133s] BooleanLiteral ::= 'true' | 'false' {{{ */
+%type booleanLiteral { struct rdf_term* }
+%destructor booleanLiteral { rdf_term_free($$); }
 booleanLiteral(A) ::= BOOLEAN_LITERAL(B). {
         A = rdf_term_from_literal(B, NULL, string_create(rdfBoolean));
         string_dealloc(B);
@@ -577,34 +644,41 @@ booleanLiteral(A) ::= BOOLEAN_LITERAL(B). {
 }
 /*}}}*/
 /* [17] String ::= STRING_LITERAL_QUOTE | STRING_LITERAL_SINGLE_QUOTE | STRING_LITERAL_LONG_SINGLE_QUOTE | STRING_LITERAL_LONG_QUOTE {{{ */
+%type string { utf8 }
+%destructor string { string_dealloc($$); }
 string(A) ::= STRING_LITERAL(B). { A = B; }
 /*}}}*/
 /* [135s] iri ::= IRIREF | PrefixedName (=> PNAME_LN | PNAME_NS) {{{ */
+%type iri { struct rdf_term* }
+%destructor iri { rdf_term_free($$); }
 iri(A) ::= IRIREF(B). {
         if (B) {
                 A = rdf_term_from_uri(B);
-                string_dealloc(B);
 
                 if (!A)
                         YYERROR;
-
         } else {
                 A = NULL;
         }
+
+        string_dealloc(B);
 }
 iri(A) ::= QNAME(B).  {
         if (B) {
                 A = rdf_term_from_curie(B);
-                string_dealloc(B);
 
                 if (!A)
                         YYERROR;
         } else {
                 A = NULL;
         }
+
+        string_dealloc(B);
 }
 /*}}}*/
 /* [137s] BlankNode ::= BLANK_NODE_LABEL | ANON {{{ */
+%type blankNode { struct rdf_term* }
+%destructor blankNode { rdf_term_free($$); }
 blankNode(A) ::= BLANK_LITERAL(B). {
         if (!B) {
                 utf8 s = p->cb.generate_bnode();
@@ -618,7 +692,17 @@ blankNode(A) ::= BLANK_LITERAL(B). {
         if (!A)
                 YYERROR;
 }
-blankNode(A) ::= anon. {
+blankNode(A) ::= anon(B). {
+        A = B;
+
+        if (!A)
+                YYERROR;
+}
+/*}}}*/
+/* ![162s] ANON ::= '[' WS* ']' {{{ */
+%type anon { struct rdf_term* }
+%destructor anon { rdf_term_free($$); }
+anon(A) ::= L_SQUARE R_SQUARE. {
         utf8 s = p->cb.generate_bnode();
         A = rdf_term_from_blank(s);
         string_dealloc(s);
@@ -626,7 +710,4 @@ blankNode(A) ::= anon. {
         if (!A)
                 YYERROR;
 }
-/*}}}*/
-/* ![162s] ANON ::= '[' WS* ']' {{{ */
-anon ::= L_SQUARE R_SQUARE.
 /*}}}*/

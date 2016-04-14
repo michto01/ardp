@@ -1,11 +1,11 @@
-AM_CFLAGS = -I$(top_srcdir)/include
+AM_CFLAGS = -g -I$(top_srcdir)/include
 
 bin_PROGRAMS = ardp
 
-ardp_SOURCES = ardp.c                 \
-               string.test.c
+ardp_SOURCES = ardp.c
 
-ardp_LDADD   = ../lib/libardp.a       \
+ardp_LDADD   = ../lib/libardp_parser_turtle.a  \
+               ../lib/libardp_lexer_turtle.a \
                ../lib/libardpstring.a \
                ../lib/libhashmap.a    \
                $(AM_LDFLAGS)          \
