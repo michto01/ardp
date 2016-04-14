@@ -1,5 +1,7 @@
 AM_CFLAGS= -I$(top_srcdir)/include -Wno-pointer-sign
 
+AM_CFLAGS += -fblocks
+
 noinst_LIBRARIES= libardpstring.a \
 		  libhashmap.a \
 		  libardp_lexer_turtle.a \

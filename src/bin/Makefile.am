@@ -1,4 +1,6 @@
-AM_CFLAGS = -g -I$(top_srcdir)/include
+AM_CFLAGS = -I$(top_srcdir)/include
+
+AM_CFLAGS += -fblocks
 
 bin_PROGRAMS = ardp
 

@@ -5,7 +5,8 @@ AUTOMAKE_OPTIONS = foreign
 # Autoconf knows where to find them.
 #ACLOCAL_AMFLAGS = -I m4
 
-CC=clang -fblocks
+CC=clang
+AM_CFLAGS = -fblocks $(AM_CFLAGS)
 
 SUBDIRS = src \
           doc \
