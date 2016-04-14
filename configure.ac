@@ -183,9 +183,9 @@ case $ardp_cv_platform_type in
     ;;
 esac
 
-AM_CONDITIONAL([ARDP_ON_UNIX], [test x$ardp_cv_platform_type = xUnix])
-AM_CONDITIONAL([ARDP_ON_OSX], [test x$ardp_cv_platform_type = xDarwin])
-AM_CONDITIONAL([ARDP_ON_WIN32], [test x$ardp_cv_platform_type = xWin32])
+AM_CONDITIONAL([ARDP_ON_UNIX], [test x"$ardp_cv_platform_type" = x"Unix"])
+AM_CONDITIONAL([ARDP_ON_OSX], [test x"$ardp_cv_platform_type" = "xDarwin"])
+AM_CONDITIONAL([ARDP_ON_WIN32], [test x"$ardp_cv_platform_type" = x"Win32"])
 
 # ADD ARCH + CROSS_COMPILE to the target
 
