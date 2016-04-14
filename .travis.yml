@@ -24,6 +24,10 @@ matrix:
       before_install:
         - ./autogen.sh
         - pip install --user codecov
+        - sudo apt-add-repository "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty main"
+        - sudo apt-get update
+        - sudo apt-get -y install clang-3.8 lldb-3.8
+
         - sudo apt-get -y install ragel libdispatch-dev
 
       after_success:
