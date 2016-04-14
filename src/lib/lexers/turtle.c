@@ -193,7 +193,7 @@ int ardp_lexer_create(void)
         }
 
         shared_lexer->lexer_queue =
-            dispatch_queue_create( "eu.cre8iv.ardp.Lexer", DISPATCH_QUEUE_SERIAL );
+            dispatch_queue_create( "eu.cre8iv.ardp.Lexer", 0  /*DISPATCH_QUEUE_SERIAL*/ );
 
         shared_lexer->event_queue =
             dispatch_queue_create( "eu.cre8iv.ardp.Events", 0 );
