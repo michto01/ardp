@@ -170,6 +170,10 @@ case $ardp_cv_platform_type in
     AC_SUBST(ARDP_ON_WIN32,[0])
     ;;
   Unix)
+    BLOCKS_CFLAGS="-fblocks"
+    BLOCKS_LDFLAGS="-ldispatch -lBlocksRuntime"
+    AC_SUBST(BLOCKS_CFLAGS)
+    AC_SUBST(BLOCKS_LDFLAGS)
     AC_DEFINE([ARDP_ON_UNIX],[1],[Define if this is Unixish platform])
     AC_SUBST(ARDP_ON_OSX, [0])
     AC_SUBST(ARDP_ON_UNIX,[1])
