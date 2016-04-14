@@ -1,4 +1,8 @@
-AM_CFLAGS = -I$(top_srcdir)/include $(AM_CFLAGS)
+AM_CFLAGS = -I$(top_srcdir)/include
+
+if ARDP_ON_UNIX
+	AM_CFLAGS += -fblocks -lBlocksRuntime -ldispatch
+endif
 
 bin_PROGRAMS = ardp
 

@@ -1,4 +1,8 @@
-AM_CFLAGS= -I$(top_srcdir)/include -Wno-pointer-sign $(AM_CFLAGS)
+AM_CFLAGS= -I$(top_srcdir)/include -Wno-pointer-sign
+
+if ARDP_ON_UNIX
+	AM_CFLAGS += -fblocks -lBlocksRuntime -ldispatch
+endif
 
 noinst_LIBRARIES= libardpstring.a \
 		  libhashmap.a \
