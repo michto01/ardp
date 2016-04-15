@@ -38,7 +38,7 @@
 int color_stdout_is_tty = -1;
 
 static const char ardp_usage_string[] =
-    "usage: " PACKAGE " [-v | --version] [-h | --help] [-u | --usage] [-f | --file <path>]"
+    "usage: " PACKAGE " [-v | --version] [-h | --help] [-u | --usage] <path-to-file>"
     "\n"
     "            [-b | --use-bzip] [-c | --color auto:none:always]"
     "\n"
@@ -84,7 +84,7 @@ static void help( FILE *fs ) {
         help_option_ln( fs, "-v --version", "Display version string" );
         help_option_ln( fs, "-h --help", "Print this help" );
         help_option_ln( fs, "-u --usage", "Print compact help" );
-        help_option_ln( fs, "-f --file", "File or archive to be processed" );
+        //help_option_ln( fs, "-f --file", "File or archive to be processed" );
         help_option_ln( fs, "-s --syntax",
                         "Process file with selected syntax parser [guess, turtle, nt, nq]" );
         help_option_ln( fs, "-b --use-bzip", "Use BZip library to read file/archive" );
@@ -255,7 +255,7 @@ int main( int argc, char **argv ) {
         }
 
         for (size_t i = optind; i < argc; i++) {
-                printf("Process: %s\n", argv[i]);
+                //printf("Process: %s\n", argv[i]);
                 filename = argv[i];
         }
 
