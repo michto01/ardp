@@ -187,11 +187,11 @@ int main( int argc, char **argv ) {
                 return EXIT_FAILURE;
         }
 
-        while ( ( opt = getopt_long( argc, argv, "yqbhuvxzdc:f:s:w:", long_options, &long_index ) ) isnt - 1 ) {
+        while ( ( opt = getopt_long( argc, argv, "yqbhuvxzdc:s:w:", long_options, &long_index ) ) isnt - 1 ) {
                 switch ( opt ) {
-                        case 'f':
+                        /*case 'f':
                                 filename = optarg;
-                                break;
+                                break;*/
                         case 'b':
                                 is_bzip = true;
                                 break;
@@ -252,6 +252,11 @@ int main( int argc, char **argv ) {
                                 ardp_fprintf( stderr, ARDP_COLOR_NORMAL, ardp_usage_string );
                                 return EXIT_FAILURE;
                 }
+        }
+
+        for (size_t i = optind; i < argc; i++) {
+                printf("Process: %s\n", argv[i]);
+                filename = argv[i];
         }
 
         if ( not filename ) {
