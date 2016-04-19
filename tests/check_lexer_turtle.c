@@ -23,7 +23,6 @@
 
  #include <zlib.h>
  #include <bzlib.h>
-
  #include <unistd.h>
 
 int color_stdout_is_tty = -1;
