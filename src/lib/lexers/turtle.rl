@@ -13,7 +13,7 @@
 /* vim: set ts=8 sw=4 tw=0 noet : set foldmethod=marker */
 
 // HEADERS {{{ --------------------------------------------------------------------
-
+#include "config.h"
 #include <unistd.h>             /* sleep() */
 #include <errno.h>              /* Included for 'stderr' */
 #include <ctype.h>              /* isalnum() ... */
