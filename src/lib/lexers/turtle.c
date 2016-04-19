@@ -13024,8 +13024,98 @@ case 236:
         handler( ARDP_SUCCESS );
 }
 /*}}}*/
-/* ardp_lexer_process_reader() {{{ */
+/* 'ardp_lexer_process_reader() {{{ */
+
 int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
+{
+    if (reader == NULL)
+        return 1;
+
+    int status = 0;
+
+    if ( !ardp_lexer_is_ready() )
+        return 2;
+
+    shared_lexer->finished = 0;
+
+    uint8_t *buf = malloc(sizeof(*buf)*BUFSIZE);
+
+    size_t   have = 0;
+    uint8_t *mark = NULL;
+    bool     eof  = false;
+
+    uint8_t  nbufsize = 1;
+
+      while (!shared_lexer->finished) {
+            uint8_t *p = buf + have;
+            size_t space = BUFSIZE - have;
+
+            if (space == 0) {
+                    /* Finished space while scanning token without the data; Grow buffer*/
+                    uint8_t* newbuf = malloc(sizeof(*buf)*(++nbufsize * BUFSIZE));
+                    p = newbuf + have;
+                    space = nbufsize - have;
+
+                    /* patch up the pointers */
+                    if (shared_lexer->env.ts != 0)
+                        shared_lexer->env.ts = newbuf + (shared_lexer->env.ts - buf);
+
+                    shared_lexer->env.te = newbuf + (shared_lexer->env.te - buf);
+                    memcpy( newbuf, buf, have );
+                    free(buf);
+                    buf = newbuf;
+            }
+
+            int len = reader(p, space, reader_args);
+            if ( len < space ) {
+                    eof = true;
+                    shared_lexer->finished = 1;
+            }
+
+            status = ardp_lexer_process_block( p, len, mark, eof );
+
+            if (shared_lexer->env.cs == turtle_error ) {
+                    /* Machine failed before finding a token.
+                     *  I'm not yet sure if this
+              		   * is reachable. */
+                     status = ARDP_LEXER_GENERIC_ERROR;
+                     if (buf)
+                        free(buf);
+                     return status;
+            }
+
+            /* Decide if we need to preserve anything. */
+            uint8_t *preserve = shared_lexer->env.ts;
+            if ( preserve == 0 ) {
+                have = 0;
+            } else {
+                /* There is data that needs to be shifted over. */
+                have = (p+len) - preserve;
+                memmove( buf, preserve, have );
+                unsigned int shiftback = preserve - buf;
+                if ( shared_lexer->env.ts != 0 )
+                    shared_lexer->env.ts -= shiftback;
+                shared_lexer->env.te -= shiftback;
+
+                preserve = buf;
+            }
+      }
+
+        if (buf)
+          free(buf);
+
+        dispatch_queue_t *q = &shared_lexer->lexer_queue;
+        dispatch_queue_t *e = &shared_lexer->event_queue;
+
+        // Optimalization to free CPU operations
+        while(!dispatch_queue_isempty(*q) || !dispatch_queue_isempty(*e))
+                usleep(25);
+
+        return status;
+}
+
+
+int ardp_lexer_process_reader_BUG( lexer_reader reader, void *_Nullable reader_args)
 {
         if ( reader == NULL )
                 return 1;
@@ -13141,4 +13231,3 @@ void ardp_lexer_process_reader_old( lexer_reader reader,
         handler( status );
 }
 /*}}}*/
-
