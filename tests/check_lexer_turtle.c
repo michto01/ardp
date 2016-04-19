@@ -19,6 +19,7 @@
  #include <ardp/util.h>
  #include <ardp/color.h>
  #include <ardp/parser.h>
+ #include <ardp/string.h>
 
  #include <zlib.h>
  #include <bzlib.h>
@@ -67,7 +68,6 @@ static uint8_t *_Nullable const kLexerTestText= ( uint8_t * )
 
 int main( int argc, char **argv )
 {
-  return EXIT_SUCCESS;
 
   char cwd[1024];
   if (getcwd(cwd, sizeof(cwd)) != NULL)
