@@ -385,9 +385,13 @@ int ardp_lexer_create(void)
         shared_lexer->lexer_queue =
             dispatch_queue_create( "eu.cre8iv.ardp.Lexer", 0  /*DISPATCH_QUEUE_SERIAL*/ );
 
+#if ARDP_ON_OSX
         shared_lexer->event_queue =
             dispatch_queue_create( "eu.cre8iv.ardp.Events", DISPATCH_QUEUE_SERIAL );
-
+#else
+        shared_lexer->event_queue =
+                dispatch_queue_create("eu.cre8iv.ardp.Events", NULL);
+#endif
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_CREATED;
         shared_lexer->finished = 1;
 
