@@ -12,7 +12,7 @@ ardp_LDADD   = ../lib/libardp_parser_turtle.a  \
                ../lib/libardpstring.a          \
                ../lib/libhashmap.a             \
                $(AM_LDFLAGS)                   \
-	       @BLOCKS_LDFLAGS@ \
+	       			@BLOCKS_LDFLAGS@ \
                -lz -lbz2
 
 ardp_LDFLAGS = --coverage

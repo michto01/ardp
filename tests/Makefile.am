@@ -132,4 +132,5 @@ check_lexer_turtle_SOURCES = check_lexer_turtle.c
 check_lexer_turtle_CFLAGS  = -I$(top_srcdir)/include -Wno-pointer-sign @BLOCKS_CFLAGS@
 check_lexer_turtle_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
 										   			 $(top_builddir)/src/lib/libardp_lexer_turtle.a \
-                             $(AM_LDFLAGS)
+                             $(AM_LDFLAGS) \
+														 @BLOCKS_LDFLAGS@
