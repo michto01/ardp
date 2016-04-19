@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <dispatch/dispatch.h>
+#include <Block.h>
 #include <iso646.h>
 
 #include <errno.h>
@@ -318,6 +319,7 @@ int main( int argc, char **argv ) {
         ardp_lexer_process_reader( is_bzip ? read_bzip : read_gzip, file );
         ardp_lexer_destroy();
 
+        /* As the lexer library changed, we now need to catch the end in parser*/
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
         dispatch_release(group);
 

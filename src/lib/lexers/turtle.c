@@ -196,7 +196,7 @@ int ardp_lexer_create(void)
             dispatch_queue_create( "eu.cre8iv.ardp.Lexer", 0  /*DISPATCH_QUEUE_SERIAL*/ );
 
         shared_lexer->event_queue =
-            dispatch_queue_create( "eu.cre8iv.ardp.Events", 0 );
+            dispatch_queue_create( "eu.cre8iv.ardp.Events", DISPATCH_QUEUE_SERIAL );
 
         shared_lexer->state = ARDP_LEXER_TURTLE_STATUS_CREATED;
         shared_lexer->finished = 1;
