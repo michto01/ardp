@@ -243,6 +243,18 @@ int string_prepend(utf8 *src, const uint8_t* str);
 int string_append(utf8 *src, const uint8_t* mod);
 
 /*!
+ *  @brief Append two ardp string to one another.
+ *
+ *  Appends string to string. The string is resized if necessary.
+ *
+ *  @param[in,out] src Pointer to string pointer. (indirection)
+ *  @param[in]     mod string buffer to be appended.
+ *
+ *  @return 0 on success, non-zero value if there is error.
+ */
+int string_append_str(utf8 *src, utf8 mod);
+
+/*!
  *  @brief Returns new copy of the specified string.
  *
  *  @param[in] src String to be copied.

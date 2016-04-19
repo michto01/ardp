@@ -6,14 +6,20 @@ TESTS = check_hashmap_create \
         check_hashmap_get    \
         check_hashmap_resize \
         check_string         \
-        check_string_create
+        check_string_create  \
+        check_string_copy    \
+        check_string_append  \
+        check_string_append_str
 
 check_PROGRAMS = check_hashmap_create \
                  check_hashmap_push   \
                  check_hashmap_get    \
                  check_hashmap_resize \
                  check_string         \
-                 check_string_create
+                 check_string_create  \
+                 check_string_copy    \
+                 check_string_append  \
+                 check_string_append_str
 
 
 check_hashmap_create_SOURCES = check_hashmap_create.c
@@ -50,3 +56,18 @@ check_string_create_SOURCES = check_string_create.c
 check_string_create_CFLAGS  = -I$(top_srcdir)/include
 check_string_create_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
                               $(AM_LDFLAGS)
+
+check_string_copy_SOURCES   = check_string_copy.c
+check_string_copy_CFLAGS    = -I$(top_srcdir)/include
+check_string_copy_LDADD     = $(top_builddir)/src/lib/libardpstring.a \
+                              $(AM_LDFLAGS)
+
+check_string_append_SOURCES = check_string_append.c
+check_string_append_CFLAGS  = -I$(top_srcdir)/include
+check_string_append_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+                              $(AM_LDFLAGS)
+
+check_string_append_str_SOURCES = check_string_append_str.c
+check_string_append_str_CFLAGS  = -I$(top_srcdir)/include
+check_string_append_str_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+                                  $(AM_LDFLAGS)
