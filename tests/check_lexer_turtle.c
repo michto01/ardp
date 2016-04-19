@@ -106,7 +106,6 @@ int main( int argc, char **argv )
         void* file = gzopen( "../../tests/ttl/connectivity-of-lod-datasets.ttl", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);
-        ardp_fprintf(stdout, kARDPColorRed, "<><><><><><><><>\n\n\n");
         ardp_lexer_destroy();
 
         // LEXER - PARSER //
