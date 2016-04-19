@@ -1,4 +1,4 @@
-/*! @file rdf.statement.c
+/*! @file rdf_statement.c
  *
  * Implements the RDF 'statement' interfaces declared in `rdf.h`.
  *

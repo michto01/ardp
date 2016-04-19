@@ -55,6 +55,7 @@ static const char ardp_usage_string[] =
     "            [-y | --enable-lexer-debug]"
     "\n"
     "            [-q | --enable-parser-debug]"
+    "\n"
     ;
 
 /**

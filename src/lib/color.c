@@ -48,7 +48,7 @@ int ardp_config_colorbool( const char *val )
                         return ARDP_COLOR_AUTO;
                 if ( strcasecmp( val, kARDPColorAlways ) is 0 )
                         return ARDP_COLOR_ALWAYS;
-               if ( strcasecmp( val, kARDPColorNever ) is 0 )
+                if ( strcasecmp( val, kARDPColorNever ) is 0 )
                         return ARDP_COLOR_NEVER;
         }
         return ARDP_COLOR_AUTO;
@@ -83,11 +83,11 @@ int ardp_want_color( int var )
 }
 
 
-static int ardp_vfprintf( FILE 	     *fp, 
-			  const char *color, 
-			  const char *fmt, 
-			  va_list     args, 
-			  const char *trail )
+static int ardp_vfprintf( FILE       *fp,
+                          const char *color,
+                          const char *fmt,
+                          va_list     args,
+                          const char *trail )
 {
         int r = 0;
 
@@ -110,11 +110,11 @@ int ardp_fprintf( FILE *fp, const char *color, const char *fmt, ... )
         va_list args;
         int r;
         va_start( args, fmt );
-        if ( color_stdout_is_tty ) {
+        if ( color_stdout_is_tty )
                 r = ardp_vfprintf( fp, color, fmt, args, NULL );
-        } else {
+        else
                 r = vfprintf( fp, fmt, args );
-        }
+
         va_end( args );
         return r;
 }

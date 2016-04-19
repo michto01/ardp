@@ -1,15 +1,19 @@
-/*! @file rdf.term.c
+/*! @file rdf_term.c
+ *  @brief Implementation of the `rdf_term`
  *
- * Implements the `rdf term`
+ *  This file implements the rdf_term and all its functions.
+ *  Term can be one of the following: URI, CURIE, BLANK, LITERAL. Depending on type,
+ *  the starage is used by internal union.
  *
+ * @author Tomas Michalek <tomas.michalek.st@vsb.cz>
+ * @date   2016
  */
-#include <stdlib.h>
 
+#include <stdlib.h>
 #include <ardp/rdf.h>
 #include <ardp/util.h>
 #include <ardp/string.h>
 
-//extern utf8 string_copy(utf8 s);
 
 struct rdf_term* rdf_term_from_uri(utf8 uri)
 {
