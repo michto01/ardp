@@ -17,8 +17,9 @@ int main( int argc, char **argv )
 {
         size_t len = 3;
         utf8 str = string_create_n((const uint8_t*)"abc", len, len);
-
         if (string_strlen(str) != len)
+          return EXIT_FAILURE;
 
+        string_dealloc(str);
         return EXIT_SUCCESS;
 }

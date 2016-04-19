@@ -23,13 +23,11 @@ struct rdf_statement* rdf_statement_from_nodes( struct rdf_term* subject,
         struct rdf_statement* statement = rdf_statement_create();
 
         if ( statement == NULL ) {
-
                 //rdf_term_free does NULL check
                 rdf_term_free(subject);
                 rdf_term_free(predicate);
                 rdf_term_free(object);
                 rdf_term_free(graph);
-
                 return NULL;
         }
 

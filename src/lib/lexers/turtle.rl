@@ -480,12 +480,12 @@ int ardp_lexer_process_block( uint8_t *_Nullable v,
         return ARDP_FAILURE;
     }
 
-    __block uint8_t *_Nullable p  = v; /* Indirection to allow the GCD */
+    /*__block*/ uint8_t *_Nullable p  = v; /* Indirection to allow the GCD */
     const   uint8_t *_Nullable pe = p + len; /* Points to fist byte beyond the data */
     const   uint8_t *_Nullable eof= (is_eof) ? pe : NULL; /* Indicated end of all data*/
 
     /* clang-format off */
-    %% write exec;
+        %% write exec;
     /* clang-format on */
 
     return ARDP_SUCCESS;
@@ -572,7 +572,7 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
             if (shared_lexer->env.cs == turtle_error ) {
                     /* Machine failed before finding a token.
                      *  I'm not yet sure if this
-              		   * is reachable. */
+                           * is reachable. */
                      status = ARDP_LEXER_GENERIC_ERROR;
                      if (buf)
                         free(buf);
@@ -599,12 +599,12 @@ int ardp_lexer_process_reader( lexer_reader reader, void *_Nullable reader_args)
         if (buf)
           free(buf);
 
-        dispatch_queue_t *q = &shared_lexer->lexer_queue;
-        dispatch_queue_t *e = &shared_lexer->event_queue;
+        //dispatch_queue_t *q = &shared_lexer->lexer_queue;
+        //dispatch_queue_t *e = &shared_lexer->event_queue;
 
         // Optimalization to free CPU operations
-        while(!dispatch_queue_isempty(*q) || !dispatch_queue_isempty(*e))
-                usleep(25);
+        //while(!dispatch_queue_isempty(*q) || !dispatch_queue_isempty(*e))
+        //        usleep(25);
 
         return status;
 }

@@ -202,9 +202,7 @@ predicateObjectList_astr(A) ::= . { A = NULL; }
 predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
         if (B && C) {
                 for (size_t i = 0; i < sequence_size(C); i++) {
-                        struct rdf_statement* t = (struct rdf_statement*)
-                                                        sequence_get_at(C, i);
-
+                        struct rdf_statement* t = (struct rdf_statement*) sequence_get_at(C, i);
                         t->predicate = rdf_term_copy(B);
                 }
                 /* @TODO: double copy -> should be optimalized */
@@ -216,6 +214,7 @@ predicateObjectList(A) ::= verb(B) objectList(C) predicateObjectList_ast(D). {
                                         sequence_free(C);
                                         sequence_free(D);
                                         rdf_term_free(B);
+                                        rdf_statement_free(t2);
                                         YYERROR;
                                 }
                         }
@@ -248,8 +247,7 @@ predicateObjectList_ast(A) ::= predicateObjectList_ast(B) predicateObjectList_qs
                         A = NULL;
         } else {
                 while ( sequence_size(C) ) {
-                        struct rdf_statement* t = (struct rdf_statement*)
-                                                        sequence_unshift(C);
+                        struct rdf_statement* t = (struct rdf_statement*) sequence_unshift(C);
                         if (sequence_push(B,t)) {
                                 sequence_free(B);
                                 sequence_free(C);
@@ -277,6 +275,7 @@ predicateObjectList_qst(A) ::= SEMICOLON verb(B) objectList(C). {
         } else {
                 A = NULL;
         }
+        rdf_term_free(B);
 }
 predicateObjectList_qst(A) ::= SEMICOLON. { A = NULL; }
 /*}}}*/
@@ -652,28 +651,23 @@ string(A) ::= STRING_LITERAL(B). { A = B; }
 %type iri { struct rdf_term* }
 %destructor iri { rdf_term_free($$); }
 iri(A) ::= IRIREF(B). {
-        if (B) {
-                A = rdf_term_from_uri(B);
+        A = rdf_term_from_uri(B);
+        string_dealloc(B);
 
-                if (!A)
-                        YYERROR;
-        } else {
+        if (!A) {
+                YYERROR;
                 A = NULL;
         }
-
-        string_dealloc(B);
 }
 iri(A) ::= QNAME(B).  {
-        if (B) {
-                A = rdf_term_from_curie(B);
+        A = rdf_term_from_curie(B);
+        string_dealloc(B);
 
-                if (!A)
-                        YYERROR;
-        } else {
+        if (!A) {
+                YYERROR;
                 A = NULL;
         }
 
-        string_dealloc(B);
 }
 /*}}}*/
 /* [137s] BlankNode ::= BLANK_NODE_LABEL | ANON {{{ */
@@ -694,9 +688,6 @@ blankNode(A) ::= BLANK_LITERAL(B). {
 }
 blankNode(A) ::= anon(B). {
         A = B;
-
-        if (!A)
-                YYERROR;
 }
 /*}}}*/
 /* ![162s] ANON ::= '[' WS* ']' {{{ */
@@ -707,7 +698,9 @@ anon(A) ::= L_SQUARE R_SQUARE. {
         A = rdf_term_from_blank(s);
         string_dealloc(s);
 
-        if (!A)
+        if (!A) {
                 YYERROR;
+                A = NULL;
+        }
 }
 /*}}}*/

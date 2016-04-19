@@ -143,6 +143,8 @@ int main( int argc, char **argv ) {
 
         int verbose = 0;
 
+        dispatch_queue_t parsingQueue = dispatch_queue_create("eu.cre8iv.ardp.Parser", 0);
+        dispatch_group_t group = dispatch_group_create();
 
         /* auto detect color predispositions at start */
         color_stdout_is_tty = ardp_want_color( -1 );
@@ -288,9 +290,11 @@ int main( int argc, char **argv ) {
                 cfg.logging.eprintf = &lexer_error;
 
                 cfg.cb.stoken = ^int(int type, utf8 value, size_t line, size_t col) {
-                        if (verbose == 2 || verbose >= 10)
-                                ardp_fprintf_ln(stderr, kARDPColorMagenta, "[lexer]: type: %d, value: %s", type, value);
-                        ardp_parser_exec(type, value, line, col);
+                        dispatch_group_async(group, parsingQueue, ^{
+                            if (verbose == 2 || verbose >= 10)
+                                  ardp_fprintf_ln(stderr, kARDPColorMagenta, "[lexer]: type: %d, value: %s", type, value);
+                            ardp_parser_exec(type, value, line, col);
+                        });
                         return ARDP_SUCCESS;
                 };
 
@@ -312,10 +316,14 @@ int main( int argc, char **argv ) {
         ardp_parser_set_option((uint8_t *)"expand:curie",  (void **) &curie_expansion);
 
         ardp_lexer_process_reader( is_bzip ? read_bzip : read_gzip, file );
+        ardp_lexer_destroy();
+
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+        dispatch_release(group);
 
         ardp_parser_finish();
         ardp_parser_destroy();
-        ardp_lexer_destroy();
+
 
         // LEXER - PARSER //
 

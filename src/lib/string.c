@@ -50,7 +50,6 @@ uint8_t const *ssechr(uint8_t const *s, uint8_t ch)
                 if (v) return s + ffs(v) - 1;
                 if (u) return  NULL;
                 s += 16;
-
         }
 }
 
@@ -237,7 +236,7 @@ int string_append_str(utf8 *src, utf8 apd)
 utf8 string_copy(utf8 src)
 {
         struct string_header *hdr = string_hdr(src);
-        struct string_header *cpy = calloc(1, (sizeof(*hdr) + hdr->capacity));
+        struct string_header *cpy = calloc(1, (sizeof(*hdr) + hdr->capacity + 1));
 
         memcpy(cpy, hdr, sizeof(*hdr) + hdr->capacity);
 
