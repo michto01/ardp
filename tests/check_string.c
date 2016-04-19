@@ -44,5 +44,11 @@ int main( int argc, char **argv ) {
         }
 
         string_dealloc( str );
+
+        str = string_alloc(3);
+        string_append_utf8(&str, 3990);
+
+        string_dealloc(str);
+
         return 0;
 }

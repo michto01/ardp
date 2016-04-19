@@ -27,8 +27,8 @@ int main( int argc, char **argv )
         sequence_push( ss, y );
         sequence_push( ss, z );
 
-        rdf_statement_free( x );
-        fprintf( stderr, "Freed" );
+        //rdf_statement_free( x );
+        //fprintf( stderr, "Freed" );
         // rdf_statement_free(y);
         // rdf_statement_free(z);
 

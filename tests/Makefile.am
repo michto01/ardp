@@ -9,7 +9,10 @@ TESTS = check_hashmap_create \
         check_string_create  \
         check_string_copy    \
         check_string_append  \
-        check_string_append_str
+        check_string_append_str \
+        check_string_generic_cmp \
+        check_string_strlen \
+        check_sequence_free
 
 check_PROGRAMS = check_hashmap_create \
                  check_hashmap_push   \
@@ -19,7 +22,10 @@ check_PROGRAMS = check_hashmap_create \
                  check_string_create  \
                  check_string_copy    \
                  check_string_append  \
-                 check_string_append_str
+                 check_string_append_str \
+                 check_string_generic_cmp \
+                 check_string_strlen \
+                 check_sequence_free 
 
 
 check_hashmap_create_SOURCES = check_hashmap_create.c
@@ -71,3 +77,19 @@ check_string_append_str_SOURCES = check_string_append_str.c
 check_string_append_str_CFLAGS  = -I$(top_srcdir)/include
 check_string_append_str_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
                                   $(AM_LDFLAGS)
+
+check_string_generic_cmp_SOURCES = check_string_generic_cmp.c
+check_string_generic_cmp_CFLAGS  = -I$(top_srcdir)/include
+check_string_generic_cmp_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+                                   $(AM_LDFLAGS)
+
+check_string_strlen_SOURCES = check_string_strlen.c
+check_string_strlen_CFLAGS  = -I$(top_srcdir)/include
+check_string_strlen_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+                              $(AM_LDFLAGS)
+
+check_sequence_free_SOURCES = check_sequence_free.c
+check_sequence_free_CFLAGS  = -I$(top_srcdir)/include
+check_sequence_free_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+															$(top_builddir)/src/lib/libardp_parser_turtle.a \
+                              $(AM_LDFLAGS)
