@@ -72,8 +72,6 @@ int main( int argc, char** argv )
         if (status isnt ARDP_SUCCESS)
                 die("Couldn't load defaults settings.");
 
-        ardp_parser_create(); //creates the parser shared opaque instance
-        //ardp_parser_trace();
 
         { //Configure the lexer for turtle
                 struct ardp_lexer_config cfg;
@@ -82,8 +80,8 @@ int main( int argc, char** argv )
                 cfg.logging.eprintf = &lexer_error;
 
                 __block int (^stoken)(int, utf8, size_t, size_t) = ^int(int type, utf8 value, size_t line, size_t col){
-                        //fprintf(stderr, "(type: %d, line: %ld, col: %ld, value: %s)\n", type, line, col, value);
-                        ardp_parser_exec(type, value ? value : 0, line, col);
+                        fprintf(stderr, "(type: %d, line: %ld, col: %ld, value: %s)\n", type, line, col, value);
+                        //ardp_parser_exec(type, value ? value : 0, line, col);
                         return ARDP_SUCCESS;
                 };
                 cfg.cb.stoken = stoken;
@@ -94,15 +92,23 @@ int main( int argc, char** argv )
                         die("Initialization error!");
         }
 
-        void* file = gzopen( "../../../tests/ttl/GND.ttl.gz", "rb" );
-        //void* file = gzopen( "../../../tests/ttl/connectivity-of-lod-datasets.ttl", "rb" );
+        void* file = gzopen( "../../tests/ttl/connectivity-of-lod-datasets.ttl", "rb" );
         //void* file = gzopen( "../../../tests/ttl/british-national-bibliography.ttl", "rb" );
 
         ardp_lexer_process_reader(read_gzip, file);
 
-        ardp_parser_finish();
-        ardp_parser_destroy();
 
         return EXIT_SUCCESS;
 }
 
+/*
+TODO: Check block in lexer
+status = ardp_lexer_process_block(kLexerTestText, strlen((const char*)kLexerTestText), mark, true);
++/*
++        ardp_lexer_turtle_process_block( kLexerTestText, strlen((const char*)kLexerTestText), mark, true, ^(int success){
++                                if(success isnt ARDP_SUCCESS)
++                                        printf("Error while lexing block!");
++                                else
++                                        ardp_lexer_tutle_finish();
++                        });
+ */
