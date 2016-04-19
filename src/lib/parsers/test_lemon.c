@@ -200,6 +200,7 @@ static int expand_curie(struct rdf_term *t)
                 status = map_get(p->namespaces, dlm, &value);
                 if (status == ARDP_MAP_OK) {
                         utf8 s = string_copy((utf8) value);
+                        u8_concatenate(t->value.uri, 1);
                         return term_uri_append(t, s, FRONT);
                 } else {
                         return ARDP_FAILURE; // No prefix found.
