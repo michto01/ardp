@@ -1,4 +1,4 @@
-/*! @file check_string_append.c
+/*! @file check_string_append_str.c
  *  @brief Test to spot regression in string implemenation.
  *
  * This files tests the function which are supporsed to append string.
