@@ -1,7 +1,7 @@
 /*! @file check_rdf_term_create.c
- *  @brief Test to spot regression in string implemenation.
+ *  @brief Test to spot regression in rdf_term implemenation.
  *
- * This files tests the function which are checks length of string
+ * This files tests the function which create term itself.
  */
 #include <assert.h>
 #include <stdio.h>
@@ -32,6 +32,9 @@ int main( int argc, char **argv )
   if (l1->type != RDF_TERM_LITERAL || !l1->value.literal.string)
       return EXIT_FAILURE;
 
-
+  rdf_term_free(s);
+  rdf_term_free(c);
+  rdf_term_free(b);
+  rdf_term_free(l1);
   return EXIT_SUCCESS;
 }

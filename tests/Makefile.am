@@ -14,7 +14,9 @@ TESTS = check_hashmap_create \
         check_string_strlen \
         check_sequence_free \
 				check_rdf_term_create \
-				check_rdf_term_is
+				check_rdf_term_is \
+				check_rdf_term_copy \
+				check_rdf_statement_create
 
 check_PROGRAMS = check_hashmap_create \
                  check_hashmap_push   \
@@ -29,7 +31,9 @@ check_PROGRAMS = check_hashmap_create \
                  check_string_strlen \
                  check_sequence_free \
 								 check_rdf_term_create \
-								 check_rdf_term_is
+								 check_rdf_term_is \
+								 check_rdf_term_copy \
+								 check_rdf_statement_create
 
 
 check_hashmap_create_SOURCES = check_hashmap_create.c
@@ -109,3 +113,15 @@ check_rdf_term_is_CFLAGS  = -I$(top_srcdir)/include -Wno-pointer-sign
 check_rdf_term_is_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
 														$(top_builddir)/src/lib/libardp_parser_turtle.a \
                             $(AM_LDFLAGS)
+
+check_rdf_term_copy_SOURCES = check_rdf_term_copy.c
+check_rdf_term_copy_CFLAGS  = -I$(top_srcdir)/include -Wno-pointer-sign
+check_rdf_term_copy_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+										   				$(top_builddir)/src/lib/libardp_parser_turtle.a \
+                              $(AM_LDFLAGS)
+
+check_rdf_statement_create_SOURCES = check_rdf_statement_create.c
+check_rdf_statement_create_CFLAGS  = -I$(top_srcdir)/include -Wno-pointer-sign
+check_rdf_statement_create_LDADD   = $(top_builddir)/src/lib/libardpstring.a \
+										   							 $(top_builddir)/src/lib/libardp_parser_turtle.a \
+                              			 $(AM_LDFLAGS)
