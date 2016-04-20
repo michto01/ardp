@@ -317,11 +317,13 @@ int main( int argc, char **argv ) {
         ardp_parser_set_option((uint8_t *)"expand:curie",  (void **) &curie_expansion);
 
         ardp_lexer_process_reader( is_bzip ? read_bzip : read_gzip, file );
-        ardp_lexer_destroy();
+
 
         /* As the lexer library changed, we now need to catch the end in parser*/
         dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
         dispatch_release(group);
+
+        ardp_lexer_destroy(); // Lexer holds filename, needs to be alive, until parsing is over
 
         ardp_parser_finish();
         ardp_parser_destroy();
