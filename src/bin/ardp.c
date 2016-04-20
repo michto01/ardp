@@ -346,5 +346,6 @@ int main( int argc, char **argv ) {
                 gzclose( file );
         }
 
+        dispatch_release(parsingQueue);
         return EXIT_SUCCESS;
 }

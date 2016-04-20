@@ -451,6 +451,8 @@ void ardp_lexer_destroy()
         if ( shared_lexer isnt NULL ) {
                 if (shared_lexer->string)
                         string_dealloc(shared_lexer->string);
+                dispatch_release(shared_lexer->lexer_queue);
+                dispatch_release(shared_lexer->event_queue);
                 free( shared_lexer );
                 log(INFO, "Freed the shared lexer.");
         }
