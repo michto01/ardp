@@ -101,12 +101,14 @@ directive ::= sparqlBase.
 /*}}}*/
 /* [4] prefixID ::= '@prefix' PNAME_NS IRIREF '.' {{{ */
 prefixID ::= PREFIX COLON IRIREF(B) DOT. {
-        if(p->cb.add_namespace((uint8_t *)":",B)) {
+        utf8 s = string_create_n(":",1,1);
+        if(p->cb.add_namespace(s,B)) {
                 string_dealloc(B);
                 YYERROR;
         } else {
                 string_dealloc(B);
         }
+        string_dealloc(s);
 }
 prefixID ::= PREFIX QNAME(A) IRIREF(B) DOT. {
         if(p->cb.add_namespace(A,B))
