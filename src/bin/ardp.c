@@ -144,7 +144,7 @@ int main( int argc, char **argv ) {
 
         int verbose = 0;
 
-        dispatch_queue_t parsingQueue = dispatch_queue_create("eu.cre8iv.ardp.Parser", 0);
+        dispatch_queue_t parsingQueue = dispatch_queue_create("eu.cre8iv.ardp.Parser", NULL);
         dispatch_group_t group = dispatch_group_create();
 
         /* auto detect color predispositions at start */

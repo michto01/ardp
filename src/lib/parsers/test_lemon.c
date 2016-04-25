@@ -167,7 +167,7 @@ static int expand_relative_uri(struct rdf_term *t)
 static inline int extract_prefix(struct rdf_term *t, char **prefix, size_t *loc)
 {
         const char delim = ':';
-        uint8_t *search = (uint8_t *) strchr((char *)(t)->value.uri, delim);
+        uint8_t *search = (uint8_t *) ssechr((char *)(t)->value.uri, delim);
         if (search == NULL)
                 return ARDP_FAILURE; // <Doesn't have the delimenete
 
