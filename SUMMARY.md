@@ -3,6 +3,7 @@
 * [Abstract](README.md)
 * [Introduction](doc/introduction.md)
 * [RDF](doc/rdf.md)
-* [Parsers](doc/parser.md)
+* [Character encoding](doc/encoding.md)
 * [GNU Autotools](doc/gnu-make.md)
+* [Installation Guide](doc/installation-guide.md)
 
