@@ -1,0 +1,40 @@
+<map id="Parse" name="Parse">
+<area shape="rect" id="node2" href="$d6/d1c/turtle__parser_8c.html#afca0f0d2a9c0e0ca0625382394fa060e" title="yy_destructor" alt="" coords="887,851,988,876"/>
+<area shape="rect" id="node9" href="$d6/d1c/turtle__parser_8c.html#a913a1adf7c0f47e794123d9daf284d1c" title="yy_find_reduce_action" alt="" coords="274,5,428,31"/>
+<area shape="rect" id="node10" href="$d6/d1c/turtle__parser_8c.html#ae94e08f5e995194c50f04c64a7aa659c" title="yy_find_shift_action" alt="" coords="282,1373,420,1399"/>
+<area shape="rect" id="node11" href="$d6/d1c/turtle__parser_8c.html#a77ad8017d85e3462cd23c296fe3d22af" title="yy_parse_failed" alt="" coords="493,1309,607,1335"/>
+<area shape="rect" id="node12" href="$d6/d1c/turtle__parser_8c.html#aa142fdd91628fd550751c6ef4e29b603" title="yy_pop_parser_stack" alt="" coords="672,1171,820,1196"/>
+<area shape="rect" id="node14" href="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14" title="yy_reduce" alt="" coords="126,592,209,617"/>
+<area shape="rect" id="node36" href="$d6/d1c/turtle__parser_8c.html#a49026332b2b85d2ae13efa4d955b7a94" title="yy_shift" alt="" coords="318,1221,384,1247"/>
+<area shape="rect" id="node37" href="$d6/d1c/turtle__parser_8c.html#aa86923ecccad4f6d79295f099b46f67a" title="yyStackOverflow" alt="" coords="490,1235,610,1260"/>
+<area shape="rect" id="node39" href="$d6/d1c/turtle__parser_8c.html#a9cb4087abc3aaed2095d574857968d1d" title="yy_syntax_error" alt="" coords="109,1424,226,1449"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="1224,607,1327,632"/>
+<area shape="rect" id="node5" href="$de/d76/rdf_8h.html#ae723a9696763fcfdf0571c471f46cce0" title="rdf_term_free" alt="" coords="1059,556,1160,581"/>
+<area shape="rect" id="node6" href="$db/df3/sequence_8h.html#a50379a6dd00ae9cbbfbda40d0dab31a2" title="sequence_free" alt="" coords="1055,876,1165,901"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="1386,353,1467,379"/>
+<area shape="rect" id="node7" href="$d4/d43/sequence_8c.html#a52f85f7d759b47795429789aa96aa4aa" title="sequence_size" alt="" coords="1220,900,1331,925"/>
+<area shape="rect" id="node8" href="$d4/d43/sequence_8c.html#ae2ae59dd404dc065a41a7b336501d797" title="sequence_unshift" alt="" coords="1213,851,1338,876"/>
+<area shape="rect" id="node13" href="$da/dec/color_8h.html#a34adbd47a4d5e4e1dac1e7265fe1fe64" title="Print to stream with color Supported. " alt="" coords="701,1309,790,1335"/>
+<area shape="rect" id="node15" href="$da/d66/string_8h.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="493,404,607,429"/>
+<area shape="rect" id="node16" href="$da/d66/string_8h.html#aaded537f5c2631707954b4d2ec7bfca6" title="Create new string from string buffer. " alt="" coords="302,968,400,993"/>
+<area shape="rect" id="node18" href="$db/df3/sequence_8h.html#a52f85f7d759b47795429789aa96aa4aa" title="sequence_size" alt="" coords="296,721,406,747"/>
+<area shape="rect" id="node19" href="$db/df3/sequence_8h.html#ae2ae59dd404dc065a41a7b336501d797" title="sequence_unshift" alt="" coords="288,771,414,796"/>
+<area shape="rect" id="node20" href="$de/d76/rdf_8h.html#afd1597416610a03195d8d2d525c1ef70" title="rdf_term_copy" alt="" coords="298,153,404,179"/>
+<area shape="rect" id="node21" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="505,253,595,279"/>
+<area shape="rect" id="node22" href="$de/d76/rdf_8h.html#a02ce4093fd0ce96649f011edf0b77bdb" title="rdf_statement_free" alt="" coords="679,455,812,480"/>
+<area shape="rect" id="node24" href="$db/df3/sequence_8h.html#a8ca2ef35dbd5d3ac19b5f3f98bdd4fd0" title="sequence_get_at" alt="" coords="289,869,413,895"/>
+<area shape="rect" id="node25" href="$db/df3/sequence_8h.html#af26b115986ea4e2a82bbdfd553731b2a" title="sequence_push" alt="" coords="293,820,409,845"/>
+<area shape="rect" id="node27" href="$de/d76/rdf_8h.html#a4cac26f6b264b67efcc5490306ae438a" title="rdf_statement_from\l_nodes" alt="" coords="283,556,420,595"/>
+<area shape="rect" id="node29" href="$db/df3/sequence_8h.html#a1a70901569107d9a97dd916b3d086d7b" title="sequence_create" alt="" coords="289,203,413,228"/>
+<area shape="rect" id="node30" href="$db/df3/sequence_8h.html#a1b612f302148de12a236349f25900732" title="sequence_shift" alt="" coords="296,919,407,944"/>
+<area shape="rect" id="node31" href="$de/d76/rdf_8h.html#ac2094070a1cf38a9a583f040f8f3eb5d" title="rdf_term_from_uri" alt="" coords="287,353,415,379"/>
+<area shape="rect" id="node33" href="$de/d76/rdf_8h.html#a881ed93cd1f373a3f6d2a08bf6e9707d" title="rdf_term_from_blank" alt="" coords="279,304,423,329"/>
+<area shape="rect" id="node34" href="$de/d76/rdf_8h.html#af988cc14c5a775936dc0875d903c52ea" title="rdf_term_from_literal" alt="" coords="279,55,423,80"/>
+<area shape="rect" id="node35" href="$de/d76/rdf_8h.html#a4b73977af4ee19333e270d1c6b287d9f" title="rdf_term_from_curie" alt="" coords="280,104,422,129"/>
+<area shape="rect" id="node38" href="$d6/d1c/turtle__parser_8c.html#a868e202daa58bd4f71c467b477831e3a" title="yy_accept" alt="" coords="509,1120,591,1145"/>
+<area shape="rect" id="node17" href="$d1/db0/string_8c.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="493,968,607,993"/>
+<area shape="rect" id="node23" href="$d9/de5/rdf__statement_8c.html#a3ea695afe82e1c554e0ec256a0f4c024" title="rdf_statement_clear" alt="" coords="868,455,1007,480"/>
+<area shape="rect" id="node26" href="$d4/d43/sequence_8c.html#a3284b67b79168061487516dcd2afac7b" title="sequence_ensure" alt="" coords="486,869,614,895"/>
+<area shape="rect" id="node28" href="$d9/de5/rdf__statement_8c.html#aeff78c7f1d1aebc96f2de9e0f35e17c5" title="Create new empty RDF statement. " alt="" coords="476,607,624,632"/>
+<area shape="rect" id="node32" href="$da/d66/string_8h.html#a134c79b629c363220b78fdcf761a69eb" title="Length of the fat&#45;pointer string. " alt="" coords="890,353,984,379"/>
+</map>

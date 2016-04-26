@@ -1,0 +1,223 @@
+.TH "/Developer/school/ardp/src/lib/lexers/lexer_mockup.c" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/lexers/lexer_mockup.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <ardp/lexer\&.h>\fP
+.br
+\fC#include <ardp/grammar\&.turtle\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/error\&.h>\fP
+.br
+\fC#include 'config\&.h'\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBlexer_obj\fP \fBlexer_t\fP = {0}"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBstruct\fP { \fBREADY\fP, \fBPAUSED\fP, \fBTOKENIZING\fP, \fBCREATED\fP, \fBINITALIZED\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBint\fP \fBlexer_init\fP (void)"
+.br
+.ti -1c
+.RI "\fBint\fP \fBlexer_set_grammar\fP (enum grammar)"
+.br
+.ti -1c
+.RI "\fBint\fP \fBlexer_set_handler\fP ((void *) fc)"
+.br
+.ti -1c
+.RI "\fBint\fP \fBlexer_set_handler\fP (error)"
+.br
+.ti -1c
+.RI "\fBint\fP \fBlexer_create\fP (void)"
+.br
+.ti -1c
+.RI "\fBardp_lexer_config_default\fP (\fBardp_lexer_config\fP *cfg)"
+.br
+.ti -1c
+.RI "\fBardp_status_t\fP \fBardp_lexer_init\fP (\fBardp_lexer_config\fP *cfg)"
+.br
+.ti -1c
+.RI "\fBardp_lexer_process_block\fP (char[] block, size_t \fBlen\fP)"
+.br
+.ti -1c
+.RI "\fBardp_lexer_process_file\fP (FILE *file)"
+.br
+.ti -1c
+.RI "\fBardp_lexer_process_url\fP (const char *url)"
+.br
+.ti -1c
+.RI "\fBardp_status_t\fP \fBardp_lexer_process\fP (void)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBstruct\fP \fBlexer_t\fP * \fBshared_lexer\fP"
+.br
+.ti -1c
+.RI "\fBint\fP \fBeof\fP"
+.br
+.ti -1c
+.RI "char \fBbuf\fP []"
+.br
+.ti -1c
+.RI "\fBinternal\fP"
+.br
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "void(* \fBon_error\fP )(\fBint\fP line, \fBint\fP \fBcolumn\fP, \fBint\fP code, const char *description)"
+.br
+.ti -1c
+.RI "void(* \fBon_get_more_data\fP )(reader_t reader)"
+.br
+.ti -1c
+.RI "void(* \fBtoken\fP )(enum tokens \fBtoken\fP, const char *content)"
+.br
+.ti -1c
+.RI "void(* \fBpause\fP )()"
+.br
+.ti -1c
+.RI "void(* \fBrestore\fP )()"
+.br
+.ti -1c
+.RI "void(* \fBdestroy\fP )()"
+.br
+.ti -1c
+.RI "void(* \fBwill_destroy\fP )()"
+.br
+.ti -1c
+.RI "void(* \fBwill_emit_token\fP )()"
+.br
+.ti -1c
+.RI "void(* \fBdid_emit_token\fP )()"
+.br
+.ti -1c
+.RI "} \fBcb\fP"
+.br
+.ti -1c
+.RI "\fBlexer_obj\fP"
+.br
+.ti -1c
+.RI "static \fBlexer_t\fP \fBlexer\fP"
+.br
+.ti -1c
+.RI "\fBardp_status_t\fP \fBstatus\fP"
+.br
+.ti -1c
+.RI "\fBardp_config\fP"
+.br
+.ti -1c
+.RI "\fBardp_lexer_config\fP"
+.br
+.ti -1c
+.RI "\fBardp_parser_config\fP"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef \fBlexer_obj\fP \fBlexer_t\fP = {0}"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBstruct\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIREADY \fP\fP
+.TP
+\fB\fIPAUSED \fP\fP
+.TP
+\fB\fITOKENIZING \fP\fP
+.TP
+\fB\fICREATED \fP\fP
+.TP
+\fB\fIINITALIZED \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "ardp_lexer_config_default (\fBardp_lexer_config\fP * cfg)"
+
+.SS "\fBardp_status_t\fP ardp_lexer_init (\fBardp_lexer_config\fP * cfg)"
+
+.SS "\fBardp_status_t\fP ardp_lexer_process (void)"
+
+.PP
+References ardp_error_msg(), ARDP_FAILURE, ERROR, and is\&.
+.SS "ardp_lexer_process_block (char[] block, size_t len)"
+
+.SS "ardp_lexer_process_file (FILE * file)"
+
+.SS "ardp_lexer_process_url (const char * url)"
+
+.SS "\fBint\fP lexer_create (void)"
+
+.SS "\fBint\fP lexer_init (void)"
+
+.SS "\fBint\fP lexer_set_grammar (enum grammar)"
+
+.SS "\fBint\fP lexer_set_handler ((void *) fc)"
+
+.SS "\fBint\fP lexer_set_handler (error)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "ardp_config"
+
+.SS "\fBardp_lexer_config\fP"
+
+.SS "ardp_parser_config"
+
+.SS "char buf[]"
+
+.PP
+Referenced by _bnode(), ardp_lexer_process_reader(), and ardp_lexer_process_reader_old()\&.
+.SS "struct { \&.\&.\&. }   \fBcb\fP"
+
+.SS "\fBint\fP eof"
+
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_process_reader_old(), and ardp_lexer_turtle_process_block()\&.
+.SS "internal"
+
+.SS "\fBlexer_t\fP \fBlexer\fP\fC [static]\fP"
+
+.SS "lexer_obj"
+
+.SS "\fBstruct\fP \fBlexer_t\fP* shared_lexer"
+
+.SS "\fBardp_status_t\fP status"
+
+.PP
+Referenced by ardp_lexer_process_reader(), ardp_lexer_process_reader_old(), expand_curie(), main(), map_iterate(), map_rehash(), and term_uri_append()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

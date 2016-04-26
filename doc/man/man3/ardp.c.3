@@ -1,0 +1,241 @@
+.TH "/Developer/school/ardp/src/bin/ardp.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/bin/ardp.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'config\&.h'\fP
+.br
+\fC#include <dispatch/dispatch\&.h>\fP
+.br
+\fC#include <Block\&.h>\fP
+.br
+\fC#include <iso646\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+\fC#include <getopt\&.h>\fP
+.br
+\fC#include <zlib\&.h>\fP
+.br
+\fC#include <bzlib\&.h>\fP
+.br
+\fC#include <ardp/lexer\&.h>\fP
+.br
+\fC#include <ardp/parser\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void \fBhelp_option_ln\fP (FILE *fs, const char *option, const char *desc)"
+.br
+.RI "\fIHelper function to write the application options with support for \fCinteligent\fP color detection and printing\&. \fP"
+.ti -1c
+.RI "static void \fBhelp\fP (FILE *fs)"
+.br
+.RI "\fIHelp info dump\&. \fP"
+.ti -1c
+.RI "static int \fBread_gzip\fP (unsigned char *p, unsigned int len, void *arg)"
+.br
+.RI "\fIRead using GZIP method\&. \fP"
+.ti -1c
+.RI "static int \fBread_bzip\fP (unsigned char *p, unsigned int len, void *arg)"
+.br
+.RI "\fIRead using BZIP method\&. \fP"
+.ti -1c
+.RI "static int \fBlexer_error\fP (int level, const char *\fB_Nullable\fP str)"
+.br
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP = -1"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.ti -1c
+.RI "static const char \fBardp_usage_string\fP []"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+The main of the ARDP RDF parser\&.
+.PP
+\fBTodo\fP
+.RS 4
+Move auxiliary functions to separate file (help_option_ln, \&.\&.\&.)
+.RE
+.PP
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015 
+.RE
+.PP
+
+.PP
+Definition in file \fBardp\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "static void help (FILE * fs)\fC [static]\fP"
+
+.PP
+Help info dump\&. Prints the usage help with explanation of each option\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfs\fP File pointer/stream to dump the info to\&. 
+.RE
+.PP
+
+.PP
+Definition at line 84 of file ardp\&.c\&.
+.PP
+References ARDP_COLOR_NORMAL, ardp_fprintf_ln(), help_option_ln(), and PACKAGE_STRING\&.
+.PP
+Referenced by main()\&.
+.SS "static void help_option_ln (FILE * fs, const char * option, const char * desc)\fC [static]\fP"
+
+.PP
+Helper function to write the application options with support for \fCinteligent\fP color detection and printing\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfs\fP Pointer to output file/stream 
+.br
+\fIoption\fP Option which we are describing\&. 
+.br
+\fIdesc\fP Description of the option 
+.RE
+.PP
+
+.PP
+Definition at line 70 of file ardp\&.c\&.
+.PP
+References ARDP_COLOR_BOLD, ARDP_COLOR_NORMAL, ardp_fprintf(), and ardp_fprintf_ln()\&.
+.PP
+Referenced by help()\&.
+.SS "static int \fBlexer_error\fP (int level, const char *\fB_Nullable\fP str)\fC [static]\fP"
+
+.PP
+Definition at line 132 of file ardp\&.c\&.
+.PP
+References ardp_fprintf_ln(), and kARDPColorMagenta\&.
+.PP
+Referenced by main()\&.
+.SS "int main (int argc, char ** argv)"
+
+.PP
+Definition at line 137 of file ardp\&.c\&.
+.PP
+References ARDP_COLOR_AUTO, ARDP_COLOR_BOLD, ARDP_COLOR_NORMAL, ARDP_COLOR_RED, ardp_config_colorbool(), ardp_fprintf(), ardp_fprintf_ln(), ardp_lexer_create(), ardp_lexer_defaults(), ardp_lexer_destroy(), ardp_lexer_init(), ardp_lexer_process_reader(), ardp_parser_create(), ardp_parser_destroy(), ardp_parser_exec(), ardp_parser_finish(), ardp_parser_set_default_base(), ardp_parser_set_option(), ardp_parser_trace(), ARDP_SUCCESS, ardp_usage_string, ardp_want_color(), ardp_lexer_config::cb, color_stdout_is_tty, DEBUG, die(), ERROR, help(), is, isnt, kARDPColorMagenta, kARDPColorRed, lexer_error(), ardp_lexer_config::logging, not, PACKAGE_STRING, read_bzip(), and read_gzip()\&.
+.SS "static int read_bzip (unsigned char * p, unsigned int len, void * arg)\fC [static]\fP"
+
+.PP
+Read using BZIP method\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIp\fP Pointer to block of memory to be read into\&. 
+.br
+\fIlen\fP Length of the block to be read\&. 
+.br
+\fIarg\fP File desccriptors and info\&. 
+.RE
+.PP
+
+.PP
+Definition at line 126 of file ardp\&.c\&.
+.PP
+Referenced by main()\&.
+.SS "static int read_gzip (unsigned char * p, unsigned int len, void * arg)\fC [static]\fP"
+
+.PP
+Read using GZIP method\&. 
+.PP
+\fBNote:\fP
+.RS 4
+Used for reading of \fC\fP*\&.gz archives and normal \fC\fP*\&.nt files\&.
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fIp\fP Pointer to block of memory to be read into\&. 
+.br
+\fIlen\fP Length of the block to be read\&. 
+.br
+\fIarg\fP File desccriptors and info\&. 
+.RE
+.PP
+
+.PP
+Definition at line 113 of file ardp\&.c\&.
+.PP
+Referenced by main()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "const char ardp_usage_string[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+=
+    "usage: " PACKAGE " [-v | --version] [-h | --help] [-u | --usage] <path-to-file>"
+    "\n"
+    "            [-b | --use-bzip] [-c | --color auto:none:always]"
+    "\n"
+    "            [-s | --syntax tutle:nt:nq:guess]"
+    "\n"
+    "            [-w | --verbose <0-7>]"
+    "\n"
+    "            [-x | --disable-uri-expansion]"
+    "\n"
+    "            [-z | --disable-curie-expansion]"
+    "\n"
+    "            [-d | --disable-show-datatype]"
+    "\n"
+    "            [-y | --enable-lexer-debug]"
+    "\n"
+    "            [-q | --enable-parser-debug]"
+    "\n"
+.fi
+.PP
+Definition at line 41 of file ardp\&.c\&.
+.PP
+Referenced by main()\&.
+.SS "int color_stdout_is_tty = -1"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 39 of file ardp\&.c\&.
+.PP
+Referenced by main()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

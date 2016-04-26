@@ -1,0 +1,552 @@
+.TH "/Developer/school/ardp/include/ardp/color.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/color.h \- Color TTY\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'util\&.h'\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBARDP_COLOR_NORMAL\fP   ''"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_RESET\fP   '\\033[0m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD\fP   '\\x1b[1m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_RED\fP   '\\x1b[31m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_GREEN\fP   '\\x1b[32m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_YELLOW\fP   '\\x1b[33m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BLUE\fP   '\\x1b[34m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_MAGENTA\fP   '\\x1b[35m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_CYAN\fP   '\\x1b[36m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_WHITE\fP   '\\x1b[37m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_RED\fP   '\\x1b[1;31m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_GREEN\fP   '\\x1b[1;32m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_YELLOW\fP   '\\x1b[1;33m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_BLUE\fP   '\\x1b[1;34m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_MAGENTA\fP   '\\x1b[1;35m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BOLD_CYAN\fP   '\\x1b[1;36m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_RED\fP   '\\x1b[41m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_GREEN\fP   '\\x1b[42m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_YELLOW\fP   '\\x1b[43m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_BLUE\fP   '\\x1b[44m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_MAGENTA\fP   '\\x1b[45m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_BG_CYAN\fP   '\\x1b[46m'"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_UNKNOWN\fP   ( -1 )"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_NEVER\fP   ( 0 )"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_ALWAYS\fP   ( 1 )"
+.br
+.ti -1c
+.RI "#define \fBARDP_COLOR_AUTO\fP   ( 2 )"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBardp_fprintf\fP (FILE *\fB_Nonnull\fP fp, const char *\fB_Nonnull\fP color, const char *\fB_Nullable\fP fmt,\&.\&.\&.) \fB__attribute__\fP((__format__(__printf__"
+.br
+.RI "\fIPrint to stream with color Supported\&. \fP"
+.ti -1c
+.RI "int int \fBardp_fprintf_ln\fP (FILE *\fB_Nonnull\fP fp, const char *\fB_Nonnull\fP color, const char *\fB_Nullable\fP fmt,\&.\&.\&.) \fB__attribute__\fP((__format__(__printf__"
+.br
+.RI "\fIPrint line to stream with color Supported\&. \fP"
+.ti -1c
+.RI "int int void \fBardp_color_set\fP (char *\fB_Nullable\fP dst, const char *\fB_Nullable\fP color_bytes)"
+.br
+.ti -1c
+.RI "int \fBardp_config_colorbool\fP (const char *\fB_Nullable\fP val)"
+.br
+.RI "\fIConverts string value to predefined color settings flag\&. \fP"
+.ti -1c
+.RI "int \fBardp_want_color\fP (int \fBvar\fP)"
+.br
+.RI "\fIProbe environment to see if colored output is supported\&. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorNormal\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorReset\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBold\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorRed\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorGreen\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorYellow\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBlue\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorMagenta\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorCyan\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorWhite\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldRed\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldGreen\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldYellow\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldBlue\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldMagenta\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBoldCyan\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundRed\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundGreen\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundYellow\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundBlue\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundMagenta\fP"
+.br
+.ti -1c
+.RI "const char *\fB_Nonnull\fP const \fBkARDPColorBackgroundCyan\fP"
+.br
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Color TTY\&. 
+
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+1\&.0\&.2 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015 
+.RE
+.PP
+
+.PP
+Definition in file \fBcolor\&.h\fP\&.
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define ARDP_COLOR_ALWAYS   ( 1 )"
+
+.PP
+Definition at line 71 of file color\&.h\&.
+.PP
+Referenced by ardp_config_colorbool()\&.
+.SS "#define ARDP_COLOR_AUTO   ( 2 )"
+
+.PP
+Definition at line 72 of file color\&.h\&.
+.PP
+Referenced by ardp_config_colorbool(), ardp_want_color(), and main()\&.
+.SS "#define ARDP_COLOR_BG_BLUE   '\\x1b[44m'"
+
+.PP
+Definition at line 63 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BG_CYAN   '\\x1b[46m'"
+
+.PP
+Definition at line 65 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BG_GREEN   '\\x1b[42m'"
+
+.PP
+Definition at line 61 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BG_MAGENTA   '\\x1b[45m'"
+
+.PP
+Definition at line 64 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BG_RED   '\\x1b[41m'"
+
+.PP
+Definition at line 60 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BG_YELLOW   '\\x1b[43m'"
+
+.PP
+Definition at line 62 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BLUE   '\\x1b[34m'"
+
+.PP
+Definition at line 48 of file color\&.h\&.
+.PP
+Referenced by ardp_error_msg()\&.
+.SS "#define ARDP_COLOR_BOLD   '\\x1b[1m'"
+
+.PP
+Definition at line 43 of file color\&.h\&.
+.PP
+Referenced by help_option_ln(), and main()\&.
+.SS "#define ARDP_COLOR_BOLD_BLUE   '\\x1b[1;34m'"
+
+.PP
+Definition at line 56 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BOLD_CYAN   '\\x1b[1;36m'"
+
+.PP
+Definition at line 58 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BOLD_GREEN   '\\x1b[1;32m'"
+
+.PP
+Definition at line 54 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BOLD_MAGENTA   '\\x1b[1;35m'"
+
+.PP
+Definition at line 57 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BOLD_RED   '\\x1b[1;31m'"
+
+.PP
+Definition at line 53 of file color\&.h\&.
+.SS "#define ARDP_COLOR_BOLD_YELLOW   '\\x1b[1;33m'"
+
+.PP
+Definition at line 55 of file color\&.h\&.
+.SS "#define ARDP_COLOR_CYAN   '\\x1b[36m'"
+
+.PP
+Definition at line 50 of file color\&.h\&.
+.SS "#define ARDP_COLOR_GREEN   '\\x1b[32m'"
+
+.PP
+Definition at line 46 of file color\&.h\&.
+.PP
+Referenced by ardp_error_msg(), and string_debug()\&.
+.SS "#define ARDP_COLOR_MAGENTA   '\\x1b[35m'"
+
+.PP
+Definition at line 49 of file color\&.h\&.
+.PP
+Referenced by string_debug()\&.
+.SS "#define ARDP_COLOR_NEVER   ( 0 )"
+
+.PP
+Definition at line 70 of file color\&.h\&.
+.PP
+Referenced by ardp_config_colorbool()\&.
+.SS "#define ARDP_COLOR_NORMAL   ''"
+
+.PP
+Definition at line 41 of file color\&.h\&.
+.PP
+Referenced by ardp_error_msg(), help(), help_option_ln(), main(), and string_debug()\&.
+.SS "#define ARDP_COLOR_RED   '\\x1b[31m'"
+
+.PP
+Definition at line 45 of file color\&.h\&.
+.PP
+Referenced by ardp_error_msg(), and main()\&.
+.SS "#define ARDP_COLOR_RESET   '\\033[0m'"
+
+.PP
+Definition at line 42 of file color\&.h\&.
+.SS "#define ARDP_COLOR_UNKNOWN   ( -1 )"
+
+.PP
+Definition at line 69 of file color\&.h\&.
+.SS "#define ARDP_COLOR_WHITE   '\\x1b[37m'"
+
+.PP
+Definition at line 51 of file color\&.h\&.
+.SS "#define ARDP_COLOR_YELLOW   '\\x1b[33m'"
+
+.PP
+Definition at line 47 of file color\&.h\&.
+.PP
+Referenced by ardp_error_msg(), and string_debug()\&.
+.SH "Function Documentation"
+.PP 
+.SS "int int void ardp_color_set (char *\fB_Nullable\fP dst, const char *\fB_Nullable\fP color_bytes)"
+
+.SS "int ardp_config_colorbool (const char *\fB_Nullable\fP val)"
+
+.PP
+Converts string value to predefined color settings flag\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIval\fP String to be eveluated for color directives
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+\fCARDP_COLOR_AUTO\fP if the evaluates the nil or unknown value, ARDP_COLOR_* otherwise\&. 
+.RE
+.PP
+
+.PP
+Referenced by main()\&.
+.SS "int ardp_fprintf (FILE *\fB_Nonnull\fP fp, const char *\fB_Nonnull\fP color, const char *\fB_Nullable\fP fmt,  \&.\&.\&.)"
+
+.PP
+Print to stream with color Supported\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfp\fP File pointer ( usually STDERR, STDOUT) 
+.br
+\fIcolor\fP Color to be used for printing the message with; 
+.br
+\fIfmt\fP Formatting string 
+.br
+\fI\&.\&.\&.\fP Aditional variadic parameters
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+If successful, the total number of characters written is returned otherwise, a negative number is returned\&. 
+.RE
+.PP
+
+.PP
+Referenced by _triple(), ardp_error_msg(), help_option_ln(), main(), string_debug(), yy_parse_failed(), yy_syntax_error(), and yyStackOverflow()\&.
+.SS "int int ardp_fprintf_ln (FILE *\fB_Nonnull\fP fp, const char *\fB_Nonnull\fP color, const char *\fB_Nullable\fP fmt,  \&.\&.\&.)"
+
+.PP
+Print line to stream with color Supported\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfp\fP File pointer ( usually STDERR, STDOUT) 
+.br
+\fIcolor\fP Color to be used for printing the message with; 
+.br
+\fIfmt\fP Formatting string 
+.br
+\fI\&.\&.\&.\fP Aditional variadic parameters
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+If successful, the total number of characters written is returned otherwise, a negative number is returned\&. 
+.RE
+.PP
+
+.PP
+Referenced by help(), help_option_ln(), lexer_error(), and main()\&.
+.SS "int ardp_want_color (int var)"
+
+.PP
+Probe environment to see if colored output is supported\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIvar\fP Overwrite for the probed value\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Color directive depending on actual environment\&. 
+.RE
+.PP
+
+.PP
+Definition at line 70 of file color\&.c\&.
+.PP
+References ardp_auto_color(), ARDP_COLOR_AUTO, and is\&.
+.PP
+Referenced by main()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "int color_stdout_is_tty"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 39 of file ardp\&.c\&.
+.PP
+Referenced by ardp_auto_color(), ardp_fprintf(), ardp_fprintf_ln(), and main()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundBlue"
+
+.PP
+Definition at line 34 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundCyan"
+
+.PP
+Definition at line 36 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundGreen"
+
+.PP
+Definition at line 32 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundMagenta"
+
+.PP
+Definition at line 35 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundRed"
+
+.PP
+Definition at line 31 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBackgroundYellow"
+
+.PP
+Definition at line 33 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBlue"
+
+.PP
+Definition at line 19 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBold"
+
+.PP
+Definition at line 14 of file color\&.c\&.
+.PP
+Referenced by _triple()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldBlue"
+
+.PP
+Definition at line 27 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldCyan"
+
+.PP
+Definition at line 29 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldGreen"
+
+.PP
+Definition at line 25 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldMagenta"
+
+.PP
+Definition at line 28 of file color\&.c\&.
+.PP
+Referenced by yy_syntax_error()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldRed"
+
+.PP
+Definition at line 24 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorBoldYellow"
+
+.PP
+Definition at line 26 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorCyan"
+
+.PP
+Definition at line 21 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorGreen"
+
+.PP
+Definition at line 17 of file color\&.c\&.
+.PP
+Referenced by _triple()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorMagenta"
+
+.PP
+Definition at line 20 of file color\&.c\&.
+.PP
+Referenced by lexer_error(), main(), yy_parse_failed(), yy_syntax_error(), and yyStackOverflow()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorNormal"
+
+.PP
+Definition at line 12 of file color\&.c\&.
+.PP
+Referenced by _triple()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorRed"
+
+.PP
+Definition at line 16 of file color\&.c\&.
+.PP
+Referenced by _triple(), and main()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorReset"
+
+.PP
+Definition at line 13 of file color\&.c\&.
+.PP
+Referenced by ardp_vfprintf()\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorWhite"
+
+.PP
+Definition at line 22 of file color\&.c\&.
+.SS "const char* \fB_Nonnull\fP const kARDPColorYellow"
+
+.PP
+Definition at line 18 of file color\&.c\&.
+.PP
+Referenced by _triple()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

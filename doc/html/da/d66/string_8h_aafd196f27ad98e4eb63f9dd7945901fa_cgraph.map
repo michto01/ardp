@@ -1,0 +1,6 @@
+<map id="string_prepend" name="string_prepend">
+<area shape="rect" id="node2" href="$d1/db0/string_8c.html#a47fcb6c8c2357ef6d472ecb058bb5537" title="Append two ardp string to one another. " alt="" coords="164,5,292,31"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="340,56,420,81"/>
+<area shape="rect" id="node4" href="$d1/db0/string_8c.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="171,107,284,132"/>
+<area shape="rect" id="node5" href="$d1/db0/string_8c.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="176,156,279,181"/>
+</map>

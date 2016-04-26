@@ -1,0 +1,13 @@
+<map id="string_finish" name="string_finish">
+<area shape="rect" id="node2" href="$dc/d1b/lexers_2turtle_8c.html#a70051edb3a62388bb92f4a12cf90cd74" title="Lex the block of data. " alt="" coords="537,36,675,75"/>
+<area shape="rect" id="node6" href="$dc/d1b/lexers_2turtle_8c.html#ae79ab750940fc212a8a8c9be1b97d391" title="ardp_lexer_turtle_process\l_block" alt="" coords="518,188,693,227"/>
+<area shape="rect" id="node8" href="$d1/db0/string_8c.html#a7bd884793285536f59677943dfcbdf1d" title="Append character (BYTE) " alt="" coords="146,144,285,169"/>
+<area shape="rect" id="node10" href="$d1/db0/string_8c.html#a2db486e5503fea3ece12d07176462de4" title="Append the UTF8 codepoint to the string. " alt="" coords="334,93,469,119"/>
+<area shape="rect" id="node3" href="$dc/d1b/lexers_2turtle_8c.html#af942e21a2717f9a7715645feb9cf5955" title="Process reader until the input is exhausted. " alt="" coords="741,68,880,107"/>
+<area shape="rect" id="node5" href="$dc/d1b/lexers_2turtle_8c.html#a5ac446a5cbfeec92647c0f900f2972d7" title="ardp_lexer_process\l_reader_BUG" alt="" coords="741,5,880,44"/>
+<area shape="rect" id="node4" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="928,75,978,100"/>
+<area shape="rect" id="node7" href="$dc/d1b/lexers_2turtle_8c.html#a3d449109bcd6f8b42fcf3428b6fec62a" title="ardp_lexer_process\l_reader_old" alt="" coords="741,188,880,227"/>
+<area shape="rect" id="node9" href="$db/d3b/check__string_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="581,119,631,144"/>
+<area shape="rect" id="node11" href="$d2/d16/string_8test_8c.html#a5bd883f1449bb92aed14743dc712f4e0" title="test_string_addition\l_with_realloc" alt="" coords="333,245,470,284"/>
+<area shape="rect" id="node12" href="$d2/d16/string_8test_8c.html#a62b2536b2cdfbf39adbd152a23ba51a7" title="test_string" alt="" coords="564,252,647,277"/>
+</map>

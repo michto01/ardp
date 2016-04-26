@@ -1,0 +1,39 @@
+<map id="string_dealloc" name="string_dealloc">
+<area shape="rect" id="node2" href="$db/d06/test__lemon_8c.html#acea320599200403c5eed9eaa0f8750ea" title="_rebase" alt="" coords="607,21,676,46"/>
+<area shape="rect" id="node6" href="$dc/d1b/lexers_2turtle_8c.html#a91e046899c17dfa51473f2d643b23a5e" title="Destroy the shared instance of the lexer. " alt="" coords="1327,879,1463,905"/>
+<area shape="rect" id="node8" href="$dc/d1b/lexers_2turtle_8c.html#a70051edb3a62388bb92f4a12cf90cd74" title="Lex the block of data. " alt="" coords="175,670,314,709"/>
+<area shape="rect" id="node11" href="$dc/d1b/lexers_2turtle_8c.html#ae79ab750940fc212a8a8c9be1b97d391" title="ardp_lexer_turtle_process\l_block" alt="" coords="157,925,332,963"/>
+<area shape="rect" id="node13" href="$db/d06/test__lemon_8c.html#ab354e58bc712d96b897c41bdd3be42bd" title="ardp_parser_destroy\l_internal" alt="" coords="569,815,714,854"/>
+<area shape="rect" id="node15" href="$d9/d03/check__rdf__term__copy_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="425,555,475,581"/>
+<area shape="rect" id="node16" href="$d3/dd7/rdf__term_8c.html#ae723a9696763fcfdf0571c471f46cce0" title="rdf_term_free" alt="" coords="194,399,295,425"/>
+<area shape="rect" id="node20" href="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14" title="yy_reduce" alt="" coords="1169,387,1252,413"/>
+<area shape="rect" id="node25" href="$d6/d1c/turtle__parser_8c.html#afca0f0d2a9c0e0ca0625382394fa060e" title="yy_destructor" alt="" coords="399,463,501,489"/>
+<area shape="rect" id="node32" href="$d1/db0/string_8c.html#aafd196f27ad98e4eb63f9dd7945901fa" title="Append the C string buffer to the beginning of the ARDP string. " alt="" coords="190,987,300,1013"/>
+<area shape="rect" id="node33" href="$db/d06/test__lemon_8c.html#a7bff91aaad6f8360b67ae2587704cc4a" title="term_uri_append" alt="" coords="184,109,306,134"/>
+<area shape="rect" id="node37" href="$d2/d16/string_8test_8c.html#a5bd883f1449bb92aed14743dc712f4e0" title="test_string_addition\l_with_realloc" alt="" coords="176,1037,313,1075"/>
+<area shape="rect" id="node3" href="$db/d06/test__lemon_8c.html#a0a1bc799a2da60fe82e1061e72016dd5" title="Parser ///. " alt="" coords="764,74,901,113"/>
+<area shape="rect" id="node4" href="$db/d06/test__lemon_8c.html#a0360aabf481135a87f18e29fc81e5c21" title="Create and initialize all prerequisites for shared_parser. " alt="" coords="1142,217,1279,242"/>
+<area shape="rect" id="node5" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="1691,795,1741,821"/>
+<area shape="rect" id="node7" href="$dc/d1b/lexers_2turtle_8c.html#acc480fcaf28b3158f218dcb4da9fbe45" title="Create new shared instance of lexer. " alt="" coords="1512,871,1641,897"/>
+<area shape="rect" id="node9" href="$dc/d1b/lexers_2turtle_8c.html#af942e21a2717f9a7715645feb9cf5955" title="Process reader until the input is exhausted. " alt="" coords="952,766,1091,805"/>
+<area shape="rect" id="node10" href="$dc/d1b/lexers_2turtle_8c.html#a5ac446a5cbfeec92647c0f900f2972d7" title="ardp_lexer_process\l_reader_BUG" alt="" coords="381,670,519,709"/>
+<area shape="rect" id="node12" href="$dc/d1b/lexers_2turtle_8c.html#a3d449109bcd6f8b42fcf3428b6fec62a" title="ardp_lexer_process\l_reader_old" alt="" coords="381,925,519,963"/>
+<area shape="rect" id="node14" href="$db/d06/test__lemon_8c.html#aea7d3efa6dbae53364164cf5561eb784" title="Unallocate parser after it is not necessary anymore. " alt="" coords="949,829,1094,854"/>
+<area shape="rect" id="node17" href="$d9/de5/rdf__statement_8c.html#a3ea695afe82e1c554e0ec256a0f4c024" title="rdf_statement_clear" alt="" coords="380,387,520,413"/>
+<area shape="rect" id="node24" href="$d9/de5/rdf__statement_8c.html#a4cac26f6b264b67efcc5490306ae438a" title="rdf_statement_from\l_nodes" alt="" coords="573,299,710,338"/>
+<area shape="rect" id="node18" href="$d9/de5/rdf__statement_8c.html#a02ce4093fd0ce96649f011edf0b77bdb" title="rdf_statement_free" alt="" coords="575,362,708,387"/>
+<area shape="rect" id="node19" href="$d2/d02/check__rdf__statement__create_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="807,311,858,337"/>
+<area shape="rect" id="node21" href="$d6/d1c/turtle__parser_8c.html#a3c36da155e7cc782a7c759461bfc4acb" title="Parse" alt="" coords="1367,614,1423,639"/>
+<area shape="rect" id="node22" href="$db/d06/test__lemon_8c.html#a32f57dfc8fb69715ace3977789c4010e" title="ardp_parser_exec" alt="" coords="1512,663,1641,689"/>
+<area shape="rect" id="node23" href="$db/d06/test__lemon_8c.html#a5f6da0e12004e85804719717c0fe18d0" title="Flush parser to end one parsing unit. " alt="" coords="1511,614,1643,639"/>
+<area shape="rect" id="node26" href="$d6/d1c/turtle__parser_8c.html#aa142fdd91628fd550751c6ef4e29b603" title="yy_pop_parser_stack" alt="" coords="568,601,716,626"/>
+<area shape="rect" id="node27" href="$d6/d1c/turtle__parser_8c.html#a723f78e4796165532cfdf4792d4de994" title="ParseFree" alt="" coords="791,727,874,753"/>
+<area shape="rect" id="node28" href="$d6/d1c/turtle__parser_8c.html#a868e202daa58bd4f71c467b477831e3a" title="yy_accept" alt="" coords="981,514,1062,539"/>
+<area shape="rect" id="node29" href="$d6/d1c/turtle__parser_8c.html#a77ad8017d85e3462cd23c296fe3d22af" title="yy_parse_failed" alt="" coords="1153,715,1268,741"/>
+<area shape="rect" id="node30" href="$d6/d1c/turtle__parser_8c.html#aa86923ecccad4f6d79295f099b46f67a" title="yyStackOverflow" alt="" coords="772,575,893,601"/>
+<area shape="rect" id="node31" href="$d6/d1c/turtle__parser_8c.html#a49026332b2b85d2ae13efa4d955b7a94" title="yy_shift" alt="" coords="988,563,1055,589"/>
+<area shape="rect" id="node34" href="$db/d06/test__lemon_8c.html#a75806af329d99c4a3ba569197f9b576f" title="expand_curie" alt="" coords="399,59,501,85"/>
+<area shape="rect" id="node36" href="$db/d06/test__lemon_8c.html#ac45847426934034dc0143c048d219e17" title="expand_relative_uri" alt="" coords="381,109,519,134"/>
+<area shape="rect" id="node35" href="$db/d06/test__lemon_8c.html#ab48aab69d9c6f5e7e073a50e505e1fa0" title="_triple" alt="" coords="613,81,670,106"/>
+<area shape="rect" id="node38" href="$d2/d16/string_8test_8c.html#a62b2536b2cdfbf39adbd152a23ba51a7" title="test_string" alt="" coords="409,1043,491,1069"/>
+</map>

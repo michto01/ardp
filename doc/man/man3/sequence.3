@@ -1,0 +1,136 @@
+.TH "sequence" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+sequence \- Memory container for generic data storage of sequential data\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <sequence\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "size_t \fBsize\fP"
+.br
+.ti -1c
+.RI "size_t \fBcapacity\fP"
+.br
+.ti -1c
+.RI "size_t \fBhead\fP"
+.br
+.ti -1c
+.RI "void ** \fBitems\fP"
+.br
+.ti -1c
+.RI "void * \fBcontext\fP"
+.br
+.ti -1c
+.RI "void(* \fBprint\fP )(void *data)"
+.br
+.ti -1c
+.RI "void(* \fBerror\fP )(void *data)"
+.br
+.ti -1c
+.RI "void(* \fBfree\fP )(void *data)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Memory container for generic data storage of sequential data\&. 
+
+
+.PP
+.nf
+* Sequence:
+*     0            <-- N consecutive items -->         C - 1
+* -----------------------------------------------------------
+* |      |      | data1 |  .....     data N |  ...  |       |
+* -----------------------------------------------------------
+* ------ O -----> offset of first data item
+*
+*  head = 0
+*  size = N
+*  cap. = C
+*  
+.fi
+.PP
+ 
+.PP
+Definition at line 43 of file sequence\&.h\&.
+.SH "Field Documentation"
+.PP 
+.SS "size_t capacity"
+Actual length of the pre-allocated array of items\&. 
+.PP
+Definition at line 52 of file sequence\&.h\&.
+.PP
+Referenced by sequence_ensure(), sequence_push(), sequence_set_at(), and sequence_shift()\&.
+.SS "void* context"
+
+.SH "used currently {"
+.PP
+
+.PP
+Definition at line 67 of file sequence\&.h\&.
+.SS "void(* error) (void *data)"
+
+.PP
+Definition at line 77 of file sequence\&.h\&.
+.PP
+Referenced by sequence_create()\&.
+.SS "free"
+Handler to free item\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIdata\fP Data to be freed\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+Should do nothing if item is NULL; 
+.RE
+.PP
+
+.PP
+Definition at line 87 of file sequence\&.h\&.
+.PP
+Referenced by sequence_create(), sequence_free(), sequence_push(), sequence_set_at(), and sequence_shift()\&.
+.SS "size_t head"
+Offset of the first item of the data in sequence\&. 
+.PP
+Definition at line 57 of file sequence\&.h\&.
+.PP
+Referenced by sequence_delete_at(), sequence_ensure(), sequence_get_at(), sequence_pop(), sequence_push(), sequence_set_at(), sequence_shift(), and sequence_unshift()\&.
+.SS "void** items"
+Array of size 'capacity' pointing to the data\&. 
+.PP
+Definition at line 62 of file sequence\&.h\&.
+.PP
+Referenced by sequence_delete_at(), sequence_ensure(), sequence_free(), sequence_get_at(), sequence_pop(), sequence_push(), sequence_set_at(), sequence_shift(), and sequence_unshift()\&.
+.SS "print"
+Print item in debug
+.PP
+\fBDeprecated\fP
+.RS 4
+Not used anymore 
+.RE
+.PP
+
+.PP
+Definition at line 75 of file sequence\&.h\&.
+.PP
+Referenced by sequence_create()\&.
+.SS "size_t size"
+Current number of the items in the sequence\&. 
+.PP
+Definition at line 47 of file sequence\&.h\&.
+.PP
+Referenced by sequence_delete_at(), sequence_ensure(), sequence_get_at(), sequence_pop(), sequence_push(), sequence_set_at(), sequence_shift(), sequence_size(), and sequence_unshift()\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

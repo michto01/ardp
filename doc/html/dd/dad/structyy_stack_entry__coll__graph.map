@@ -1,0 +1,8 @@
+<map id="yyStackEntry" name="yyStackEntry">
+<area shape="rect" id="node2" href="$d6/d1c/turtle__parser_8c.html#d7/d85/union_y_y_m_i_n_o_r_t_y_p_e" title="{YYMINORTYPE\n|+ yyinit\l+ yy0\l+ yy2\l|}" alt="" coords="136,543,254,643"/>
+<area shape="rect" id="node3" href="$de/d76/rdf_8h.html#d3/dd1/structrdf__term" title="{rdf_term\n|+ type\l|}" alt="" coords="45,361,116,435"/>
+<area shape="rect" id="node4" href="$de/d76/rdf_8h.html#d3/d90/unionrdf__term__value" title="{rdf_term_value\n|+ uri\l+ blank\l|}" alt="" coords="25,167,135,253"/>
+<area shape="rect" id="node5" href="$de/d76/rdf_8h.html#d0/d06/structrdf__term__literal__value" title="{rdf_term_literal_value\n|+ string\l+ datatype\l+ language\l|}" alt="" coords="5,5,155,105"/>
+<area shape="rect" id="node6" href="$d5/d36/parser_8h.html#de/daf/structdatatype__sys__t" title="{datatype_sys_t\n|+ langtag\l+ datatype\l|}" alt="" coords="139,355,250,441"/>
+<area shape="rect" id="node7" href="$df/d06/structsequence.html" title="Memory container for generic data storage of sequential data. " alt="" coords="274,315,356,481"/>
+</map>

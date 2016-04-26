@@ -1,0 +1,532 @@
+.TH "/Developer/school/ardp/src/lib/string.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/string.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <ardp/string\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBMAX_PREALLOC\fP   ( 1024 * 1024 )"
+.br
+.ti -1c
+.RI "#define \fBINITIAL_CAPACITY\fP   8"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "uint8_t const * \fBssechr\fP (uint8_t const *s, uint8_t ch)"
+.br
+.RI "\fILocate first occurrence of character in string\&. \fP"
+.ti -1c
+.RI "size_t \fBstring_strlen\fP (\fButf8\fP str)"
+.br
+.RI "\fILength of the fat-pointer string\&. \fP"
+.ti -1c
+.RI "void \fBstring_debug\fP (\fButf8\fP str)"
+.br
+.RI "\fIDebbuging information of the string\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fBstring_alloc\fP (size_t len)"
+.br
+.RI "\fIAllocate new string of length\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fBstring_create_n\fP (const uint8_t *s, size_t len, size_t n)"
+.br
+.RI "\fICreate new string from content of the buffer of specified length\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fBstring_create\fP (const uint8_t *s)"
+.br
+.RI "\fICreate new string from string buffer\&. \fP"
+.ti -1c
+.RI "int \fBstring_append\fP (\fButf8\fP *src, const uint8_t *mod)"
+.br
+.RI "\fIAppend C string to ardp string container\&. \fP"
+.ti -1c
+.RI "int \fBstring_prepend\fP (\fButf8\fP *src, const uint8_t *str)"
+.br
+.RI "\fIAppend the C string buffer to the beginning of the ARDP string\&. \fP"
+.ti -1c
+.RI "int \fBstring_append_str\fP (\fButf8\fP *src, \fButf8\fP apd)"
+.br
+.RI "\fIAppend two ardp string to one another\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fBstring_copy\fP (\fButf8\fP src)"
+.br
+.RI "\fIReturns new copy of the specified string\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fBstring_new\fP ()"
+.br
+.RI "\fIAllocate new string with the default length\&. \fP"
+.ti -1c
+.RI "void \fBstring_dealloc\fP (\fButf8\fP self)"
+.br
+.RI "\fIDestroy the string\&. \fP"
+.ti -1c
+.RI "bool \fBstring_resize\fP (\fButf8\fP *str, size_t room)"
+.br
+.RI "\fIResize the string\&. \fP"
+.ti -1c
+.RI "bool \fBstring_append_char\fP (\fButf8\fP *str, char c)"
+.br
+.RI "\fIAppend character (BYTE) \fP"
+.ti -1c
+.RI "bool \fBstring_append_utf8\fP (\fButf8\fP *s, int cp)"
+.br
+.RI "\fIAppend the UTF8 codepoint to the string\&. \fP"
+.ti -1c
+.RI "void \fBstring_finish\fP (\fButf8\fP str)"
+.br
+.RI "\fIClose finish the string\&. \fP"
+.ti -1c
+.RI "int \fBstring_generic_cmp\fP (const uint8_t *a, const uint8_t *b, int len)"
+.br
+.RI "\fIOptimalized compare algorithm yealding little faster string comparison then build-in \fCstrcmp\fP function\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Implements the 'fat-pointer' string interface\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015 
+.RE
+.PP
+
+.PP
+Definition in file \fBstring\&.c\fP\&.
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define INITIAL_CAPACITY   8"
+
+.PP
+Definition at line 39 of file string\&.c\&.
+.PP
+Referenced by string_new()\&.
+.SS "#define MAX_PREALLOC   ( 1024 * 1024 )"
+
+.PP
+Definition at line 38 of file string\&.c\&.
+.PP
+Referenced by string_resize()\&.
+.SH "Function Documentation"
+.PP 
+.SS "uint8_t const* ssechr (uint8_t const * s, uint8_t ch)"
+
+.PP
+Locate first occurrence of character in string\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIs\fP C string\&. 
+.br
+\fIch\fP Character to be located\&. It is passed as its int promotion, but it is internally converted back to char for the comparison\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+The terminating null-character is considered part of the C string\&. Therefore, it can also be located in order to retrieve a pointer to the end of a string\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+position of first character matched, NULL if not found\&. 
+.RE
+.PP
+
+.PP
+Definition at line 41 of file string\&.c\&.
+.PP
+Referenced by extract_prefix()\&.
+.SS "\fButf8\fP string_alloc (size_t length)"
+
+.PP
+Allocate new string of length\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIlength\fP Length of the newly allocated string\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Pointer to the newly created string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 78 of file string\&.c\&.
+.PP
+References string_header_t\&.
+.PP
+Referenced by main(), and string_new()\&.
+.SS "int string_append (\fButf8\fP * src, const uint8_t * mod)"
+
+.PP
+Append C string to ardp string container\&. Appends c string buffer to string\&. The string is resized if necessary\&. The string buffer being appended needs to be NULL terminated\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsrc\fP Pointer to string pointer\&. (indirection) 
+.br
+\fImod\fP C string buffer to be appended\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, non-zero value if there is error\&. 
+.RE
+.PP
+
+.PP
+Definition at line 133 of file string\&.c\&.
+.PP
+References string_hdr()\&.
+.PP
+Referenced by main()\&.
+.SS "bool string_append_char (\fButf8\fP * str, char c)"
+
+.PP
+Append character (BYTE) Safe version with boundaries checking for apppeding the character to the string\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String being manipulated\&. 
+.br
+\fIc\fP Character being pushed into the string\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+True if character was sucessfully appended, false otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 296 of file string\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, isnt, string_finish(), string_push(), and string_resize()\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), main(), string_append_utf8(), and test_string_addition_with_realloc()\&.
+.SS "int string_append_str (\fButf8\fP * src, \fButf8\fP mod)"
+
+.PP
+Append two ardp string to one another\&. Appends string to string\&. The string is resized if necessary\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsrc\fP Pointer to string pointer\&. (indirection) 
+.br
+\fImod\fP string buffer to be appended\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, non-zero value if there is error\&. 
+.RE
+.PP
+
+.PP
+Definition at line 211 of file string\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, and string_hdr()\&.
+.PP
+Referenced by main(), string_prepend(), and term_uri_append()\&.
+.SS "bool string_append_utf8 (\fButf8\fP * str, int cp)"
+
+.PP
+Append the UTF8 codepoint to the string\&. description
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String being manipulated\&. 
+.br
+\fIcp\fP Character codepoint being pushed into the string\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+True if character was sucessfully appended, false otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 305 of file string\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, isnt, string_append_char(), string_finish(), string_push(), and string_resize()\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), and main()\&.
+.SS "\fButf8\fP string_copy (\fButf8\fP src)"
+
+.PP
+Returns new copy of the specified string\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsrc\fP String to be copied\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Copy of the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 236 of file string\&.c\&.
+.PP
+References string_hdr()\&.
+.PP
+Referenced by _add_namespace(), _rebase(), expand_curie(), expand_relative_uri(), lexer_emit_u8_token(), main(), rdf_term_copy(), rdf_term_from_blank(), rdf_term_from_curie(), rdf_term_from_literal(), rdf_term_from_uri(), and yy_reduce()\&.
+.SS "\fButf8\fP string_create (const uint8_t * s)"
+
+.PP
+Create new string from string buffer\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIs\fP String buffer to be place in the buffer\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Pointer to a new string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 112 of file string\&.c\&.
+.PP
+References string_create_n()\&.
+.PP
+Referenced by _bnode(), ardp_parser_set_default_base(), main(), and yy_reduce()\&.
+.SS "\fButf8\fP string_create_n (const uint8_t * s, size_t len, size_t n)"
+
+.PP
+Create new string from content of the buffer of specified length\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIs\fP String buffer to be placed in the new string\&. 
+.br
+\fIlen\fP Length of the s buffer\&. 
+.br
+\fIn\fP Length to preallocate for buffer\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+New string on success, NULL otherwise\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+Doesn't check the memory, copies with for \fCn\fP\&. 
+.RE
+.PP
+
+.PP
+Definition at line 93 of file string\&.c\&.
+.PP
+Referenced by lexer_emit_token(), main(), rdf_term_from_uri(), string_create(), string_prepend(), and yy_reduce()\&.
+.SS "void string_dealloc (\fButf8\fP self)"
+
+.PP
+Destroy the string\&. As the 'utf8' allocates string header which is hidden from the user, API need to back-shift in the buffer to access it and then delete the whole pointer of the structure\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIself\fP Pointer to the manipulated string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 256 of file string\&.c\&.
+.PP
+References is, and string_hdr()\&.
+.PP
+Referenced by _rebase(), ardp_lexer_destroy(), ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), ardp_parser_destroy_internal(), main(), rdf_term_free(), string_prepend(), term_uri_append(), test_string_addition_with_realloc(), yy_destructor(), and yy_reduce()\&.
+.SS "void string_debug (\fButf8\fP str)"
+
+.PP
+Debbuging information of the string\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String being investigated\&. 
+.RE
+.PP
+
+.PP
+Definition at line 64 of file string\&.c\&.
+.PP
+References ARDP_COLOR_GREEN, ARDP_COLOR_MAGENTA, ARDP_COLOR_NORMAL, ARDP_COLOR_YELLOW, ardp_fprintf(), and string_hdr()\&.
+.SS "void string_finish (\fButf8\fP str)"
+
+.PP
+Close finish the string\&. In the 'C' the string needs to be NULL-terminated with '\\0' and this function provides just that\&.
+.PP
+\fBNote:\fP
+.RS 4
+we regard this function as safe 'cause the string has preallocated the space to 'allways' accomodate the NUL terminator
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String being manipulated\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+True if the string was finished corretly, false otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 333 of file string\&.c\&.
+.PP
+References string_hdr(), and string_header_t\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), string_append_char(), and string_append_utf8()\&.
+.SS "int string_generic_cmp (const uint8_t * a, const uint8_t * b, int len)"
+
+.PP
+Optimalized compare algorithm yealding little faster string comparison then build-in \fCstrcmp\fP function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIa\fP First string 
+.br
+\fIb\fP Second string 
+.br
+\fIlen\fP Length to compare\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+1 iff string are the same, 0 otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 339 of file string\&.c\&.
+.PP
+Referenced by ardp_parser_set_option(), main(), and rdf_term_equals()\&.
+.SS "\fButf8\fP string_new (void)"
+
+.PP
+Allocate new string with the default length\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Pointer to the newly created string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 249 of file string\&.c\&.
+.PP
+References INITIAL_CAPACITY, and string_alloc()\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), main(), and test_string_addition_with_realloc()\&.
+.SS "int string_prepend (\fButf8\fP * src, const uint8_t * str)"
+
+.PP
+Append the C string buffer to the beginning of the ARDP string\&. This function creates new string with the content of the C string buffer and then appends the rest using the \fCstring_append\fP function\&. As the new string already has space for the new string, it doesn't require second realloc\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIsrc\fP Source string to be appended to\&. 
+.br
+\fIstr\fP C string buffer to be prepended\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, non-zero value otherwise\&.
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+err=1 - couldn't create new string\&. 
+.PP
+err=2 - couldn't append the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 173 of file string\&.c\&.
+.PP
+References string_append_str(), string_create_n(), string_dealloc(), and string_hdr()\&.
+.SS "bool string_resize (\fButf8\fP * str, size_t size)"
+
+.PP
+Resize the string\&. This function checks if there is enougth space in the string or if the space need to be added\&. In case that the space is inssuficient, it allocates twice as much until the 'MAX_PREALLOC' is reached when the new preallocation is then created allways with it's size\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP Pointer to String currently being manipulated\&. 
+.br
+\fIsize\fP Size to check/allocate\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+True if string is ready to accomodate the size, no otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 265 of file string\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, is, MAX_PREALLOC, string_hdr(), and string_header_t\&.
+.PP
+Referenced by string_append_char(), and string_append_utf8()\&.
+.SS "size_t string_strlen (\fButf8\fP str)"
+
+.PP
+Length of the fat-pointer string\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String for measurement\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Return the length of the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 59 of file string\&.c\&.
+.PP
+References string_hdr()\&.
+.PP
+Referenced by expand_curie(), main(), rdf_term_equals(), rdf_term_from_uri(), and transform_uri()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

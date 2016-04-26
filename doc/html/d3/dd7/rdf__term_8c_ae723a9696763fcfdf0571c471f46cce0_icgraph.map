@@ -1,0 +1,20 @@
+<map id="rdf_term_free" name="rdf_term_free">
+<area shape="rect" id="node2" href="$d9/d03/check__rdf__term__copy_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="199,5,249,31"/>
+<area shape="rect" id="node3" href="$d9/de5/rdf__statement_8c.html#a3ea695afe82e1c554e0ec256a0f4c024" title="rdf_statement_clear" alt="" coords="155,55,294,80"/>
+<area shape="rect" id="node6" href="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14" title="yy_reduce" alt="" coords="869,209,952,235"/>
+<area shape="rect" id="node11" href="$d9/de5/rdf__statement_8c.html#a4cac26f6b264b67efcc5490306ae438a" title="rdf_statement_from\l_nodes" alt="" coords="347,95,484,133"/>
+<area shape="rect" id="node12" href="$d6/d1c/turtle__parser_8c.html#afca0f0d2a9c0e0ca0625382394fa060e" title="yy_destructor" alt="" coords="174,272,275,297"/>
+<area shape="rect" id="node4" href="$d9/de5/rdf__statement_8c.html#a02ce4093fd0ce96649f011edf0b77bdb" title="rdf_statement_free" alt="" coords="349,45,483,71"/>
+<area shape="rect" id="node5" href="$d2/d02/check__rdf__statement__create_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="573,57,623,83"/>
+<area shape="rect" id="node7" href="$d6/d1c/turtle__parser_8c.html#a3c36da155e7cc782a7c759461bfc4acb" title="Parse" alt="" coords="1031,412,1087,437"/>
+<area shape="rect" id="node8" href="$db/d06/test__lemon_8c.html#a32f57dfc8fb69715ace3977789c4010e" title="ardp_parser_exec" alt="" coords="1136,461,1265,487"/>
+<area shape="rect" id="node9" href="$db/d06/test__lemon_8c.html#a5f6da0e12004e85804719717c0fe18d0" title="Flush parser to end one parsing unit. " alt="" coords="1135,412,1266,437"/>
+<area shape="rect" id="node10" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="1314,463,1365,488"/>
+<area shape="rect" id="node13" href="$d6/d1c/turtle__parser_8c.html#aa142fdd91628fd550751c6ef4e29b603" title="yy_pop_parser_stack" alt="" coords="342,336,490,361"/>
+<area shape="rect" id="node14" href="$d6/d1c/turtle__parser_8c.html#a723f78e4796165532cfdf4792d4de994" title="ParseFree" alt="" coords="707,513,790,539"/>
+<area shape="rect" id="node16" href="$d6/d1c/turtle__parser_8c.html#a868e202daa58bd4f71c467b477831e3a" title="yy_accept" alt="" coords="708,260,789,285"/>
+<area shape="rect" id="node17" href="$d6/d1c/turtle__parser_8c.html#a77ad8017d85e3462cd23c296fe3d22af" title="yy_parse_failed" alt="" coords="853,311,968,336"/>
+<area shape="rect" id="node18" href="$d6/d1c/turtle__parser_8c.html#aa86923ecccad4f6d79295f099b46f67a" title="yyStackOverflow" alt="" coords="538,361,659,387"/>
+<area shape="rect" id="node15" href="$db/d06/test__lemon_8c.html#aea7d3efa6dbae53364164cf5561eb784" title="Unallocate parser after it is not necessary anymore. " alt="" coords="838,513,983,539"/>
+<area shape="rect" id="node19" href="$d6/d1c/turtle__parser_8c.html#a49026332b2b85d2ae13efa4d955b7a94" title="yy_shift" alt="" coords="715,361,782,387"/>
+</map>

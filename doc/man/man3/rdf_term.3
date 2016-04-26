@@ -1,0 +1,34 @@
+.TH "rdf_term" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+rdf_term \- 
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <rdf\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "enum \fBrdf_term_type\fP \fBtype\fP"
+.br
+.ti -1c
+.RI "union \fBrdf_term_value\fP \fBvalue\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "enum \fBrdf_term_type\fP type"
+
+.PP
+Referenced by _triple(), rdf_term_compare(), rdf_term_copy(), rdf_term_equals(), rdf_term_free(), rdf_term_from_blank(), rdf_term_from_curie(), rdf_term_from_literal(), rdf_term_from_uri(), and yy_reduce()\&.
+.SS "union \fBrdf_term_value\fP value"
+
+.PP
+Referenced by _triple(), expand_curie(), extract_prefix(), rdf_term_copy(), rdf_term_equals(), rdf_term_free(), rdf_term_from_blank(), rdf_term_from_curie(), rdf_term_from_literal(), rdf_term_from_uri(), term_uri_append(), transform_uri(), uri_has_scheme(), and yy_reduce()\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

@@ -1,0 +1,224 @@
+.TH "/Developer/school/ardp/include/ardp/util.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/util.h \- Utilites for the ARDP programme\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBis\fP   =="
+.br
+.ti -1c
+.RI "#define \fBisnt\fP   !="
+.br
+.ti -1c
+.RI "#define \fBor\fP   ||"
+.br
+.ti -1c
+.RI "#define \fBand\fP   &&"
+.br
+.ti -1c
+.RI "#define \fBnot\fP   !"
+.br
+.ti -1c
+.RI "#define \fB_Nullable\fP"
+.br
+.ti -1c
+.RI "#define \fB_Nonnull\fP"
+.br
+.ti -1c
+.RI "#define \fB_Null_unspecified\fP"
+.br
+.ti -1c
+.RI "#define \fBlikely\fP(x)   __builtin_expect( !!( x ), 1 )"
+.br
+.RI "\fIBranch prediction macro: likely to occur\&. \fP"
+.ti -1c
+.RI "#define \fBunlikely\fP(x)   __builtin_expect( !!( x ), 0 )"
+.br
+.RI "\fIBranch prediction macro: unlikely to occur\&. \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef void * \fBvar\fP"
+.br
+.RI "\fIShortcut for void pointer\&. \fP"
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBardp_status_t\fP { \fBARDP_SUCCESS\fP = 0, \fBARDP_FAILURE\fP, \fBARDP_UNKNOWN\fP }"
+.br
+.RI "\fIStatus codes to designate explicit states of operation\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static void _Noreturn \fBdie\fP (const char *message)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static const int \fBnullptr\fP = 0"
+.br
+.RI "\fINullptr refers to own definition of C++ nullptr\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Utilites for the ARDP programme\&. 
+
+It includes some guard defitions for non-standard C extensions used in code\&. As well status codes and format definitions\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+1\&.4\&.3 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015 
+.RE
+.PP
+\fBBug\fP
+.RS 4
+A known bug 
+.RE
+.PP
+
+.PP
+Definition in file \fButil\&.h\fP\&.
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define _Nonnull"
+
+.PP
+Definition at line 32 of file util\&.h\&.
+.SS "#define _Null_unspecified"
+
+.PP
+Definition at line 33 of file util\&.h\&.
+.SS "#define _Nullable"
+
+.PP
+Definition at line 31 of file util\&.h\&.
+.SS "#define and   &&"
+
+.PP
+Definition at line 24 of file util\&.h\&.
+.PP
+Referenced by ardp_auto_color()\&.
+.SS "#define is   =="
+
+.PP
+Definition at line 19 of file util\&.h\&.
+.PP
+Referenced by ardp_config_colorbool(), ardp_lexer_create(), ardp_lexer_is_ready(), ardp_lexer_process_reader_old(), ardp_lexer_state(), ardp_parser_set_base_uri(), ardp_want_color(), main(), map_create(), map_get(), map_hash(), map_push(), map_remove(), map_resize(), string_dealloc(), and string_resize()\&.
+.SS "#define isnt   !="
+
+.PP
+Definition at line 20 of file util\&.h\&.
+.PP
+Referenced by ardp_lexer_create(), ardp_lexer_destroy(), ardp_lexer_process_reader_old(), ardp_parser_prefix_add(), ardp_parser_prefix_find(), ardp_parser_set_base_uri(), main(), map_capacity(), map_create(), map_iterate(), map_size(), string_append_char(), and string_append_utf8()\&.
+.SS "#define likely(x)   __builtin_expect( !!( x ), 1 )"
+
+.PP
+Branch prediction macro: likely to occur\&. 
+.PP
+Definition at line 87 of file util\&.h\&.
+.PP
+Referenced by _triple(), ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), ardp_parser_exec(), lexer_emit_token(), lexer_emit_token_const(), and lexer_emit_u8_token()\&.
+.SS "#define not   !"
+
+.PP
+Definition at line 25 of file util\&.h\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_process_reader_old(), main(), and map_rehash()\&.
+.SS "#define or   ||"
+
+.PP
+Definition at line 23 of file util\&.h\&.
+.SS "#define unlikely(x)   __builtin_expect( !!( x ), 0 )"
+
+.PP
+Branch prediction macro: unlikely to occur\&. 
+.PP
+Definition at line 92 of file util\&.h\&.
+.PP
+Referenced by _add_namespace(), _bnode(), _rebase(), ardp_lexer_create(), ardp_parser_destroy_internal(), ardp_parser_set_default_base(), expand_curie(), sequence_create(), sequence_delete_at(), sequence_get_at(), sequence_pop(), sequence_set_at(), sequence_shift(), sequence_size(), and sequence_unshift()\&.
+.SH "Typedef Documentation"
+.PP 
+.SS "\fBvar\fP"
+
+.PP
+Shortcut for void pointer\&. 
+.PP
+Definition at line 43 of file util\&.h\&.
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBardp_status_t\fP"
+
+.PP
+Status codes to designate explicit states of operation\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIARDP_SUCCESS \fP\fP
+Operation finished sucessfully\&.
+.PP
+\fBNote:\fP
+.RS 4
+The success value is denoted as '0' in the spirit of *nix-ness\&. 
+.RE
+.PP
+
+.TP
+\fB\fIARDP_FAILURE \fP\fP
+Operation didn't finish correctly\&. 
+.TP
+\fB\fIARDP_UNKNOWN \fP\fP
+Operation aborted or undefined behaviour encountered\&. 
+.PP
+Definition at line 53 of file util\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "static void _Noreturn die (const char * message)\fC [inline]\fP, \fC [static]\fP"
+Helper function to kill the program on unrecoverable error\&. 
+.PP
+Definition at line 75 of file util\&.h\&.
+.PP
+Referenced by main()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "nullptr = 0\fC [static]\fP"
+
+.PP
+Nullptr refers to own definition of C++ nullptr\&. 
+.PP
+Definition at line 48 of file util\&.h\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

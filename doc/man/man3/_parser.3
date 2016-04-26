@@ -1,0 +1,84 @@
+.TH "_parser" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+_parser \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "bool \fBignore_types\fP"
+.br
+.ti -1c
+.RI "bool \fBexpand_prefixes\fP"
+.br
+.ti -1c
+.RI "int \fBstate\fP"
+.br
+.ti -1c
+.RI "\fBardp_rdf_turtle_prefix\fP * \fBprefixes\fP"
+.br
+.ti -1c
+.RI "size_t \fBn_prefixes\fP"
+.br
+.ti -1c
+.RI "uint8_t *\fB_Nullable\fP \fBbase_uri\fP"
+.br
+.ti -1c
+.RI "ardp_linked_list * \fBtokens\fP"
+.br
+.ti -1c
+.RI "void(* \fBerror\fP )(struct \fBcursor\fP cur, \fBtoken\fP tok)"
+.br
+.ti -1c
+.RI "void(* \fBevent\fP )(\fBtoken\fP tok)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 36 of file parser\&.c\&.
+.SH "Field Documentation"
+.PP 
+.SS "uint8_t* \fB_Nullable\fP base_uri"
+
+.PP
+Definition at line 43 of file parser\&.c\&.
+.SS "void( * error) (struct \fBcursor\fP cur, \fBtoken\fP tok)"
+
+.PP
+Definition at line 46 of file parser\&.c\&.
+.SS "void( * event) (\fBtoken\fP tok)"
+
+.PP
+Definition at line 47 of file parser\&.c\&.
+.SS "bool expand_prefixes"
+
+.PP
+Definition at line 38 of file parser\&.c\&.
+.SS "bool ignore_types"
+
+.PP
+Definition at line 37 of file parser\&.c\&.
+.SS "size_t n_prefixes"
+
+.PP
+Definition at line 42 of file parser\&.c\&.
+.SS "\fBardp_rdf_turtle_prefix\fP* prefixes"
+
+.PP
+Definition at line 41 of file parser\&.c\&.
+.SS "int state"
+
+.PP
+Definition at line 40 of file parser\&.c\&.
+.SS "ardp_linked_list* tokens"
+
+.PP
+Definition at line 45 of file parser\&.c\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

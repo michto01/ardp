@@ -1,0 +1,35 @@
+<map id="/Developer/school/ardp/include/ardp/string.h" name="/Developer/school/ardp/include/ardp/string.h">
+<area shape="rect" id="node2" href="$d5/df3/lexer_8h.html" title="/Developer/school/ardp\l/include/ardp/lexer.h" alt="" coords="304,185,462,224"/>
+<area shape="rect" id="node4" href="$dc/d1b/lexers_2turtle_8c.html" title="/Developer/school/ardp\l/src/lib/lexers/turtle.c" alt="" coords="5,285,164,324"/>
+<area shape="rect" id="node5" href="$de/dc5/turtle__test_8c.html" title="/Developer/school/ardp\l/src/lib/lexers/turtle\l_test.c" alt="" coords="188,279,346,331"/>
+<area shape="rect" id="node6" href="$d6/d1c/turtle__parser_8c.html" title="/Developer/school/ardp\l/src/lib/parsers/turtle\l_parser.c" alt="" coords="1063,279,1221,331"/>
+<area shape="rect" id="node7" href="$db/d06/test__lemon_8c.html" title="/Developer/school/ardp\l/src/lib/parsers/test\l_lemon.c" alt="" coords="1201,379,1360,431"/>
+<area shape="rect" id="node8" href="$d1/d49/check__lexer__turtle_8c.html" title="/Developer/school/ardp\l/tests/check_lexer_turtle.c" alt="" coords="553,285,728,324"/>
+<area shape="rect" id="node9" href="$d5/d36/parser_8h.html" title="/Developer/school/ardp\l/include/ardp/parser.h" alt="" coords="536,185,694,224"/>
+<area shape="rect" id="node11" href="$de/d76/rdf_8h.html" title="/Developer/school/ardp\l/include/ardp/rdf.h" alt="" coords="1340,92,1498,131"/>
+<area shape="rect" id="node13" href="$d3/dd7/rdf__term_8c.html" title="Implementation of the rdf_term " alt="" coords="768,185,926,224"/>
+<area shape="rect" id="node14" href="$d2/d02/check__rdf__statement__create_8c.html" title="/Developer/school/ardp\l/tests/check_rdf_statement\l_create.c" alt="" coords="950,179,1131,231"/>
+<area shape="rect" id="node15" href="$d9/d03/check__rdf__term__copy_8c.html" title="Test to spot regression in rdf_term implemenation. " alt="" coords="1456,179,1614,231"/>
+<area shape="rect" id="node16" href="$d9/d79/check__rdf__term__create_8c.html" title="Test to spot regression in rdf_term implemenation. " alt="" coords="1639,179,1797,231"/>
+<area shape="rect" id="node17" href="$dd/d1e/check__rdf__term__is_8c.html" title="Test to spot regression in rdf_term implemenation. " alt="" coords="1820,185,1997,224"/>
+<area shape="rect" id="node19" href="$db/df3/sequence_8h.html" title="/Developer/school/ardp\l/include/ardp/sequence.h" alt="" coords="1674,92,1844,131"/>
+<area shape="rect" id="node21" href="$d2/d16/string_8test_8c.html" title="/Developer/school/ardp\l/src/bin/string.test.c" alt="" coords="1919,92,2077,131"/>
+<area shape="rect" id="node22" href="$d5/def/color_8c.html" title="/Developer/school/ardp\l/src/lib/color.c" alt="" coords="2101,92,2260,131"/>
+<area shape="rect" id="node23" href="$d1/d04/hash_8c.html" title="/Developer/school/ardp\l/src/lib/hash.c" alt="" coords="2284,92,2442,131"/>
+<area shape="rect" id="node24" href="$d8/def/hashmap_8c.html" title="/Developer/school/ardp\l/src/lib/hashmap.c" alt="" coords="2467,92,2625,131"/>
+<area shape="rect" id="node25" href="$d1/db0/string_8c.html" title="/Developer/school/ardp\l/src/lib/string.c" alt="" coords="2649,92,2808,131"/>
+<area shape="rect" id="node26" href="$df/d8e/check__hashmap__get_8c.html" title="/Developer/school/ardp\l/tests/check_hashmap_get.c" alt="" coords="2832,92,3022,131"/>
+<area shape="rect" id="node27" href="$dd/d03/check__hashmap__resize_8c.html" title="/Developer/school/ardp\l/tests/check_hashmap_resize.c" alt="" coords="3046,92,3254,131"/>
+<area shape="rect" id="node28" href="$db/d3b/check__string_8c.html" title="/Developer/school/ardp\l/tests/check_string.c" alt="" coords="3277,92,3436,131"/>
+<area shape="rect" id="node29" href="$d6/d69/check__string__append_8c.html" title="Test to spot regression in string implemenation. " alt="" coords="3460,92,3654,131"/>
+<area shape="rect" id="node30" href="$da/d5e/check__string__append__str_8c.html" title="Test to spot regression in string implemenation. " alt="" coords="3678,92,3894,131"/>
+<area shape="rect" id="node31" href="$df/d9c/check__string__copy_8c.html" title="/Developer/school/ardp\l/tests/check_string_copy.c" alt="" coords="3918,92,4094,131"/>
+<area shape="rect" id="node32" href="$d0/df2/check__string__create_8c.html" title="/Developer/school/ardp\l/tests/check_string_create.c" alt="" coords="4118,92,4305,131"/>
+<area shape="rect" id="node33" href="$db/dd3/check__string__generic__cmp_8c.html" title="Test to spot regression in string implemenation. " alt="" coords="4329,92,4555,131"/>
+<area shape="rect" id="node34" href="$d9/d7f/check__string__strlen_8c.html" title="Test to spot regression in string implemenation. " alt="" coords="4579,92,4761,131"/>
+<area shape="rect" id="node3" href="$d8/da8/ardp_8c.html" title="/Developer/school/ardp\l/src/bin/ardp.c" alt="" coords="371,285,529,324"/>
+<area shape="rect" id="node10" href="$d1/d1e/parsers_2turtle_8c.html" title="/Developer/school/ardp\l/src/lib/parsers/turtle.c" alt="" coords="752,285,910,324"/>
+<area shape="rect" id="node12" href="$d9/de5/rdf__statement_8c.html" title="/Developer/school/ardp\l/src/lib/rdf/rdf_statement.c" alt="" coords="1207,185,1381,224"/>
+<area shape="rect" id="node18" href="$d6/d8f/check__sequence__free_8c.html" title="/Developer/school/ardp\l/tests/check_sequence\l_free.c" alt="" coords="2020,179,2178,231"/>
+<area shape="rect" id="node20" href="$d4/d43/sequence_8c.html" title="/Developer/school/ardp\l/src/lib/sequence.c" alt="" coords="2252,185,2410,224"/>
+</map>

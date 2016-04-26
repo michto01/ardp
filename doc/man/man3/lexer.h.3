@@ -1,0 +1,476 @@
+.TH "/Developer/school/ardp/include/ardp/lexer.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/lexer.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <dispatch/dispatch\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/string\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBardp_lexer_config\fP"
+.br
+.ti -1c
+.RI "struct \fBtoken\fP"
+.br
+.RI "\fIHolds the single lexical unit and its value\&. \fP"
+.ti -1c
+.RI "struct \fBlexer\fP"
+.br
+.RI "\fIHold informations about the lexer as well as the its internal state\&. \fP"
+.ti -1c
+.RI "struct \fBardp_lexer_config\&.logging\fP"
+.br
+.ti -1c
+.RI "struct \fBardp_lexer_config\&.cb\fP"
+.br
+.ti -1c
+.RI "struct \fBlexer\&.env\fP"
+.br
+.ti -1c
+.RI "struct \fBlexer\&.log\fP"
+.br
+.ti -1c
+.RI "struct \fBlexer\&.cb\fP"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int(* \fB_Nullable\fP) (unsigned char *\fB_Nonnull\fP buffer, unsigned len, void *_Nullable arg)"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBlexer_status\fP { \fBARDP_LEXER_TURTLE_STATUS_UNKNOWN\fP, \fBARDP_LEXER_TURTLE_STATUS_CREATED\fP, \fBARDP_LEXER_TURTLE_STATUS_PREINITIALIZED\fP, \fBARDP_LEXER_TURTLE_STATUS_READY\fP }"
+.br
+.RI "\fIInternal state of the lexer used to guard against restricted memory access\&. \fP"
+.ti -1c
+.RI "enum \fBlexer_error\fP { \fBARDP_ERROR_LEXER_INIT_PREREQUISITE\fP = 101, \fBARDP_ERROR_LEXER_MALLOC\fP, \fBARDP_LEXER_READER_NOT_READY\fP, \fBARDP_LEXER_GENERIC_ERROR\fP, \fBARDP_LEXER_ERROR\fP, \fBARDP_LEXER_OMEM\fP }"
+.br
+.RI "\fISet of errors, which can be encountered at the runtime of the lexer\&. \fP"
+.ti -1c
+.RI "enum \fBlexer_log_level\fP { \fBALERT\fP = 1, \fBCRITICAL\fP, \fBERROR\fP, \fBWARNING\fP, \fBNOTICE\fP, \fBINFO\fP, \fBDEBUG\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBardp_lexer_create\fP (void)"
+.br
+.RI "\fICreate new shared instance of lexer\&. \fP"
+.ti -1c
+.RI "int \fBardp_lexer_defaults\fP ()"
+.br
+.RI "\fIPreinitialize lexer with defaults values and prepare it for initialization\&. \fP"
+.ti -1c
+.RI "int \fBardp_lexer_init\fP (struct \fBardp_lexer_config\fP *\fB_Nullable\fP cfg)"
+.br
+.ti -1c
+.RI "void \fBardp_lexer_destroy\fP (void)"
+.br
+.RI "\fIDestroy the shared instance of the lexer\&. \fP"
+.ti -1c
+.RI "int \fBardp_lexer_state\fP (void)"
+.br
+.RI "\fIGet state of the lexer\&. \fP"
+.ti -1c
+.RI "bool \fBardp_lexer_is_ready\fP (void)"
+.br
+.RI "\fICheck ready state of the lexer\&. \fP"
+.ti -1c
+.RI "int \fBardp_lexer_process_block\fP (uint8_t *\fB_Nullable\fP p, size_t len, uint8_t *\fB_Nullable\fP mark, bool is_eof)"
+.br
+.RI "\fILex the block of data\&. \fP"
+.ti -1c
+.RI "int \fBardp_lexer_process_reader\fP (lexer_reader reader, void *\fB_Nullable\fP reader_args)"
+.br
+.RI "\fIProcess reader until the input is exhausted\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Define the formal interface for the ARDP lexer (tokenizer) as well as defines the tokens for the turtle (and N-triples) grammar\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015
+.RE
+.PP
+\fBBug\fP
+.RS 4
+Internal dispatch queue code needs to be cleaned up and locks need to be set properly (currently not working as designed)\&. 
+.RE
+.PP
+
+.PP
+Definition in file \fBlexer\&.h\fP\&.
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct ardp_lexer_config"
+.PP 
+Definition at line 70 of file lexer\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+struct \fBardp_lexer_config\fP \fIcb\fP 
+.br
+.PP
+struct \fBardp_lexer_config\fP \fIlogging\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct token"
+.PP 
+Holds the single lexical unit and its value\&. 
+
+: Geared to be Turtle token type - needs to be generalized\&. 
+.PP
+Definition at line 103 of file lexer\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+char *\fB_Nullable\fP \fIlexem\fP Actual value of the token (optional) 
+.br
+.PP
+int \fItype\fP Enumerated token type 
+.br
+.PP
+.RE
+.PP
+.SH "struct lexer"
+.PP 
+Hold informations about the lexer as well as the its internal state\&. 
+
+
+.PP
+\fBNote:\fP
+.RS 4
+The current implementation hides this structure from the user by declaring global variable shared_lexer\&. This is used for convenience as user don't need to type the lexer in the function call\&. Future version(s) should include the option to allow user to specify this on their own if they want to overload this for eg\&. 
+.RE
+.PP
+
+.PP
+Definition at line 119 of file lexer\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+struct \fBlexer\fP \fIcb\fP Callback used in the lexer
+.PP
+\fBNote:\fP
+.RS 4
+This section was reduced due to rewrite of the lexer states\&. 
+.RE
+.PP
+
+.br
+.PP
+struct \fBlexer\fP \fIenv\fP Lexer environment setup used in Ragel\&.
+.PP
+These variables are required by Ragel to work properly\&. 
+.br
+.PP
+dispatch_queue_t \fB_Null_unspecified\fP \fIevent_queue\fP Queue (~thread) for events dispatching\&. 
+.br
+.PP
+int \fIfinished\fP Denotes if the lexer is still running (used only in file processing)
+.PP
+\fBNote:\fP
+.RS 4
+Should be moved to callback pointer argument\&. 
+.RE
+.PP
+
+.br
+.PP
+dispatch_queue_t \fB_Null_unspecified\fP \fIlexer_queue\fP Queue (~thread) to run lexer at\&. 
+.br
+.PP
+off_t \fIline\fP Current line count in scanned file/block\&. 
+.br
+.PP
+struct \fBlexer\fP \fIlog\fP Debugger and logger helper and level\&. 
+.br
+.PP
+enum \fBlexer_status\fP \fIstate\fP Internal state of the lexer\&. 
+.br
+.PP
+\fButf8\fP \fB_Nullable\fP \fIstring\fP String buffer for the current parsing\&. 
+.br
+.PP
+.RE
+.PP
+.SH "struct lexer\&.env"
+.PP 
+Lexer environment setup used in Ragel\&.
+.PP
+These variables are required by Ragel to work properly\&. 
+.PP
+Definition at line 156 of file lexer\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+int \fIact\fP Actual state 
+.br
+.PP
+int \fIcs\fP Current state 
+.br
+.PP
+uint8_t *\fB_Nullable\fP \fIte\fP Token end 
+.br
+.PP
+uint8_t *\fB_Nullable\fP \fIts\fP Token start 
+.br
+.PP
+.RE
+.PP
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void( ^ _Nullable) (int success)"
+
+.PP
+Definition at line 93 of file lexer\&.h\&.
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBlexer_error\fP"
+
+.PP
+Set of errors, which can be encountered at the runtime of the lexer\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIARDP_ERROR_LEXER_INIT_PREREQUISITE \fP\fP
+.TP
+\fB\fIARDP_ERROR_LEXER_MALLOC \fP\fP
+.TP
+\fB\fIARDP_LEXER_READER_NOT_READY \fP\fP
+.TP
+\fB\fIARDP_LEXER_GENERIC_ERROR \fP\fP
+.TP
+\fB\fIARDP_LEXER_ERROR \fP\fP
+.TP
+\fB\fIARDP_LEXER_OMEM \fP\fP
+.PP
+Definition at line 45 of file lexer\&.h\&.
+.SS "enum \fBlexer_log_level\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIALERT \fP\fP
+Should be corrected immediately 
+.TP
+\fB\fICRITICAL \fP\fP
+Critical conditions 
+.TP
+\fB\fIERROR \fP\fP
+Error conditions 
+.TP
+\fB\fIWARNING \fP\fP
+May indicate that an error will occur if action is not taken\&. 
+.TP
+\fB\fINOTICE \fP\fP
+Events that are unusual, but not error conditions\&. 
+.TP
+\fB\fIINFO \fP\fP
+Normal operational messages that require no action\&. 
+.TP
+\fB\fIDEBUG \fP\fP
+Information useful to developers for debugging the application\&. 
+.PP
+Definition at line 55 of file lexer\&.h\&.
+.SS "enum \fBlexer_status\fP"
+
+.PP
+Internal state of the lexer used to guard against restricted memory access\&. 
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIARDP_LEXER_TURTLE_STATUS_UNKNOWN \fP\fP
+.TP
+\fB\fIARDP_LEXER_TURTLE_STATUS_CREATED \fP\fP
+.TP
+\fB\fIARDP_LEXER_TURTLE_STATUS_PREINITIALIZED \fP\fP
+.TP
+\fB\fIARDP_LEXER_TURTLE_STATUS_READY \fP\fP
+.PP
+Definition at line 34 of file lexer\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "int ardp_lexer_create (void)"
+
+.PP
+Create new shared instance of lexer\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null value if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 180 of file turtle\&.c\&.
+.PP
+References ARDP_FAILURE, ardp_lexer_destroy(), ARDP_LEXER_TURTLE_STATUS_CREATED, ARDP_SUCCESS, DISPATCH_QUEUE_SERIAL, ERROR, lexer::event_queue, lexer::finished, INFO, is, isnt, lexer::lexer_queue, log(), shared_lexer, lexer::state, unlikely, and WARNING\&.
+.PP
+Referenced by main()\&.
+.SS "ardp_lexer_defaults (void)"
+
+.PP
+Preinitialize lexer with defaults values and prepare it for initialization\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 214 of file turtle\&.c\&.
+.PP
+References ARDP_FAILURE, ardp_lexer_state(), ARDP_LEXER_TURTLE_STATUS_CREATED, ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED, ARDP_SUCCESS, column, ERROR, INFO, lexer::line, log(), shared_lexer, and lexer::state\&.
+.PP
+Referenced by main()\&.
+.SS "void ardp_lexer_destroy (void)"
+
+.PP
+Destroy the shared instance of the lexer\&. Clean the lexer with all of its subsidiary structures\&.
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 268 of file turtle\&.c\&.
+.PP
+References lexer::event_queue, INFO, isnt, lexer::lexer_queue, log(), shared_lexer, lexer::string, and string_dealloc()\&.
+.PP
+Referenced by ardp_lexer_create(), and main()\&.
+.SS "int ardp_lexer_init (struct \fBardp_lexer_config\fP *\fB_Nullable\fP cfg)"
+
+.PP
+Definition at line 235 of file turtle\&.c\&.
+.PP
+References ARDP_FAILURE, ardp_lexer_state(), ARDP_LEXER_TURTLE_STATUS_PREINITIALIZED, ARDP_LEXER_TURTLE_STATUS_READY, ARDP_SUCCESS, lexer::cb, lexer::env, ERROR, INFO, log(), lexer::log, shared_lexer, lexer::state, and turtle_start\&.
+.PP
+Referenced by main()\&.
+.SS "bool ardp_lexer_is_ready (void)"
+
+.PP
+Check ready state of the lexer\&. Shorthand for the \fCardp_lexer_turtle_state()\fP with probing the state to \fCARDP_LEXER_STATUS_READY\fP\&.
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 292 of file turtle\&.c\&.
+.PP
+References ardp_lexer_state(), ARDP_LEXER_TURTLE_STATUS_READY, and is\&.
+.PP
+Referenced by ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_process_reader_BUG(), ardp_lexer_process_reader_old(), and ardp_lexer_turtle_process_block()\&.
+.SS "int ardp_lexer_process_block (uint8_t *\fB_Nullable\fP p, size_t len, uint8_t *\fB_Nullable\fP mark, bool is_eof)"
+
+.PP
+Lex the block of data\&. Process single block of data
+.PP
+\fBParameters:\fP
+.RS 4
+\fIp\fP Data to be processed\&. 
+.br
+\fIlen\fP Length of the data\&. 
+.br
+\fImark\fP Helper to process the string marks\&. 
+.br
+\fIis_eof\fP End of the file indicator\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 299 of file turtle\&.c\&.
+.PP
+References A, ARDP_FAILURE, ardp_lexer_is_ready(), ARDP_SUCCESS, BASE, BLANK_LITERAL, BOOLEAN_LITERAL, COMMA, DECIMAL_LITERAL, DOT, DOUBLE_LITERAL, lexer::env, ERROR, lexer::event_queue, lexer::finished, HAT, hex(), INTEGER_LITERAL, IRIREF, L_CURLY, L_ROUND, L_SQUARE, LANGTAG, lexer_emit_token(), lexer_emit_token_const(), lexer_emit_u8_token(), likely, log(), not, PREFIX, QNAME, R_CURLY, R_ROUND, R_SQUARE, SEMICOLON, shared_lexer, SPARQL_BASE, SPARQL_PREFIX, lexer::string, string_append_char(), string_append_utf8(), string_dealloc(), string_finish(), STRING_LITERAL, string_new(), and var\&.
+.PP
+Referenced by ardp_lexer_process_reader(), and ardp_lexer_process_reader_BUG()\&.
+.SS "int ardp_lexer_process_reader (lexer_reader reader, void *\fB_Nullable\fP reader_args)"
+
+.PP
+Process reader until the input is exhausted\&. Continually process the blocks of data until the reader data stops providing new data to feed the underlying \fCardp_lexer_turtle_process_block\fP\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIreader\fP Function pointer to reader more data\&. 
+.br
+\fIreader_args\fP Additional arguments for the reader\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 13036 of file turtle\&.c\&.
+.PP
+References ARDP_LEXER_GENERIC_ERROR, ardp_lexer_is_ready(), ardp_lexer_process_block(), BUFSIZE, lexer::env, lexer::finished, shared_lexer, and turtle_error\&.
+.PP
+Referenced by main()\&.
+.SS "int ardp_lexer_state (void)"
+
+.PP
+Get state of the lexer\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Status of operation\&. Non-null if error, zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 280 of file turtle\&.c\&.
+.PP
+References ARDP_LEXER_TURTLE_STATUS_UNKNOWN, is, shared_lexer, and lexer::state\&.
+.PP
+Referenced by ardp_lexer_defaults(), ardp_lexer_init(), and ardp_lexer_is_ready()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

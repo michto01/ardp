@@ -1,0 +1,225 @@
+.TH "lexer" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lexer \- Hold informations about the lexer as well as the its internal state\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <lexer\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "dispatch_queue_t \fB_Null_unspecified\fP \fBlexer_queue\fP"
+.br
+.RI "\fIQueue (~thread) to run lexer at\&. \fP"
+.ti -1c
+.RI "dispatch_queue_t \fB_Null_unspecified\fP \fBevent_queue\fP"
+.br
+.RI "\fIQueue (~thread) for events dispatching\&. \fP"
+.ti -1c
+.RI "enum \fBlexer_status\fP \fBstate\fP"
+.br
+.RI "\fIInternal state of the lexer\&. \fP"
+.ti -1c
+.RI "off_t \fBline\fP"
+.br
+.RI "\fICurrent line count in scanned file/block\&. \fP"
+.ti -1c
+.RI "\fButf8\fP \fB_Nullable\fP \fBstring\fP"
+.br
+.RI "\fIString buffer for the current parsing\&. \fP"
+.ti -1c
+.RI "\fBint\fP \fBfinished\fP"
+.br
+.RI "\fIDenotes if the lexer is still running (used only in file processing) \fP"
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   \fBint\fP \fBcs\fP"
+.br
+.RI "\fICurrent state\&. \fP"
+.ti -1c
+.RI "   \fBint\fP \fBact\fP"
+.br
+.RI "\fIActual state\&. \fP"
+.ti -1c
+.RI "   uint8_t *\fB_Nullable\fP \fBts\fP"
+.br
+.RI "\fIToken start\&. \fP"
+.ti -1c
+.RI "   uint8_t *\fB_Nullable\fP \fBte\fP"
+.br
+.RI "\fIToken end\&. \fP"
+.ti -1c
+.RI "} \fBenv\fP"
+.br
+.RI "\fILexer environment setup used in Ragel\&. \fP"
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   \fBint\fP \fBlevel\fP"
+.br
+.RI "\fIHow verbose is the output\&. \fP"
+.ti -1c
+.RI "   \fBint\fP(* \fB_Nullable\fP )(\fBint\fP \fBlevel\fP, const char 
+.br
+      *_Nullable str)"
+.br
+.RI "\fILog function to call for the level\&. \fP"
+.ti -1c
+.RI "} \fBlog\fP"
+.br
+.RI "\fIDebugger and logger helper and level\&. \fP"
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   \fBint\fP(^ \fB_Nullable\fP )(\fBint\fP type, \fButf8\fP _Nullable 
+.br
+      value, size_t \fBline\fP, size_t col)"
+.br
+.RI "\fIFunction which emits the token to the parent object(s)\&. \fP"
+.ti -1c
+.RI "} \fBcb\fP"
+.br
+.RI "\fICallback used in the lexer\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Hold informations about the lexer as well as the its internal state\&. 
+
+
+.PP
+\fBNote:\fP
+.RS 4
+The current implementation hides this structure from the user by declaring global variable shared_lexer\&. This is used for convenience as user don't need to type the lexer in the function call\&. Future version(s) should include the option to allow user to specify this on their own if they want to overload this for eg\&. 
+.RE
+.PP
+
+.SH "Field Documentation"
+.PP 
+.SS "\fBint\fP( * _Nullable) (\fBint\fP \fBlevel\fP, const char *_Nullable str)"
+
+.PP
+Log function to call for the level\&. 
+.SS "\fBint\fP( ^ _Nullable) (\fBint\fP type, const char *_Nullable value) (\fBint\fP type, \fButf8\fP _Nullable value, size_t line, size_t col)"
+
+.PP
+Function which emits the token to the parent object(s)\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fItype\fP Type of the token\&. 
+.br
+\fIvalue\fP Optional value of the token\&.
+.RE
+.PP
+: Should take arbitrary token type not only the turtle enum\&. 
+.SS "\fBint\fP act"
+
+.PP
+Actual state\&. 
+.PP
+Referenced by ardp_lexer_init(), ardp_lexer_process_block(), and ardp_lexer_turtle_process_block()\&.
+.SS "struct { \&.\&.\&. }   \fBcb\fP"
+
+.PP
+Callback used in the lexer\&. 
+.PP
+\fBNote:\fP
+.RS 4
+This section was reduced due to rewrite of the lexer states\&. 
+.RE
+.PP
+
+.PP
+Referenced by ardp_lexer_init(), lexer_emit_token(), lexer_emit_token_const(), and lexer_emit_u8_token()\&.
+.SS "\fBint\fP cs"
+
+.PP
+Current state\&. 
+.PP
+Referenced by ardp_lexer_init(), ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_process_reader_old(), and ardp_lexer_turtle_process_block()\&.
+.SS "struct { \&.\&.\&. }   env"
+
+.PP
+Lexer environment setup used in Ragel\&. These variables are required by Ragel to work properly\&. 
+.PP
+Referenced by ardp_lexer_init(), ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_process_reader_old(), and ardp_lexer_turtle_process_block()\&.
+.SS "dispatch_queue_t \fB_Null_unspecified\fP event_queue"
+
+.PP
+Queue (~thread) for events dispatching\&. 
+.PP
+Referenced by ardp_lexer_create(), ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_turtle_process_block(), lexer_emit_token(), lexer_emit_token_const(), and lexer_emit_u8_token()\&.
+.SS "\fBint\fP finished"
+
+.PP
+Denotes if the lexer is still running (used only in file processing) 
+.PP
+\fBNote:\fP
+.RS 4
+Should be moved to callback pointer argument\&. 
+.RE
+.PP
+
+.PP
+Referenced by ardp_lexer_create(), ardp_lexer_process_block(), ardp_lexer_process_reader(), ardp_lexer_process_reader_old(), and ardp_lexer_turtle_process_block()\&.
+.SS "\fBint\fP level"
+
+.PP
+How verbose is the output\&. 
+.PP
+Referenced by ardp_lexer_init(), and log()\&.
+.SS "dispatch_queue_t \fB_Null_unspecified\fP lexer_queue"
+
+.PP
+Queue (~thread) to run lexer at\&. 
+.PP
+Referenced by ardp_lexer_create(), and ardp_lexer_process_reader()\&.
+.SS "off_t line"
+
+.PP
+Current line count in scanned file/block\&. 
+.PP
+Referenced by ardp_lexer_defaults()\&.
+.SS "struct { \&.\&.\&. }   log"
+
+.PP
+Debugger and logger helper and level\&. 
+.PP
+Referenced by ardp_lexer_init(), and log()\&.
+.SS "enum \fBlexer_status\fP state"
+
+.PP
+Internal state of the lexer\&. 
+.PP
+Referenced by ardp_lexer_create(), ardp_lexer_defaults(), ardp_lexer_init(), ardp_lexer_state(), and ardp_lexer_turtle_debug()\&.
+.SS "\fButf8\fP \fB_Nullable\fP string"
+
+.PP
+String buffer for the current parsing\&. 
+.PP
+Referenced by ardp_lexer_destroy(), ardp_lexer_process_block(), ardp_lexer_turtle_process_block(), and lexer_emit_u8_token()\&.
+.SS "uint8_t* \fB_Nullable\fP te"
+
+.PP
+Token end\&. 
+.PP
+Referenced by ardp_lexer_init(), ardp_lexer_process_block(), and ardp_lexer_turtle_process_block()\&.
+.SS "uint8_t* \fB_Nullable\fP ts"
+
+.PP
+Token start\&. 
+.PP
+Referenced by ardp_lexer_init(), ardp_lexer_process_block(), and ardp_lexer_turtle_process_block()\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

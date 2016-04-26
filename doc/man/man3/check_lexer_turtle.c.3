@@ -1,0 +1,128 @@
+.TH "/Developer/school/ardp/tests/check_lexer_turtle.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/tests/check_lexer_turtle.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <iso646\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <dispatch/dispatch\&.h>\fP
+.br
+\fC#include <ardp/lexer\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+\fC#include <ardp/parser\&.h>\fP
+.br
+\fC#include <zlib\&.h>\fP
+.br
+\fC#include <bzlib\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBlexer_error\fP (int level, const char *\fB_Nullable\fP str)"
+.br
+.ti -1c
+.RI "int \fBread_gzip\fP (uint8_t *p, unsigned int len, void *arg)"
+.br
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP = -1"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.ti -1c
+.RI "static uint8_t *\fB_Nullable\fP const \fBkLexerTestText\fP"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "static int \fBlexer_error\fP (int level, const char *\fB_Nullable\fP str)\fC [static]\fP"
+
+.PP
+Definition at line 30 of file check_lexer_turtle\&.c\&.
+.PP
+Referenced by main()\&.
+.SS "int main (int argc, char ** argv)"
+
+.PP
+Definition at line 68 of file check_lexer_turtle\&.c\&.
+.PP
+References ardp_lexer_create(), ardp_lexer_defaults(), ardp_lexer_destroy(), ardp_lexer_init(), ardp_lexer_process_reader(), ARDP_SUCCESS, ARDP_UNKNOWN, ardp_lexer_config::cb, CRITICAL, die(), is, isnt, lexer_error(), ardp_lexer_config::logging, and read_gzip()\&.
+.SS "int read_gzip (uint8_t * p, unsigned int len, void * arg)"
+
+.PP
+Definition at line 35 of file check_lexer_turtle\&.c\&.
+.PP
+Referenced by main()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "int color_stdout_is_tty = -1"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 28 of file check_lexer_turtle\&.c\&.
+.SS "uint8_t* \fB_Nullable\fP const kLexerTestText\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= ( uint8_t * )
+      "  @base <http://example\&.org/> \&.\n"
+      "  @prefix rdf: <http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#> \&.\n"
+      "  @prefix rdfs: <http://www\&.w3\&.org/2000/01/rdf-schema#> \&.\n"
+      "  @prefix foaf: <http://xmlns\&.com/foaf/0\&.1/> \&.\n"
+      "  @prefix rel: <http://www\&.perceive\&.net/schemas/relationship/> \&. \n"
+      ""
+      "  <#green-goblin>\n"
+      "      rel:enemyOf <#spiderman> ;\n"
+      "      a foaf:Person ;    # in the context of the Marvel universe\n"
+      "      foaf:name \"Green Goblin\" \&.\n"
+      ""
+      "  <#spiderman>\n"
+      "      rel:enemyOf <#green-goblin> ;\n"
+      "      a foaf:Person ;\n"
+      "     foaf:name \'Spiderman\' , \"Человек-паук\"@ru \&.\n"
+      ""
+      "  @prefix : <http://example\&.org/stuff/1\&.0/> \&.\n"
+      "  (1 -2\&.0 -3E-1 true false) :p \"w\" \&."
+      ""
+      "  :a :b\n"
+      "  [ rdf:first \"apple\";\n"
+      "     rdf:rest [ rdf:first \"banana\";\n"
+      "     rdf:rest rdf:nil ]\n"
+      "  ] \&."
+.fi
+.PP
+Definition at line 41 of file check_lexer_turtle\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

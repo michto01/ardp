@@ -1,0 +1,18 @@
+.TH "md___developer_school_ardp_doc_introduction" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+md___developer_school_ardp_doc_introduction \- Introduction 
+One man\\'s constant is another man\\'s variable\&. -- A\&.J\&. Perlis
+.PP
+For humans extracting information from reading the web content is not very challenging, but for machine it's exponentially more complex\&. To resolve this complexion in extraction important and relevant information from the web the extension of WWW was proposed\&. This extension is called \fCsemantic web\fP\&.
+.PP
+It helps with extracting and processing information from web by human but also more importantly to machines\&.
+.PP
+Probably most important goal of the semantic web is to describe relationships between individual data sources\&. For this exact purpose as one of the pillars of the semantic web \fCResource Description Framework\fP - \fC(RDF)\fP exists\&. The RDF denotes those relationships as \fCtriples\fP which then form vast graphs\&.
+.PP
+Primary format for description of triples in RDF become \fCXML/RDF\fP\&. Due to it's markup based syntax of XML it's easy for the machines to extrapolate the data from it using already available tools and libraries\&. The cons of this format are huge file sizes because of the markup overhead and the XML syntax is not optimized for human readability\&. This predicament gave birth to other formats how to improve the description of the triples\&. Those formats are usually not compatible between each other and present different solution to the problems\&.
+.PP
+One of the most know formats is \fCRDF/Turtle\fP which is a subset of larger and more powerful syntax Notation-3 usually denoted as simply \fCN3\fP\&.
+.PP
+This thesis focuses exactly on this format and it's simpler subset \fCN-Triples\fP\&. The goal of the implementation if to create memory-efficient, high performance parser to allow fast readout of the triples from files\&. 

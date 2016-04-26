@@ -1,0 +1,48 @@
+.TH "rdf_statement" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+rdf_statement \- 
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <rdf\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "\fBstruct\fP \fBrdf_term\fP * \fBsubject\fP"
+.br
+.ti -1c
+.RI "\fBstruct\fP \fBrdf_term\fP * \fBpredicate\fP"
+.br
+.ti -1c
+.RI "\fBstruct\fP \fBrdf_term\fP * \fBobject\fP"
+.br
+.ti -1c
+.RI "\fBstruct\fP \fBrdf_term\fP * \fBgraph\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "\fBstruct\fP \fBrdf_term\fP* graph"
+
+.PP
+Referenced by rdf_statement_clear(), rdf_statement_compare(), rdf_statement_copy(), rdf_statement_equals(), and rdf_statement_from_nodes()\&.
+.SS "\fBstruct\fP \fBrdf_term\fP* object"
+
+.PP
+Referenced by _triple(), rdf_statement_clear(), rdf_statement_compare(), rdf_statement_copy(), rdf_statement_equals(), rdf_statement_from_nodes(), and yy_reduce()\&.
+.SS "\fBstruct\fP \fBrdf_term\fP* predicate"
+
+.PP
+Referenced by _triple(), rdf_statement_clear(), rdf_statement_compare(), rdf_statement_copy(), rdf_statement_equals(), rdf_statement_from_nodes(), and yy_reduce()\&.
+.SS "\fBstruct\fP \fBrdf_term\fP* subject"
+
+.PP
+Referenced by _triple(), rdf_statement_clear(), rdf_statement_compare(), rdf_statement_copy(), rdf_statement_equals(), rdf_statement_from_nodes(), and yy_reduce()\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

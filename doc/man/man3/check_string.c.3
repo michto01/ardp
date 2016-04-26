@@ -1,0 +1,51 @@
+.TH "/Developer/school/ardp/tests/check_string.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/tests/check_string.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char ** argv)"
+
+.PP
+Definition at line 10 of file check_string\&.c\&.
+.PP
+References isnt, string_alloc(), string_append_char(), string_append_utf8(), string_dealloc(), and string_new()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "int color_stdout_is_tty"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 8 of file check_string\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

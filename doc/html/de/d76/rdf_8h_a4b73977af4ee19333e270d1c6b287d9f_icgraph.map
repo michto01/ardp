@@ -1,0 +1,8 @@
+<map id="rdf_term_from_curie" name="rdf_term_from_curie">
+<area shape="rect" id="node2" href="$d2/d02/check__rdf__statement__create_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="211,5,261,31"/>
+<area shape="rect" id="node3" href="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14" title="yy_reduce" alt="" coords="195,55,278,80"/>
+<area shape="rect" id="node4" href="$d6/d1c/turtle__parser_8c.html#a3c36da155e7cc782a7c759461bfc4acb" title="Parse" alt="" coords="326,55,382,80"/>
+<area shape="rect" id="node5" href="$db/d06/test__lemon_8c.html#a32f57dfc8fb69715ace3977789c4010e" title="ardp_parser_exec" alt="" coords="431,29,560,55"/>
+<area shape="rect" id="node6" href="$db/d06/test__lemon_8c.html#a5f6da0e12004e85804719717c0fe18d0" title="Flush parser to end one parsing unit. " alt="" coords="430,79,561,104"/>
+<area shape="rect" id="node7" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="609,79,660,104"/>
+</map>

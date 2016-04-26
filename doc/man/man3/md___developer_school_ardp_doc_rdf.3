@@ -1,0 +1,79 @@
+.TH "md___developer_school_ardp_doc_rdf" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+md___developer_school_ardp_doc_rdf \- rdf 
+#1 Resource Description Framework
+.PP
+Resource Description Framework (from here on referred to as simply \fCRDF\fP) is \fCW3C\fP specification for description and modeling of objects, their relationships and properties\&. Data stored in RDF format is formed by \fCTRIPLET: SUBJECT - PREDICAMENT - OBJECT\fP\&. The triplet tells us: 
+.PP
+.nf
+"SUBJECT has property PREDICAMENT and the predicament has value of
+OBJECT"
+
+.fi
+.PP
+.PP
+For storing RDF data the special storage techniques and tools were designed, which allows additional functions such as querying, inserting or deleting the data inside\&.
+.PP
+The other rather interesting property of RDF is ability to deduce additional information - in simplicity it is creation of triplets not (physically) existing in the RDF storage\&.
+.PP
+.SS "1\&.1 Relationship with the Semantic Web"
+.PP
+Semantic web is all about the data\&. On the internet there are large quantities of the data available in different forms\&. The most dominant forms are still texts, images and tables\&. Those are easy to understand for human, as he draws his own logical conclusions about the data and links them together\&.
+.PP
+Machines do not possess such ability to do logical deductions, so how it can then recognize relationships between information? This exact problem is challenged by \fCSemantic Web\fP\&.
+.PP
+The basic principle is to complement the in human readable form (text, image \&.\&.\&.) by metadata\&. And from the metadata the machine will determine relationships between objects\&.
+.PP
+The semantic web development is driven by the World Wide Web Consortium and it's technologies specifications contains specification for \fCRDF\fP and \fCOWL\fP\&.
+.PP
+.SS "1\&.2 RDF as a graph"
+.PP
+At the data represented in \fCRDF metadata\fP we can look as on oriented graph\&. The root node is represented by subject, edge is predicament and the result node is object\&. The nodes can be of following types:
+.IP "\(bu" 2
+Entities (has its own definition in dictionary, has its own URI)
+.IP "\(bu" 2
+Literals
+.IP "\(bu" 2
+Blank nodes (not identified by URI)
+.PP
+.PP
+.SS "1\&.3 RDF serialization formats"
+.PP
+For exchanging the \fCRDF metadata\fP there are numerous file formats in use\&. The main focus of this thesis in on the \fCNotation 3\fP and particularly it's subset: \fCTurtle\fP, \fCN-Triples\fP and \fCN-Quads\fP\&. Other well known formats are: \fCRDF/XML\fP, \fCRDF/JSON\fP, \fCTriG\fP\&. For the following discussion about each format the following example metadata will be used:
+.PP
+OBJECT PERDICAMENT SUBJECT  ex:schools::VSB ex:studiesAt ex:Student 'xyz123' ex:login ex:Student ex:Student ex:teaches ex:Profesor 
+.SS "1\&.3\&.1 RDF/XML"
+.PP
+Primary format for the data specified in \fCW3C\fP documents in 1999 for semantic web RDF description\&. ```xml <?xml version='1\&.0' encoding='UTF-8'?> <rdf:RDF xmlns:rdf='http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#' xmlns:ex='http://example\&.com/#'>
+.PP
+<rdf:Description rdf:about='http://example\&.com/Student'> <ex:studiesAt>http://example.com/schools#VSB</ex:studiesAt> <ex:login>xyz123</ex:login> </rdf:Description>
+.PP
+<rdf:Description rdf:about='http://example\&.com/Profesor'> <ex:teaches>http://example.com/Student</ex:teaches> </rdf:Description> </rdf:RDF> ```
+.PP
+.SS "1\&.3\&.2 RDF/JSON"
+.PP
+Based on format which drives \fCWeb 2\&.0\fP\&. \fCJSON\fP notation was specified for javaScript objects ( hence the name JSON - JavaScript Object Notation)\&. It gained popularity in recent years and therefore it should not be supprise to anyone that it's used as alternative to more verbose \fCRDF/XML\fP syntax
+.PP
+```json { 'http://example\&.org/Student' : { 'http://example\&.org/#studiesAt' : [ { 'value' : 'http://example\&.com/schools#VSB', 'type' : 'uri' } ], 'http://example\&.org/#login' : [ { 'value' : 'xyz123', 'type' : 'literal' } ] }, 'http://example\&.org/Profesor' : { 'http://example\&.org/#teaches' : [ { 'value' : 'http://example\&.com/Student', 'type' : 'uri' } ] } } ```
+.PP
+.SS "1\&.3\&.3 Turtle"
+.PP
+Subset of the \fCNotation 3\fP syntax omitting some less common construction such as implication (\fC=>\fP) and keywords such as \fChas\fP\&. Currently most common alternative to the \fCRDF/XML\fP syntax\&.
+.PP
+```ruby  ns0: http://example.com/# \&.
+.PP
+http://example.com/Student ns0:studiesAt 'http://example\&.com/schools#VSB' ; ns0:login 'xyz123' \&.
+.PP
+http://example.com/Profesor ns0:teaches 'http://example\&.com/Student' \&. ```
+.PP
+.SS "1\&.3\&.3 N-Triples"
+.PP
+The subset of the \fCTurtle\fP notation simplifying it's syntax and omitting more complex construction in favor of very simple triple syntax\&.
+.PP
+```xml http://example.com/Student http://example.com/#studiesAt 'http://example\&.com/schools#VSB' \&. http://example.com/Student http://example.com/#login 'xyz123' \&. http://example.com/Profesor http://example.com/#teaches 'http://example\&.com/Student' \&. ```
+.PP
+As is seen from those examples, the \fCN3\fP based examples are much easier to read to human\&.
+.PP
+ 

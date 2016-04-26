@@ -1,0 +1,33 @@
+<map id="ardp_parser_create_internal" name="ardp_parser_create_internal">
+<area shape="rect" id="node2" href="$db/d06/test__lemon_8c.html#a4a0713bc1629bb12449adb1a7a483e56" title="_add_namespace" alt="" coords="191,245,318,271"/>
+<area shape="rect" id="node3" href="$d6/df3/hashmap_8h.html#a14a559379f309ebc5a9e3b27d30ff1d9" title="Creates new hashmap. " alt="" coords="389,56,481,81"/>
+<area shape="rect" id="node13" href="$db/d06/test__lemon_8c.html#a5fa6bd7161ba75252a3ac64228c70767" title="_bnode" alt="" coords="222,560,288,585"/>
+<area shape="rect" id="node16" href="$db/d06/test__lemon_8c.html#acea320599200403c5eed9eaa0f8750ea" title="_rebase" alt="" coords="400,460,470,485"/>
+<area shape="rect" id="node18" href="$db/d06/test__lemon_8c.html#ab48aab69d9c6f5e7e073a50e505e1fa0" title="_triple" alt="" coords="226,409,284,435"/>
+<area shape="rect" id="node6" href="$d6/df3/hashmap_8h.html#ad934ebd5ac3f4ae04455b0938d3ae8c6" title="Add an element to the hashmap. " alt="" coords="393,131,477,156"/>
+<area shape="rect" id="node11" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="568,435,658,460"/>
+<area shape="rect" id="node4" href="$d8/def/hashmap_8c.html#aa9d77f3a79a15dc3305a9f80ef38db9a" title="Free the map. " alt="" coords="574,31,652,56"/>
+<area shape="rect" id="node5" href="$d8/def/hashmap_8c.html#ac29d6f579b56c940492eb213ba966d80" title="next_prime" alt="" coords="743,5,830,31"/>
+<area shape="rect" id="node7" href="$d8/def/hashmap_8c.html#aba09e753480eeaf5aec8c28843dd1415" title="Return the integer of the location in data to store the point to the item, or MAP_FULL. " alt="" coords="900,131,984,156"/>
+<area shape="rect" id="node9" href="$d8/def/hashmap_8c.html#ac7c150e717f6d2ede0549e1203334159" title="Doubles the size of the hashmap, and rehashes all the elements. " alt="" coords="565,80,661,105"/>
+<area shape="rect" id="node8" href="$d8/def/hashmap_8c.html#abce75d7bee940e4582d75e4260bd6468" title="map_hash_int_diff" alt="" coords="1034,156,1164,181"/>
+<area shape="rect" id="node10" href="$d8/def/hashmap_8c.html#ad934ebd5ac3f4ae04455b0938d3ae8c6" title="Add an element to the hashmap. " alt="" coords="744,80,828,105"/>
+<area shape="rect" id="node12" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="902,435,982,460"/>
+<area shape="rect" id="node14" href="$da/d66/string_8h.html#aaded537f5c2631707954b4d2ec7bfca6" title="Create new string from string buffer. " alt="" coords="386,609,484,635"/>
+<area shape="rect" id="node15" href="$d1/db0/string_8c.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="557,685,670,711"/>
+<area shape="rect" id="node17" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="734,535,838,560"/>
+<area shape="rect" id="node19" href="$da/dec/color_8h.html#a34adbd47a4d5e4e1dac1e7265fe1fe64" title="Print to stream with color Supported. " alt="" coords="391,411,480,436"/>
+<area shape="rect" id="node20" href="$db/d06/test__lemon_8c.html#a75806af329d99c4a3ba569197f9b576f" title="expand_curie" alt="" coords="385,309,486,335"/>
+<area shape="rect" id="node29" href="$db/d06/test__lemon_8c.html#ac45847426934034dc0143c048d219e17" title="expand_relative_uri" alt="" coords="366,509,504,535"/>
+<area shape="rect" id="node21" href="$de/d76/rdf_8h.html#ab59c6c140e76e6f83d575e343ade47f4" title="term_is_curie" alt="" coords="562,232,664,257"/>
+<area shape="rect" id="node22" href="$da/d66/string_8h.html#a134c79b629c363220b78fdcf761a69eb" title="Length of the fat&#45;pointer string. " alt="" coords="739,384,833,409"/>
+<area shape="rect" id="node23" href="$d6/df3/hashmap_8h.html#a513e889593c7cbde4239f19546a23b65" title="Get an element from the hashmap. " alt="" coords="905,181,979,207"/>
+<area shape="rect" id="node24" href="$db/d06/test__lemon_8c.html#a048c4cea456ff9e0b73d32809a467fc7" title="u8_concatenate" alt="" coords="728,283,844,308"/>
+<area shape="rect" id="node25" href="$db/d06/test__lemon_8c.html#a7bff91aaad6f8360b67ae2587704cc4a" title="term_uri_append" alt="" coords="552,484,674,509"/>
+<area shape="rect" id="node27" href="$db/d06/test__lemon_8c.html#ab54ea0c5ee856010ffa0c1f08b012faa" title="extract_prefix" alt="" coords="562,333,664,359"/>
+<area shape="rect" id="node26" href="$da/d66/string_8h.html#a37392b4b5db92c2f361fdee529b5e055" title="Append two ardp string to one another. " alt="" coords="722,485,850,511"/>
+<area shape="rect" id="node28" href="$da/d66/string_8h.html#a4e7997b3931144a18e8721e5b9d621e1" title="Locate first occurrence of character in string. " alt="" coords="756,333,817,359"/>
+<area shape="rect" id="node30" href="$de/d76/rdf_8h.html#a077e36f924f1b89623426c439e5c371e" title="term_is_uri" alt="" coords="898,611,986,636"/>
+<area shape="rect" id="node31" href="$db/d06/test__lemon_8c.html#ad328964ac2e9663a4ec5f7caed1e4244" title="is_relative_uri" alt="" coords="561,636,665,661"/>
+<area shape="rect" id="node32" href="$db/d06/test__lemon_8c.html#ad75ab20778b2dd00e192b5c175c6c76e" title="uri_has_scheme" alt="" coords="727,636,846,661"/>
+</map>

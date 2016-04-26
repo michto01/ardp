@@ -1,0 +1,61 @@
+.TH "/Developer/school/ardp/tests/check_rdf_term_is.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/tests/check_rdf_term_is.c \- Test to spot regression in \fBrdf_term\fP implemenation\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <ardp/rdf\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP = -1"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Test to spot regression in \fBrdf_term\fP implemenation\&. 
+
+This files tests the function which are checks term types 
+.PP
+Definition in file \fBcheck_rdf_term_is\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char ** argv)"
+
+.PP
+Definition at line 17 of file check_rdf_term_is\&.c\&.
+.PP
+References rdf_term_free(), rdf_term_from_blank(), rdf_term_from_curie(), rdf_term_from_literal(), rdf_term_from_uri(), string_create(), term_is_blank(), term_is_curie(), term_is_literal(), and term_is_uri()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "int color_stdout_is_tty = -1"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 15 of file check_rdf_term_is\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

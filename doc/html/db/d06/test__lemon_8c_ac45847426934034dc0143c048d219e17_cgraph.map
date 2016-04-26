@@ -1,0 +1,10 @@
+<map id="expand_relative_uri" name="expand_relative_uri">
+<area shape="rect" id="node2" href="$db/d06/test__lemon_8c.html#ad328964ac2e9663a4ec5f7caed1e4244" title="is_relative_uri" alt="" coords="200,5,304,31"/>
+<area shape="rect" id="node4" href="$de/d76/rdf_8h.html#a077e36f924f1b89623426c439e5c371e" title="term_is_uri" alt="" coords="537,31,625,56"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="207,107,297,132"/>
+<area shape="rect" id="node7" href="$db/d06/test__lemon_8c.html#a7bff91aaad6f8360b67ae2587704cc4a" title="term_uri_append" alt="" coords="191,157,313,183"/>
+<area shape="rect" id="node3" href="$db/d06/test__lemon_8c.html#ad75ab20778b2dd00e192b5c175c6c76e" title="uri_has_scheme" alt="" coords="366,5,485,31"/>
+<area shape="rect" id="node6" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="541,157,621,183"/>
+<area shape="rect" id="node8" href="$da/d66/string_8h.html#a37392b4b5db92c2f361fdee529b5e055" title="Append two ardp string to one another. " alt="" coords="361,157,489,183"/>
+<area shape="rect" id="node9" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="373,207,477,232"/>
+</map>

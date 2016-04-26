@@ -1,0 +1,262 @@
+.TH "/Developer/school/ardp/include/ardp/hash.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/hash.h \- Hashing function to choose from in hashmap\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "unsigned int \fBhash_simple\fP (char *str)"
+.br
+.RI "\fIA Simple Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_rs\fP (char *str)"
+.br
+.RI "\fIRS Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_js\fP (char *str)"
+.br
+.RI "\fIJS Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_pjw\fP (char *str)"
+.br
+.RI "\fIP\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_elf\fP (char *str)"
+.br
+.RI "\fIELF Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_bkdr\fP (char *str)"
+.br
+.RI "\fIBKDR Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_sdbm\fP (char *str)"
+.br
+.RI "\fISDBM Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_djb\fP (char *str)"
+.br
+.RI "\fIDJB Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_ap\fP (char *str)"
+.br
+.RI "\fIAP Hash Function\&. \fP"
+.ti -1c
+.RI "unsigned int \fBhash_crc\fP (char *str)"
+.br
+.RI "\fICRC Hash Function\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Hashing function to choose from in hashmap\&. 
+
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBVersion:\fP
+.RS 4
+1\&.0\&.2 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2015 
+.RE
+.PP
+
+.PP
+Definition in file \fBhash\&.h\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "unsigned int hash_ap (char * str)"
+
+.PP
+AP Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 104 of file hash\&.c\&.
+.SS "unsigned int hash_bkdr (char * str)"
+
+.PP
+BKDR Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 73 of file hash\&.c\&.
+.SS "unsigned int hash_crc (char * str)"
+
+.PP
+CRC Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 117 of file hash\&.c\&.
+.SS "unsigned int hash_djb (char * str)"
+
+.PP
+DJB Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 94 of file hash\&.c\&.
+.SS "unsigned int hash_elf (char * str)"
+
+.PP
+ELF Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 58 of file hash\&.c\&.
+.SS "unsigned int hash_js (char * str)"
+
+.PP
+JS Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 28 of file hash\&.c\&.
+.SS "unsigned int hash_pjw (char * str)"
+
+.PP
+P\&. J\&. Weinberger Hash Function
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 38 of file hash\&.c\&.
+.SS "unsigned int hash_rs (char * str)"
+
+.PP
+RS Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 15 of file hash\&.c\&.
+.SS "unsigned int hash_sdbm (char * str)"
+
+.PP
+SDBM Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 84 of file hash\&.c\&.
+.SS "unsigned int hash_simple (char * str)"
+
+.PP
+A Simple Hash Function\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIstr\fP String to generate hash from
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Hash for the string\&. 
+.RE
+.PP
+
+.PP
+Definition at line 5 of file hash\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

@@ -1,0 +1,22 @@
+<map id="ardp_lexer_process_block" name="ardp_lexer_process_block">
+<area shape="rect" id="node2" href="$dc/d1b/lexers_2turtle_8c.html#ae4b618a2f96f7104b8b5f18e01c00ae3" title="Check ready state of the lexer. " alt="" coords="202,5,344,31"/>
+<area shape="rect" id="node4" href="$dc/d1b/lexers_2turtle_8c.html#ab73368bf039341a2167ad06ae8783f44" title="hex" alt="" coords="251,55,294,80"/>
+<area shape="rect" id="node5" href="$dc/d1b/lexers_2turtle_8c.html#a14af14c96b88511cdc9a7cae091bed84" title="lexer_emit_token" alt="" coords="211,104,334,129"/>
+<area shape="rect" id="node7" href="$dc/d1b/lexers_2turtle_8c.html#af80c03b79dfa6fa27489650ba264e307" title="lexer_emit_token_const" alt="" coords="192,153,354,179"/>
+<area shape="rect" id="node8" href="$dc/d1b/lexers_2turtle_8c.html#aeaa3c48160e7c76bea14d3dd0a2b57e0" title="lexer_emit_u8_token" alt="" coords="200,407,345,432"/>
+<area shape="rect" id="node11" href="$dc/d1b/lexers_2turtle_8c.html#af99ef9f4f1bd69f0e95c94c9a4bce7b0" title="log" alt="" coords="253,456,292,481"/>
+<area shape="rect" id="node12" href="$da/d66/string_8h.html#a7bd884793285536f59677943dfcbdf1d" title="Append character (BYTE) " alt="" coords="402,431,541,456"/>
+<area shape="rect" id="node16" href="$da/d66/string_8h.html#a6f598d471df929bcdbd952f1e9250724" title="Append the UTF8 codepoint to the string. " alt="" coords="205,305,341,331"/>
+<area shape="rect" id="node18" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="589,192,693,217"/>
+<area shape="rect" id="node19" href="$da/d66/string_8h.html#a3f6f24f08bc23f32476c91cdb188d6f1" title="Close finish the string. " alt="" coords="425,229,518,255"/>
+<area shape="rect" id="node20" href="$da/d66/string_8h.html#a29627f79b1bc1cb764ca201ede9b7ecb" title="Allocate new string with the default length. " alt="" coords="230,532,316,557"/>
+<area shape="rect" id="node3" href="$dc/d1b/lexers_2turtle_8c.html#a51547bb3e48de7908262b2bb80269c33" title="Get state of the lexer. " alt="" coords="411,5,532,31"/>
+<area shape="rect" id="node6" href="$da/d66/string_8h.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="415,104,528,129"/>
+<area shape="rect" id="node9" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="596,505,686,531"/>
+<area shape="rect" id="node10" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="741,332,821,357"/>
+<area shape="rect" id="node13" href="$d1/db0/string_8c.html#a3f6f24f08bc23f32476c91cdb188d6f1" title="Close finish the string. " alt="" coords="595,431,687,456"/>
+<area shape="rect" id="node14" href="$da/d66/string_8h.html#aa2c9c3fe7a750acf8663e21823dce10e" title="Push character into the string. " alt="" coords="596,381,686,407"/>
+<area shape="rect" id="node15" href="$d1/db0/string_8c.html#a6ff49501c2d9eecb7ba76e6fe649738b" title="Resize the string. " alt="" coords="592,332,689,357"/>
+<area shape="rect" id="node17" href="$d1/db0/string_8c.html#a7bd884793285536f59677943dfcbdf1d" title="Append character (BYTE) " alt="" coords="402,381,541,407"/>
+<area shape="rect" id="node21" href="$d1/db0/string_8c.html#a775208cecc1d253c4c1009bd70f91512" title="Allocate new string of length. " alt="" coords="427,583,516,608"/>
+</map>

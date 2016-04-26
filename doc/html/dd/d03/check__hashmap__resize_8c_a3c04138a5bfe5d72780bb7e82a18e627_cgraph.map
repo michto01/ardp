@@ -1,0 +1,11 @@
+<map id="main" name="main">
+<area shape="rect" id="node2" href="$d6/df3/hashmap_8h.html#a14a559379f309ebc5a9e3b27d30ff1d9" title="Creates new hashmap. " alt="" coords="104,31,195,56"/>
+<area shape="rect" id="node5" href="$d6/df3/hashmap_8h.html#a513e889593c7cbde4239f19546a23b65" title="Get an element from the hashmap. " alt="" coords="527,180,600,205"/>
+<area shape="rect" id="node7" href="$d6/df3/hashmap_8h.html#ad934ebd5ac3f4ae04455b0938d3ae8c6" title="Add an element to the hashmap. " alt="" coords="108,105,191,131"/>
+<area shape="rect" id="node3" href="$d8/def/hashmap_8c.html#aa9d77f3a79a15dc3305a9f80ef38db9a" title="Free the map. " alt="" coords="252,31,330,56"/>
+<area shape="rect" id="node4" href="$d8/def/hashmap_8c.html#ac29d6f579b56c940492eb213ba966d80" title="next_prime" alt="" coords="387,5,474,31"/>
+<area shape="rect" id="node6" href="$d8/def/hashmap_8c.html#abce75d7bee940e4582d75e4260bd6468" title="map_hash_int_diff" alt="" coords="654,156,784,181"/>
+<area shape="rect" id="node8" href="$d8/def/hashmap_8c.html#aba09e753480eeaf5aec8c28843dd1415" title="Return the integer of the location in data to store the point to the item, or MAP_FULL. " alt="" coords="522,131,606,156"/>
+<area shape="rect" id="node9" href="$d8/def/hashmap_8c.html#ac7c150e717f6d2ede0549e1203334159" title="Doubles the size of the hashmap, and rehashes all the elements. " alt="" coords="243,80,339,105"/>
+<area shape="rect" id="node10" href="$d8/def/hashmap_8c.html#ad934ebd5ac3f4ae04455b0938d3ae8c6" title="Add an element to the hashmap. " alt="" coords="389,80,472,105"/>
+</map>

@@ -1,0 +1,190 @@
+.TH "/Developer/school/ardp/src/lib/decommisioned/parser.obj.c" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/decommisioned/parser.obj.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <string\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/parser\&.h>\fP
+.br
+\fC#include <ardp/parser_internal\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBint\fP"
+.br
+.ti -1c
+.RI "struct \fBParser\fP"
+.br
+.ti -1c
+.RI "struct \fBPlugin\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBBUFSIZE\fP   0x10000"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef \fBstruct\fP ardp_pareser \fBardp_parser_obj_t\fP"
+.br
+.ti -1c
+.RI "typedef \fBstruct\fP \fBint\fP \fBlen\fP"
+.br
+.ti -1c
+.RI "typedef \fBstruct\fP \fBint\fP * \fBarg\fP"
+.br
+.ti -1c
+.RI "typedef void(* \fBardp_parser_obj_handler\fP) (ardp_token_type type, \fButf8\fP s, void *\fBarg\fP)"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBturtle_tokens\fP { \fBCOMMENT\fP, \fBBASE\fP, \fBPREFIX\fP, \fBSPARQL_BASE\fP, \fBSPARQL_PREFIX\fP, \fBBLANK_NODE\fP, \fBIRIREF\fP, \fBPNAME_LN\fP, \fBPNAME_NS\fP, \fBCOMMA\fP, \fBSEMICOLON\fP, \fBSTART_BLANKNODE_LIST\fP, \fBCLOSE_BLANKNODE_LIST\fP, \fBSTART_COLLECTION\fP, \fBCLOSE_COLLECTION\fP, \fBTYPED_LITERAL_SEPARATOR\fP, \fBRDF_TYPE\fP, \fBDOT\fP, \fBSTRING_LITERAL\fP, \fBLANGTAG\fP, \fBINTEGER\fP, \fBDECIMAL\fP, \fBDOUBLE\fP, \fBTRUE\fP, \fBFALSE\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBardp_parser_obj_t\fP * \fBardp_parser_obj_constructor\fP ()"
+.br
+.ti -1c
+.RI "void \fBadrp_parser_obj_destroy\fP (\fBardp_parser_obj_t\fP *self)"
+.br
+.ti -1c
+.RI "\fBint\fP \fBtoken\fP (turtle_tokens_t \fBtoken\fP, cost char *value=NULL)"
+.br
+.ti -1c
+.RI "\fBtoken\fP (\fBDOT\fP)"
+.br
+.ti -1c
+.RI "\fBtoken\fP (NS_LOCAL,'content')"
+.br
+.in -1c
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct int"
+.PP 
+.SH "struct Parser"
+.PP 
+\fBData Fields:\fP
+.RS 4
+\fBint\fP \fIcs\fP 
+.br
+.PP
+\fBardp_parser_obj_handler\fP \fIhandler\fP 
+.br
+.PP
+ardp_parser_obj_reader \fIreader\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct Plugin"
+.PP 
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define BUFSIZE   0x10000"
+
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef void(* ardp_parser_obj_handler) (ardp_token_type type, \fButf8\fP s, void *\fBarg\fP)"
+
+.SS "typedef \fBstruct\fP ardp_pareser \fBardp_parser_obj_t\fP"
+
+.SS "typedef  \fBstruct\fP \fBint\fP* \fBarg\fP"
+
+.SS "typedef  \fBstruct\fP \fBint\fP \fBlen\fP"
+
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBturtle_tokens\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fICOMMENT \fP\fP
+.TP
+\fB\fIBASE \fP\fP
+.TP
+\fB\fIPREFIX \fP\fP
+.TP
+\fB\fISPARQL_BASE \fP\fP
+.TP
+\fB\fISPARQL_PREFIX \fP\fP
+.TP
+\fB\fIBLANK_NODE \fP\fP
+.TP
+\fB\fIIRIREF \fP\fP
+.TP
+\fB\fIPNAME_LN \fP\fP
+.TP
+\fB\fIPNAME_NS \fP\fP
+.TP
+\fB\fICOMMA \fP\fP
+.TP
+\fB\fISEMICOLON \fP\fP
+.TP
+\fB\fISTART_BLANKNODE_LIST \fP\fP
+.TP
+\fB\fICLOSE_BLANKNODE_LIST \fP\fP
+.TP
+\fB\fISTART_COLLECTION \fP\fP
+.TP
+\fB\fICLOSE_COLLECTION \fP\fP
+.TP
+\fB\fITYPED_LITERAL_SEPARATOR \fP\fP
+.TP
+\fB\fIRDF_TYPE \fP\fP
+.TP
+\fB\fIDOT \fP\fP
+.TP
+\fB\fISTRING_LITERAL \fP\fP
+.TP
+\fB\fILANGTAG \fP\fP
+.TP
+\fB\fIINTEGER \fP\fP
+.TP
+\fB\fIDECIMAL \fP\fP
+.TP
+\fB\fIDOUBLE \fP\fP
+.TP
+\fB\fITRUE \fP\fP
+.TP
+\fB\fIFALSE \fP\fP
+.SH "Function Documentation"
+.PP 
+.SS "void adrp_parser_obj_destroy (\fBardp_parser_obj_t\fP * self)"
+
+.SS "\fBardp_parser_obj_t\fP* ardp_parser_obj_constructor ()"
+
+.SS "\fBint\fP \fBtoken\fP (turtle_tokens_t token, cost char * value = \fCNULL\fP)"
+
+.SS "\fBtoken\fP (\fBDOT\fP)"
+
+.SS "\fBtoken\fP (NS_LOCAL, 'content')"
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

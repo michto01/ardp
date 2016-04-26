@@ -1,0 +1,10 @@
+<map id="yy_accept" name="yy_accept">
+<area shape="rect" id="node2" href="$d6/d1c/turtle__parser_8c.html#aa142fdd91628fd550751c6ef4e29b603" title="yy_pop_parser_stack" alt="" coords="135,43,283,68"/>
+<area shape="rect" id="node3" href="$d6/d1c/turtle__parser_8c.html#afca0f0d2a9c0e0ca0625382394fa060e" title="yy_destructor" alt="" coords="331,43,432,68"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="649,5,752,31"/>
+<area shape="rect" id="node6" href="$de/d76/rdf_8h.html#ae723a9696763fcfdf0571c471f46cce0" title="rdf_term_free" alt="" coords="484,43,586,68"/>
+<area shape="rect" id="node7" href="$db/df3/sequence_8h.html#a50379a6dd00ae9cbbfbda40d0dab31a2" title="sequence_free" alt="" coords="480,92,590,117"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="812,5,892,31"/>
+<area shape="rect" id="node8" href="$d4/d43/sequence_8c.html#a52f85f7d759b47795429789aa96aa4aa" title="sequence_size" alt="" coords="645,67,756,92"/>
+<area shape="rect" id="node9" href="$d4/d43/sequence_8c.html#ae2ae59dd404dc065a41a7b336501d797" title="sequence_unshift" alt="" coords="638,116,764,141"/>
+</map>

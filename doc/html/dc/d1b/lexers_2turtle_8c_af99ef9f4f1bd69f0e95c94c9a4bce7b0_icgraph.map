@@ -1,0 +1,10 @@
+<map id="log" name="log">
+<area shape="rect" id="node2" href="$dc/d1b/lexers_2turtle_8c.html#acc480fcaf28b3158f218dcb4da9fbe45" title="Create new shared instance of lexer. " alt="" coords="284,5,413,31"/>
+<area shape="rect" id="node4" href="$dc/d1b/lexers_2turtle_8c.html#a600657cf671455f379f2dbc4ff466da3" title="Preinitialize lexer with defaults values and prepare it for initialization. " alt="" coords="279,107,417,132"/>
+<area shape="rect" id="node5" href="$dc/d1b/lexers_2turtle_8c.html#a91e046899c17dfa51473f2d643b23a5e" title="Destroy the shared instance of the lexer. " alt="" coords="94,56,229,81"/>
+<area shape="rect" id="node6" href="$dc/d1b/lexers_2turtle_8c.html#ab4571ff534a65cd8c3be82a8051fd064" title="ardp_lexer_init" alt="" coords="107,251,216,276"/>
+<area shape="rect" id="node7" href="$dc/d1b/lexers_2turtle_8c.html#a70051edb3a62388bb92f4a12cf90cd74" title="Lex the block of data. " alt="" coords="92,157,231,196"/>
+<area shape="rect" id="node3" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="465,107,516,132"/>
+<area shape="rect" id="node8" href="$dc/d1b/lexers_2turtle_8c.html#af942e21a2717f9a7715645feb9cf5955" title="Process reader until the input is exhausted. " alt="" coords="279,156,417,195"/>
+<area shape="rect" id="node9" href="$dc/d1b/lexers_2turtle_8c.html#a5ac446a5cbfeec92647c0f900f2972d7" title="ardp_lexer_process\l_reader_BUG" alt="" coords="279,219,417,257"/>
+</map>

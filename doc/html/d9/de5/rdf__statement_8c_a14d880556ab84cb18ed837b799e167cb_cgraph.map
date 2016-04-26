@@ -1,0 +1,6 @@
+<map id="rdf_statement_equals" name="rdf_statement_equals">
+<area shape="rect" id="node2" href="$de/d76/rdf_8h.html#a9c981b5d7bd8769f889ef87c42cd2ba7" title="rdf_term_equals" alt="" coords="203,31,321,56"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#a537f3189a9a14507e15f1093fcbdaae5" title="Optimalized compare algorithm yealding little faster string comparison then build&#45;in strcmp function..." alt="" coords="369,5,506,31"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#a134c79b629c363220b78fdcf761a69eb" title="Length of the fat&#45;pointer string. " alt="" coords="390,55,484,80"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="554,55,635,80"/>
+</map>

@@ -1,0 +1,44 @@
+.TH "lexer.cb" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lexer.cb \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int(^ \fB_Nullable\fP )(int type, \fButf8\fP _Nullable value, size_t line, size_t col)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Callback used in the lexer
+.PP
+\fBNote:\fP
+.RS 4
+This section was reduced due to rewrite of the lexer states\&. 
+.RE
+.PP
+
+.PP
+Definition at line 184 of file lexer\&.h\&.
+.SH "Field Documentation"
+.PP 
+.SS ""
+Function which emits the token to the parent object(s)\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fItype\fP Type of the token\&. 
+.br
+\fIvalue\fP Optional value of the token\&.
+.RE
+.PP
+: Should take arbitrary token type not only the turtle enum\&. 
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

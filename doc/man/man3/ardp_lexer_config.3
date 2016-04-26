@@ -1,0 +1,61 @@
+.TH "ardp_lexer_config" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ardp_lexer_config \- 
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <lexer\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   \fBint\fP \fBlevel\fP"
+.br
+.ti -1c
+.RI "   \fBint\fP(* \fB_Nullable\fP )(\fBint\fP \fBlevel\fP, const char 
+.br
+      *_Nullable str)"
+.br
+.ti -1c
+.RI "} \fBlogging\fP"
+.br
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "   \fBint\fP(^ \fB_Nullable\fP )(\fBint\fP type, \fButf8\fP _Nullable 
+.br
+      value, size_t line, size_t col)"
+.br
+.ti -1c
+.RI "} \fBcb\fP"
+.br
+.in -1c
+.SH "Field Documentation"
+.PP 
+.SS "\fBint\fP( * _Nullable) (\fBint\fP \fBlevel\fP, const char *_Nullable str)"
+
+.SS "\fBint\fP( ^ _Nullable) (\fBint\fP type, const char *_Nullable value) (\fBint\fP type, \fButf8\fP _Nullable value, size_t line, size_t col)"
+
+.SS "struct { \&.\&.\&. }   \fBcb\fP"
+
+.PP
+Referenced by main()\&.
+.SS "\fBint\fP level"
+
+.PP
+Referenced by main()\&.
+.SS "struct { \&.\&.\&. }   logging"
+
+.PP
+Referenced by main()\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

@@ -1,0 +1,36 @@
+.TH "md___developer_school_ardp_doc_user-guide" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+md___developer_school_ardp_doc_user-guide \- user-guide 
+#User guide In order to simply run the ARDP with the default options, one can simply call:
+.PP
+```sh ardp \&.\&./example/filename\&.ttl ```
+.PP
+ARDP, in its default setting, is supposed to recognize support for color escape sequences\&. If the output is piped to non-color-supported environment, color is automatically disabled\&.
+.PP
+The color helps with the visual perception of the parsed data, but have measurable impact on the ARDP performance while processing larger files\&. To fine-tune this, use option **-c** or **--color** with one of the values: \fCauto\fP, \fCnever\fP, \fCalways\fP\&.
+.PP
+User can option to suppress \fCURI\fP expansion with two modes: realative path expansion and \fCCURIE\fP expansion\&. As the ARDP is not serializer, it doesn't place importance on missing prefixes and displays the un-expanded \fCCURIE\fP if the prefix is not found\&. Options to fine-tune this are: **-x**, **--disable-uri-expansion** and **-z**, **--disable-cuire-expansion**\&.
+.PP
+.RS 4
+While **-z** has no impact of document parsing, the **-x** switch will impact the document with the empty default URI: <>\&. As the content of the URI is empty, the printed triple will be missing the empty node\&. 
+.RE
+.PP
+.PP
+The default setting allows the ARDP to read the normal plaintext files such as \fC*\&.ttl\fP, \fC*\&.nt\fP as well as GZip archives with the \fC*\&.gz\fP extension\&. To enable Bzip archive readout, option **-b**, **--use-bzip** should be used\&.
+.PP
+.RS 4
+At the time of writing this thesis, the **-s, --syntax** option behavior was not yet implemented\&. This option will enforce stricter checks on conformance to particular grammar\&. 
+.RE
+.PP
+.PP
+The options for debugging the ARDP are changing with each release as more in-depth logging and error-checking is introduced to the parser\&.
+.PP
+The options are: **-w --verbose**, **-y --enable-lexer-debug** and **-q --enable-parser-debug**\&. The selection of either of the options select particular additional information from parser\&.
+.PP
+For deeper debugging, one should also enable debug while building the ARDP, which then adds flags to compiler\&. This is done in '\&./configure' step of installation\&.
+.PP
+Options **-u, --usage** and **-h, --help** displays short description and intended used of the options\&.
+.PP
+Option **-v, --version** shows the current build of the ARDP\&. 

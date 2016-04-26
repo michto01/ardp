@@ -1,0 +1,351 @@
+.TH "/Developer/school/ardp/src/lib/parsers/test_lemon.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/parsers/test_lemon.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+\fC#include <ardp/rdf\&.h>\fP
+.br
+\fC#include <ardp/parser\&.h>\fP
+.br
+\fC#include <ardp/hashmap\&.h>\fP
+.br
+\fC#include <ardp/color\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include 'turtle_parser\&.h'\fP
+.br
+\fC#include 'turtle_parser\&.c'\fP
+.br
+
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fB__STDC_WANT_LIB_EXT1__\fP   1"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBdir\fP { \fBFRONT\fP, \fBBACK\fP }"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBu8_concatenate\fP (\fButf8\fP uri, size_t start)"
+.br
+.ti -1c
+.RI "static int \fBterm_uri_append\fP (struct \fBrdf_term\fP *t, \fButf8\fP uri, \fBdir\fP direction)"
+.br
+.ti -1c
+.RI "static int \fBuri_has_scheme\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBis_relative_uri\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBexpand_relative_uri\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBextract_prefix\fP (struct \fBrdf_term\fP *t, char **prefix, size_t *loc)"
+.br
+.ti -1c
+.RI "static int \fBexpand_curie\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "int \fBtransform_uri\fP (struct \fBparser\fP *p, struct \fBrdf_term\fP **t)"
+.br
+.ti -1c
+.RI "static int \fB_rebase\fP (\fButf8\fP \fB_Nullable\fP base)"
+.br
+.ti -1c
+.RI "static int \fB_add_namespace\fP (\fButf8\fP \fB_Nullable\fP qname, \fButf8\fP \fB_Nullable\fP iri)"
+.br
+.ti -1c
+.RI "int \fB_triple\fP (struct \fBrdf_statement\fP *s)"
+.br
+.ti -1c
+.RI "\fButf8\fP \fB_bnode\fP (void)"
+.br
+.ti -1c
+.RI "static struct \fBparser\fP * \fBardp_parser_create_internal\fP (void)"
+.br
+.RI "\fIParser ///\&. \fP"
+.ti -1c
+.RI "static void \fBardp_parser_destroy_internal\fP (void)"
+.br
+.ti -1c
+.RI "int \fBardp_parser_create\fP (void)"
+.br
+.RI "\fICreate and initialize all prerequisites for shared_parser\&. \fP"
+.ti -1c
+.RI "void \fBardp_parser_exec\fP (int type, void *value, size_t line, size_t col)"
+.br
+.ti -1c
+.RI "void \fBardp_parser_finish\fP (void)"
+.br
+.RI "\fIFlush parser to end one parsing unit\&. \fP"
+.ti -1c
+.RI "void \fBardp_parser_destroy\fP (void)"
+.br
+.RI "\fIUnallocate parser after it is not necessary anymore\&. \fP"
+.ti -1c
+.RI "int \fBardp_parser_set_default_base\fP (const char *base)"
+.br
+.ti -1c
+.RI "int \fBardp_parser_set_option\fP (const uint8_t *key, \fBvar\fP *value)"
+.br
+.ti -1c
+.RI "void \fBardp_parser_trace\fP (void)"
+.br
+.RI "\fIPrint out parser process\&. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "struct \fBparser\fP * \fBshared_parser_internal\fP"
+.br
+.ti -1c
+.RI "static void * \fBshared_parser\fP"
+.br
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define __STDC_WANT_LIB_EXT1__   1"
+
+.PP
+Definition at line 26 of file test_lemon\&.c\&.
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBdir\fP"
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIFRONT \fP\fP
+.TP
+\fB\fIBACK \fP\fP
+.PP
+Definition at line 67 of file test_lemon\&.c\&.
+.SH "Function Documentation"
+.PP 
+.SS "static int _add_namespace (\fButf8\fP \fB_Nullable\fP qname, \fButf8\fP \fB_Nullable\fP iri)\fC [static]\fP"
+
+.PP
+Definition at line 287 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, map_create(), map_push(), parser::namespaces, string_copy(), and unlikely\&.
+.PP
+Referenced by ardp_parser_create_internal()\&.
+.SS "\fButf8\fP _bnode (void)"
+
+.PP
+Definition at line 415 of file test_lemon\&.c\&.
+.PP
+References parser::extra, parser::n_bnode, string_create(), and unlikely\&.
+.PP
+Referenced by ardp_parser_create_internal()\&.
+.SS "static int _rebase (\fButf8\fP \fB_Nullable\fP base)\fC [static]\fP"
+
+.PP
+Definition at line 273 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, parser::base, string_copy(), string_dealloc(), and unlikely\&.
+.PP
+Referenced by ardp_parser_create_internal()\&.
+.SS "int _triple (struct \fBrdf_statement\fP * s)"
+
+.PP
+Definition at line 299 of file test_lemon\&.c\&.
+.PP
+References ardp_fprintf(), rdf_term_value::blank, rdf_term_literal_value::datatype, expand_curie(), expand_relative_uri(), parser::extra, kARDPColorBold, kARDPColorGreen, kARDPColorNormal, kARDPColorRed, kARDPColorYellow, rdf_term_literal_value::language, likely, rdf_term_value::literal, rdf_statement::object, rdf_statement::predicate, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_URI, parser::stats, rdf_term_literal_value::string, rdf_statement::subject, rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by ardp_parser_create_internal()\&.
+.SS "int ardp_parser_create (void)"
+
+.PP
+Create and initialize all prerequisites for shared_parser\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, non-zero otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 473 of file test_lemon\&.c\&.
+.PP
+References ardp_parser_create_internal(), ParseAlloc(), and shared_parser\&.
+.PP
+Referenced by main()\&.
+.SS "static struct \fBparser\fP* ardp_parser_create_internal (void)\fC [static]\fP"
+
+.PP
+Parser ///\&. 
+.PP
+Definition at line 431 of file test_lemon\&.c\&.
+.PP
+References _add_namespace(), _bnode(), _rebase(), _triple(), parser::cb, map_create(), and parser::namespaces\&.
+.PP
+Referenced by ardp_parser_create()\&.
+.SS "void ardp_parser_destroy (void)"
+
+.PP
+Unallocate parser after it is not necessary anymore\&. Destroy shared lexer\&. And all its underlying structures\&. 
+.PP
+Definition at line 527 of file test_lemon\&.c\&.
+.PP
+References ardp_parser_destroy_internal(), ParseFree(), and shared_parser\&.
+.PP
+Referenced by main()\&.
+.SS "static void ardp_parser_destroy_internal (void)\fC [static]\fP"
+
+.PP
+Definition at line 445 of file test_lemon\&.c\&.
+.PP
+References parser::base, parser::extra, map_free(), parser::namespaces, shared_parser_internal, string_dealloc(), and unlikely\&.
+.PP
+Referenced by ardp_parser_destroy()\&.
+.SS "void ardp_parser_exec (int type, void * value, size_t line, size_t col)"
+
+.PP
+Definition at line 498 of file test_lemon\&.c\&.
+.PP
+References likely, Parse(), shared_parser, and parser::stats\&.
+.SS "void ardp_parser_finish (void)"
+
+.PP
+Flush parser to end one parsing unit\&. Signals to parser that we reached end of input (EOF, \&.\&.\&.) and that it is supposed to flush all data in buffer\&.
+.PP
+\fBNote:\fP
+.RS 4
+Equivalent of calling ardp_parser_exec(0,0); 
+.RE
+.PP
+
+.PP
+Definition at line 517 of file test_lemon\&.c\&.
+.PP
+References Parse(), and shared_parser\&.
+.PP
+Referenced by main()\&.
+.SS "int ardp_parser_set_default_base (const char * base)"
+
+.PP
+Definition at line 535 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, parser::base, string_create(), and unlikely\&.
+.SS "int ardp_parser_set_option (const uint8_t * key, \fBvar\fP * value)"
+
+.PP
+Definition at line 551 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, parser::extra, and string_generic_cmp()\&.
+.SS "void ardp_parser_trace (void)"
+
+.PP
+Print out parser process\&. Helps with the debugging of the parser as it writes its current stack as well as reductions and other useful informations\&. 
+.PP
+Definition at line 573 of file test_lemon\&.c\&.
+.PP
+References ParseTrace()\&.
+.PP
+Referenced by main()\&.
+.SS "static int expand_curie (struct \fBrdf_term\fP * t)\fC [static]\fP"
+
+.PP
+Definition at line 186 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_MAP_MISSING, ARDP_MAP_OK, ARDP_SUCCESS, extract_prefix(), FRONT, map_get(), parser::namespaces, shared_parser_internal, string_copy(), string_strlen(), term_is_curie(), term_uri_append(), u8_concatenate(), unlikely, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by _triple()\&.
+.SS "static int expand_relative_uri (struct \fBrdf_term\fP * t)\fC [static]\fP"
+
+.PP
+Definition at line 152 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, parser::base, FRONT, is_relative_uri(), string_copy(), term_is_uri(), and term_uri_append()\&.
+.PP
+Referenced by _triple()\&.
+.SS "static int extract_prefix (struct \fBrdf_term\fP * t, char ** prefix, size_t * loc)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 167 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, ssechr(), rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by expand_curie()\&.
+.SS "static int is_relative_uri (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 145 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, and uri_has_scheme()\&.
+.PP
+Referenced by expand_relative_uri()\&.
+.SS "static int term_uri_append (struct \fBrdf_term\fP * t, \fButf8\fP uri, \fBdir\fP direction)\fC [static]\fP"
+
+.PP
+Definition at line 84 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, BACK, FRONT, string_append_str(), string_dealloc(), rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by expand_curie(), and expand_relative_uri()\&.
+.SS "int transform_uri (struct \fBparser\fP * p, struct \fBrdf_term\fP ** t)"
+
+.PP
+Definition at line 241 of file test_lemon\&.c\&.
+.PP
+References ARDP_MAP_OK, map_get(), parser::namespaces, string_strlen(), token, rdf_term_value::uri, and rdf_term::value\&.
+.SS "int u8_concatenate (\fButf8\fP uri, size_t start)"
+
+.PP
+Definition at line 46 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, and string_hdr()\&.
+.PP
+Referenced by expand_curie()\&.
+.SS "static int uri_has_scheme (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 113 of file test_lemon\&.c\&.
+.PP
+References ARDP_FAILURE, ARDP_SUCCESS, term_is_uri(), rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by is_relative_uri()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "void* shared_parser\fC [static]\fP"
+Opaque parser used by lemon 
+.PP
+Definition at line 32 of file test_lemon\&.c\&.
+.PP
+Referenced by ardp_parser_create(), ardp_parser_destroy(), ardp_parser_exec(), and ardp_parser_finish()\&.
+.SS "struct \fBparser\fP* shared_parser_internal"
+Opaque internal structure of the parser 
+.PP
+Definition at line 29 of file test_lemon\&.c\&.
+.PP
+Referenced by ardp_parser_destroy_internal(), and expand_curie()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

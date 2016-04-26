@@ -1,0 +1,396 @@
+.TH "/Developer/school/ardp/include/ardp/rdf.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/rdf.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+\fC#include <stdarg\&.h>\fP
+.br
+\fC#include 'util\&.h'\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBrdf_term_literal_value\fP"
+.br
+.ti -1c
+.RI "union \fBrdf_term_value\fP"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP"
+.br
+.ti -1c
+.RI "struct \fBrdf_statement\fP"
+.br
+.in -1c
+.SS "Enumerations"
+
+.in +1c
+.ti -1c
+.RI "enum \fBrdf_term_type\fP { \fBRDF_TERM_UNKNOWN\fP, \fBRDF_TERM_URI\fP, \fBRDF_TERM_CURIE\fP, \fBRDF_TERM_BLANK\fP, \fBRDF_TERM_LITERAL\fP }"
+.br
+.RI "\fIDenotes type of the RDF term\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_uri\fP (\fButf8\fP uri)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_curie\fP (\fButf8\fP uri)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_blank\fP (\fButf8\fP blank)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_literal\fP (\fButf8\fP literal, \fButf8\fP lang, \fButf8\fP datatype)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_copy\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBterm_is_uri\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBterm_is_curie\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBterm_is_blank\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "static int \fBterm_is_literal\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "void \fBrdf_term_free\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "int \fBrdf_term_equals\fP (const struct \fBrdf_term\fP *a, const struct \fBrdf_term\fP *b)"
+.br
+.ti -1c
+.RI "int \fBrdf_term_compare\fP (const struct \fBrdf_term\fP *a, const struct \fBrdf_term\fP *b)"
+.br
+.ti -1c
+.RI "struct \fBrdf_statement\fP * \fBrdf_statement_create\fP (void)"
+.br
+.RI "\fICreate new empty RDF statement\&. \fP"
+.ti -1c
+.RI "struct \fBrdf_statement\fP * \fBrdf_statement_from_nodes\fP (struct \fBrdf_term\fP *subject, struct \fBrdf_term\fP *predicate, struct \fBrdf_term\fP *object, struct \fBrdf_term\fP *graph)"
+.br
+.ti -1c
+.RI "void \fBrdf_statement_zero\fP (struct \fBrdf_statement\fP *s)"
+.br
+.ti -1c
+.RI "struct \fBrdf_statement\fP * \fBrdf_statement_copy\fP (struct \fBrdf_statement\fP *s)"
+.br
+.ti -1c
+.RI "void \fBrdf_statement_clear\fP (struct \fBrdf_statement\fP *s)"
+.br
+.ti -1c
+.RI "void \fBrdf_statement_free\fP (struct \fBrdf_statement\fP *s)"
+.br
+.ti -1c
+.RI "int \fBrdf_statement_compare\fP (struct \fBrdf_statement\fP *a, struct \fBrdf_statement\fP *b)"
+.br
+.ti -1c
+.RI "int \fBrdf_statement_equals\fP (struct \fBrdf_statement\fP *a, struct \fBrdf_statement\fP *b)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+This file describes the data types specified in #RDF_term\&. 
+.PP
+Definition in file \fBrdf\&.h\fP\&.
+.SH "Data Structure Documentation"
+.PP 
+.SH "struct rdf_term_literal_value"
+.PP 
+
+.PP
+\fBNote:\fP
+.RS 4
+Literal can have either datatype of language\&. But one or another needs to be set 
+.RE
+.PP
+
+.PP
+Definition at line 55 of file rdf\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+\fButf8\fP \fIdatatype\fP Datatype of the string\&. 
+.br
+.PP
+\fButf8\fP \fIlanguage\fP Language of the string\&. 
+.br
+.PP
+\fButf8\fP \fIstring\fP String value of the literal\&. 
+.br
+.PP
+.RE
+.PP
+.SH "union rdf_term_value"
+.PP 
+Opaque type for the literals\&. 
+.PP
+Definition at line 75 of file rdf\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+\fButf8\fP \fIblank\fP 
+.br
+.PP
+struct \fBrdf_term_literal_value\fP \fIliteral\fP 
+.br
+.PP
+\fButf8\fP \fIuri\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct rdf_term"
+.PP 
+Definition at line 81 of file rdf\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+enum \fBrdf_term_type\fP \fItype\fP 
+.br
+.PP
+union \fBrdf_term_value\fP \fIvalue\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct rdf_statement"
+.PP 
+Definition at line 86 of file rdf\&.h\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+struct \fBrdf_term\fP * \fIgraph\fP 
+.br
+.PP
+struct \fBrdf_term\fP * \fIobject\fP 
+.br
+.PP
+struct \fBrdf_term\fP * \fIpredicate\fP 
+.br
+.PP
+struct \fBrdf_term\fP * \fIsubject\fP 
+.br
+.PP
+.RE
+.PP
+.SH "Enumeration Type Documentation"
+.PP 
+.SS "enum \fBrdf_term_type\fP"
+
+.PP
+Denotes type of the RDF term\&. 
+.PP
+\fBNote:\fP
+.RS 4
+Specifies subset of operations on 'union' 
+.RE
+.PP
+
+.PP
+\fBEnumerator\fP
+.in +1c
+.TP
+\fB\fIRDF_TERM_UNKNOWN \fP\fP
+.TP
+\fB\fIRDF_TERM_URI \fP\fP
+.TP
+\fB\fIRDF_TERM_CURIE \fP\fP
+.TP
+\fB\fIRDF_TERM_BLANK \fP\fP
+.TP
+\fB\fIRDF_TERM_LITERAL \fP\fP
+.PP
+Definition at line 41 of file rdf\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "void rdf_statement_clear (struct \fBrdf_statement\fP * s)"
+
+.PP
+Definition at line 67 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement::graph, rdf_statement::object, rdf_statement::predicate, rdf_term_free(), and rdf_statement::subject\&.
+.PP
+Referenced by rdf_statement_free()\&.
+.SS "int rdf_statement_compare (struct \fBrdf_statement\fP * a, struct \fBrdf_statement\fP * b)"
+
+.PP
+Definition at line 89 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement::graph, rdf_statement::object, rdf_statement::predicate, rdf_term_compare(), and rdf_statement::subject\&.
+.SS "struct \fBrdf_statement\fP* rdf_statement_copy (struct \fBrdf_statement\fP * s)"
+
+.PP
+Definition at line 42 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement::graph, rdf_statement::object, rdf_statement::predicate, rdf_statement_create(), rdf_term_copy(), and rdf_statement::subject\&.
+.PP
+Referenced by main()\&.
+.SS "rdf_statement_create (void)"
+
+.PP
+Create new empty RDF statement\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+Statement, NULL on error\&. 
+.RE
+.PP
+
+.PP
+Definition at line 12 of file rdf_statement\&.c\&.
+.PP
+Referenced by rdf_statement_copy(), and rdf_statement_from_nodes()\&.
+.SS "int rdf_statement_equals (struct \fBrdf_statement\fP * a, struct \fBrdf_statement\fP * b)"
+
+.PP
+Definition at line 119 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement::graph, rdf_statement::object, rdf_statement::predicate, rdf_term_equals(), and rdf_statement::subject\&.
+.SS "void rdf_statement_free (struct \fBrdf_statement\fP * s)"
+
+.PP
+Definition at line 79 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement_clear()\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_statement\fP* rdf_statement_from_nodes (struct \fBrdf_term\fP * subject, struct \fBrdf_term\fP * predicate, struct \fBrdf_term\fP * object, struct \fBrdf_term\fP * graph)"
+
+.PP
+Definition at line 18 of file rdf_statement\&.c\&.
+.PP
+References rdf_statement::graph, rdf_statement::object, rdf_statement::predicate, rdf_statement_create(), rdf_term_free(), and rdf_statement::subject\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "void rdf_statement_zero (struct \fBrdf_statement\fP * s)"
+
+.PP
+Definition at line 61 of file rdf_statement\&.c\&.
+.SS "int rdf_term_compare (const struct \fBrdf_term\fP * a, const struct \fBrdf_term\fP * b)"
+
+.PP
+Definition at line 232 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, and rdf_term::type\&.
+.PP
+Referenced by rdf_statement_compare()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_copy (struct \fBrdf_term\fP * t)"
+
+.PP
+Definition at line 89 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_copy(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), rdf_statement_copy(), and yy_reduce()\&.
+.SS "int rdf_term_equals (const struct \fBrdf_term\fP * a, const struct \fBrdf_term\fP * b)"
+
+.PP
+Definition at line 162 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_generic_cmp(), string_strlen(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by rdf_statement_equals()\&.
+.SS "void rdf_term_free (struct \fBrdf_term\fP * t)"
+
+.PP
+Definition at line 128 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_dealloc(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), rdf_statement_clear(), rdf_statement_from_nodes(), yy_destructor(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_blank (\fButf8\fP blank)"
+
+.PP
+Definition at line 73 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, RDF_TERM_BLANK, string_copy(), rdf_term::type, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_curie (\fButf8\fP uri)"
+
+.PP
+Definition at line 37 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_CURIE, string_copy(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_literal (\fButf8\fP literal, \fButf8\fP lang, \fButf8\fP datatype)"
+
+.PP
+Definition at line 52 of file rdf_term\&.c\&.
+.PP
+References rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_LITERAL, rdf_term_literal_value::string, string_copy(), rdf_term::type, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_uri (\fButf8\fP uri)"
+
+.PP
+Definition at line 18 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_URI, string_copy(), string_create_n(), string_strlen(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "static int term_is_blank (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 177 of file rdf\&.h\&.
+.PP
+References RDF_TERM_BLANK\&.
+.PP
+Referenced by main()\&.
+.SS "static int term_is_curie (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 166 of file rdf\&.h\&.
+.PP
+References RDF_TERM_CURIE\&.
+.PP
+Referenced by expand_curie(), and main()\&.
+.SS "static int term_is_literal (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 188 of file rdf\&.h\&.
+.PP
+References RDF_TERM_LITERAL\&.
+.PP
+Referenced by main()\&.
+.SS "static int term_is_uri (struct \fBrdf_term\fP * t)\fC [inline]\fP, \fC [static]\fP"
+
+.PP
+Definition at line 155 of file rdf\&.h\&.
+.PP
+References RDF_TERM_URI\&.
+.PP
+Referenced by expand_relative_uri(), main(), and uri_has_scheme()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

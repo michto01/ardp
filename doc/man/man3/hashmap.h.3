@@ -1,0 +1,388 @@
+.TH "/Developer/school/ardp/include/ardp/hashmap.h" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/include/ardp/hashmap.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <stdbool\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/hash\&.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int(* \fBmap_callback\fP) (\fBvar\fP a, \fBvar\fP b)"
+.br
+.RI "\fIPointer to function that can take two var arguments and return an integer\&. \fP"
+.ti -1c
+.RI "typedef \fBvar\fP \fBmap_t\fP"
+.br
+.RI "\fIPointer to internally maintained data structure\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBmap_t\fP \fBmap_create\fP (size_t n)"
+.br
+.RI "\fICreates new hashmap\&. \fP"
+.ti -1c
+.RI "bool \fBmap_resize\fP (\fBmap_t\fP *in, size_t room)"
+.br
+.RI "\fIResize the Hash map\&. \fP"
+.ti -1c
+.RI "\fBmap_t\fP \fBmap_realloc\fP (unsigned int n)"
+.br
+.RI "\fIRealloc the hashmap\&. \fP"
+.ti -1c
+.RI "int \fBmap_iterate\fP (\fBmap_t\fP in, \fBmap_callback\fP f, \fBvar\fP item)"
+.br
+.RI "\fIIteratively call function \fCf\fP with argument (item, data) for each element data in the hashmap\&. \fP"
+.ti -1c
+.RI "int \fBmap_push\fP (\fBmap_t\fP in, char *key, \fBvar\fP value)"
+.br
+.RI "\fIAdd an element to the hashmap\&. \fP"
+.ti -1c
+.RI "int \fBmap_get\fP (\fBmap_t\fP in, char *key, \fBvar\fP *arg)"
+.br
+.RI "\fIGet an element from the hashmap\&. \fP"
+.ti -1c
+.RI "int \fBmap_remove\fP (\fBmap_t\fP in, char *key)"
+.br
+.RI "\fIRemove an element from the hashmap\&. \fP"
+.ti -1c
+.RI "int \fBmap_get_one\fP (\fBmap_t\fP in, \fBvar\fP *arg, int remove)"
+.br
+.RI "\fIGet any element\&. \fP"
+.ti -1c
+.RI "void \fBmap_free\fP (\fBmap_t\fP in)"
+.br
+.RI "\fIFree the map\&. \fP"
+.ti -1c
+.RI "size_t \fBmap_size\fP (\fBmap_t\fP in)"
+.br
+.RI "\fIGet the current size of a hashmap\&. \fP"
+.ti -1c
+.RI "size_t \fBmap_capacity\fP (\fBmap_t\fP in)"
+.br
+.RI "\fIGet current capacity of the hashmap\&. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static const int \fBARDP_MAP_USED\fP = (-4)"
+.br
+.ti -1c
+.RI "static const int \fBARDP_MAP_MISSING\fP = (-3)"
+.br
+.ti -1c
+.RI "static const int \fBARDP_MAP_FULL\fP = (-2)"
+.br
+.ti -1c
+.RI "static const int \fBARDP_MAP_OUTMEM\fP = (-1)"
+.br
+.ti -1c
+.RI "static const int \fBARDP_MAP_OK\fP = ( 0)"
+.br
+.in -1c
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef int( * map_callback) (\fBvar\fP a, \fBvar\fP b)"
+
+.PP
+Pointer to function that can take two var arguments and return an integer\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIa\fP Argument A 
+.br
+\fIb\fP Argument B
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Returns status code\&. 
+.RE
+.PP
+
+.PP
+Definition at line 49 of file hashmap\&.h\&.
+.SS "typedef \fBvar\fP \fBmap_t\fP"
+
+.PP
+Pointer to internally maintained data structure\&. HashMap client do not need to know how the hashmaps are represented\&. They only manipulate the \fCmap_t\fP data types\&. 
+.PP
+Definition at line 57 of file hashmap\&.h\&.
+.SH "Function Documentation"
+.PP 
+.SS "size_t map_capacity (\fBmap_t\fP in)"
+
+.PP
+Get current capacity of the hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be probed\&.
+.RE
+.PP
+return Capacity of the hashmap\&. 
+.PP
+Definition at line 429 of file hashmap\&.c\&.
+.PP
+References isnt, and map::table_size\&.
+.SS "\fBmap_t\fP map_create (size_t n)"
+
+.PP
+Creates new hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIn\fP Number of the preallocated space\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Returns new map - or NULL if error occured\&. 
+.RE
+.PP
+
+.PP
+Definition at line 54 of file hashmap\&.c\&.
+.PP
+References hash_callback, HASHFUN, is, isnt, map_free(), and next_prime()\&.
+.PP
+Referenced by _add_namespace(), ardp_parser_create_internal(), and main()\&.
+.SS "void map_free (\fBmap_t\fP in)"
+
+.PP
+Free the map\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be unallocated\&. 
+.RE
+.PP
+
+.PP
+Definition at line 415 of file hashmap\&.c\&.
+.PP
+References map::data\&.
+.PP
+Referenced by ardp_parser_destroy_internal(), and map_create()\&.
+.SS "int map_get (\fBmap_t\fP in, char * key, \fBvar\fP * arg)"
+
+.PP
+Get an element from the hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIkey\fP Key to be used\&. 
+.br
+\fIarg\fP Item taken from the map\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Return MAP_OK or MAP_MISSING\&. 
+.RE
+.PP
+
+.PP
+Definition at line 321 of file hashmap\&.c\&.
+.PP
+References ARDP_MAP_MISSING, ARDP_MAP_OK, map_element::data, map::data, map_element::in_use, is, map_element::key, map_hash_int_diff(), MAX_CHAIN_LENGTH, and map::table_size\&.
+.PP
+Referenced by expand_curie(), main(), and transform_uri()\&.
+.SS "int map_get_one (\fBmap_t\fP in, \fBvar\fP * arg, int remove)"
+
+.PP
+Get any element\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIarg\fP item taken from the map\&. 
+.br
+\fIremove\fP Indicates if the item should be deleted
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Return MAP_OK or MAP_MISSING\&. 
+.RE
+.PP
+
+.SS "int map_iterate (\fBmap_t\fP in, \fBmap_callback\fP f, \fBvar\fP item)"
+
+.PP
+Iteratively call function \fCf\fP with argument (item, data) for each element data in the hashmap\&. The function must return a map status code\&.
+.PP
+\fBNote:\fP
+.RS 4
+\fCf\fP must not reenter any hashmap functions, or deadlock may arise\&.
+.RE
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIf\fP Operation to be performend while iterating the map\&. 
+.br
+\fIitem\fP Item
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+If it returns anything other than ARDP_MAP_OK the traversal is treminated\&. 
+.RE
+.PP
+
+.PP
+Definition at line 393 of file hashmap\&.c\&.
+.PP
+References ARDP_MAP_MISSING, ARDP_MAP_OK, map_element::data, map::data, map_element::in_use, isnt, map_size(), and map::table_size\&.
+.SS "int map_push (\fBmap_t\fP in, char * key, \fBvar\fP value)"
+
+.PP
+Add an element to the hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIkey\fP Key to be used\&. 
+.br
+\fIvalue\fP Value to put in the map\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Return ARDP_MAP_OK or ARDP_MAP_OMEM\&. 
+.RE
+.PP
+
+.PP
+Definition at line 291 of file hashmap\&.c\&.
+.PP
+References ARDP_MAP_FULL, ARDP_MAP_OK, ARDP_MAP_OUTMEM, ARDP_MAP_USED, map_element::data, map::data, map_element::in_use, is, map_element::key, map_hash(), map_rehash(), and map::size\&.
+.PP
+Referenced by _add_namespace(), main(), and map_rehash()\&.
+.SS "\fBmap_t\fP map_realloc (unsigned int n)"
+
+.PP
+Realloc the hashmap\&. 
+.SS "int map_remove (\fBmap_t\fP in, char * key)"
+
+.PP
+Remove an element from the hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIkey\fP Key to be deleted\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Return MAP_OK or MAP_MISSING\&. 
+.RE
+.PP
+
+.PP
+Definition at line 355 of file hashmap\&.c\&.
+.PP
+References ARDP_MAP_MISSING, ARDP_MAP_OK, map_element::data, map::data, map_element::in_use, is, map_element::key, map_hash_int_diff(), MAX_CHAIN_LENGTH, map::size, and map::table_size\&.
+.SS "bool map_resize (\fBmap_t\fP * in, size_t room)"
+
+.PP
+Resize the Hash map\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be manipulated\&. 
+.br
+\fIroom\fP Number of elements to add (will floor to nearest prime)\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+\fCtrue\fP if resize is completed, \fCfalse\fP otherwise\&. 
+.RE
+.PP
+
+.PP
+Definition at line 79 of file hashmap\&.c\&.
+.PP
+References map::data, is, next_prime(), and map::table_size\&.
+.SS "size_t map_size (\fBmap_t\fP in)"
+
+.PP
+Get the current size of a hashmap\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIin\fP Map to be probed\&.
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Size of the hashmap\&. 
+.RE
+.PP
+
+.PP
+Definition at line 421 of file hashmap\&.c\&.
+.PP
+References isnt, and map::size\&.
+.PP
+Referenced by map_iterate()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "const int ARDP_MAP_FULL = (-2)\fC [static]\fP"
+HashMap is full\&. 
+.PP
+Definition at line 30 of file hashmap\&.h\&.
+.PP
+Referenced by map_hash(), and map_push()\&.
+.SS "const int ARDP_MAP_MISSING = (-3)\fC [static]\fP"
+No such element in map\&. 
+.PP
+Definition at line 26 of file hashmap\&.h\&.
+.PP
+Referenced by expand_curie(), map_get(), map_iterate(), and map_remove()\&.
+.SS "const int ARDP_MAP_OK = ( 0)\fC [static]\fP"
+OK - operation was performend correctly\&. 
+.PP
+Definition at line 38 of file hashmap\&.h\&.
+.PP
+Referenced by expand_curie(), map_get(), map_iterate(), map_push(), map_rehash(), map_remove(), and transform_uri()\&.
+.SS "const int ARDP_MAP_OUTMEM = (-1)\fC [static]\fP"
+Out of memory\&. 
+.PP
+Definition at line 34 of file hashmap\&.h\&.
+.PP
+Referenced by map_push(), and map_rehash()\&.
+.SS "const int ARDP_MAP_USED = (-4)\fC [static]\fP"
+Key used in the map\&. 
+.PP
+Definition at line 22 of file hashmap\&.h\&.
+.PP
+Referenced by map_push()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

@@ -1,0 +1,13 @@
+<map id="main" name="main">
+<area shape="rect" id="node2" href="$da/d66/string_8h.html#a12f47232313c30053024087993cb974a" title="Allocate new string of length. " alt="" coords="127,33,216,59"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#a7bd884793285536f59677943dfcbdf1d" title="Append character (BYTE) " alt="" coords="287,133,426,159"/>
+<area shape="rect" id="node8" href="$da/d66/string_8h.html#a6f598d471df929bcdbd952f1e9250724" title="Append the UTF8 codepoint to the string. " alt="" coords="104,83,239,108"/>
+<area shape="rect" id="node10" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="305,235,408,260"/>
+<area shape="rect" id="node11" href="$da/d66/string_8h.html#a29627f79b1bc1cb764ca201ede9b7ecb" title="Allocate new string with the default length. " alt="" coords="128,271,214,296"/>
+<area shape="rect" id="node4" href="$d1/db0/string_8c.html#a3f6f24f08bc23f32476c91cdb188d6f1" title="Close finish the string. " alt="" coords="476,33,569,59"/>
+<area shape="rect" id="node6" href="$da/d66/string_8h.html#aa2c9c3fe7a750acf8663e21823dce10e" title="Push character into the string. " alt="" coords="478,83,568,108"/>
+<area shape="rect" id="node7" href="$d1/db0/string_8c.html#a6ff49501c2d9eecb7ba76e6fe649738b" title="Resize the string. " alt="" coords="474,133,571,159"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="619,133,700,159"/>
+<area shape="rect" id="node9" href="$d1/db0/string_8c.html#a7bd884793285536f59677943dfcbdf1d" title="Append character (BYTE) " alt="" coords="287,32,426,57"/>
+<area shape="rect" id="node12" href="$d1/db0/string_8c.html#a775208cecc1d253c4c1009bd70f91512" title="Allocate new string of length. " alt="" coords="312,284,401,309"/>
+</map>

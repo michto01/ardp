@@ -1,0 +1,134 @@
+.TH "/Developer/school/ardp/src/lib/rdf/rdf_term.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/rdf/rdf_term.c \- Implementation of the \fC\fBrdf_term\fP\fP  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <ardp/rdf\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/string\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_uri\fP (\fButf8\fP uri)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_curie\fP (\fButf8\fP uri)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_literal\fP (\fButf8\fP literal, \fButf8\fP lang, \fButf8\fP datatype)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_from_blank\fP (\fButf8\fP blank)"
+.br
+.ti -1c
+.RI "struct \fBrdf_term\fP * \fBrdf_term_copy\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "void \fBrdf_term_free\fP (struct \fBrdf_term\fP *t)"
+.br
+.ti -1c
+.RI "int \fBrdf_term_equals\fP (const struct \fBrdf_term\fP *a, const struct \fBrdf_term\fP *b)"
+.br
+.ti -1c
+.RI "int \fBrdf_term_compare\fP (const struct \fBrdf_term\fP *a, const struct \fBrdf_term\fP *b)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Implementation of the \fC\fBrdf_term\fP\fP 
+
+This file implements the \fBrdf_term\fP and all its functions\&. Term can be one of the following: URI, CURIE, BLANK, LITERAL\&. Depending on type, the starage is used by internal union\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2016 
+.RE
+.PP
+
+.PP
+Definition in file \fBrdf_term\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "int rdf_term_compare (const struct \fBrdf_term\fP * a, const struct \fBrdf_term\fP * b)"
+
+.PP
+Definition at line 232 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, and rdf_term::type\&.
+.PP
+Referenced by rdf_statement_compare()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_copy (struct \fBrdf_term\fP * t)"
+
+.PP
+Definition at line 89 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_copy(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), rdf_statement_copy(), and yy_reduce()\&.
+.SS "int rdf_term_equals (const struct \fBrdf_term\fP * a, const struct \fBrdf_term\fP * b)"
+
+.PP
+Definition at line 162 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_generic_cmp(), string_strlen(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by rdf_statement_equals()\&.
+.SS "void rdf_term_free (struct \fBrdf_term\fP * t)"
+
+.PP
+Definition at line 128 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_BLANK, RDF_TERM_CURIE, RDF_TERM_LITERAL, RDF_TERM_UNKNOWN, RDF_TERM_URI, rdf_term_literal_value::string, string_dealloc(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), rdf_statement_clear(), rdf_statement_from_nodes(), yy_destructor(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_blank (\fButf8\fP blank)"
+
+.PP
+Definition at line 73 of file rdf_term\&.c\&.
+.PP
+References rdf_term_value::blank, RDF_TERM_BLANK, string_copy(), rdf_term::type, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_curie (\fButf8\fP uri)"
+
+.PP
+Definition at line 37 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_CURIE, string_copy(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_literal (\fButf8\fP literal, \fButf8\fP lang, \fButf8\fP datatype)"
+
+.PP
+Definition at line 52 of file rdf_term\&.c\&.
+.PP
+References rdf_term_literal_value::datatype, rdf_term_literal_value::language, rdf_term_value::literal, RDF_TERM_LITERAL, rdf_term_literal_value::string, string_copy(), rdf_term::type, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "struct \fBrdf_term\fP* rdf_term_from_uri (\fButf8\fP uri)"
+
+.PP
+Definition at line 18 of file rdf_term\&.c\&.
+.PP
+References RDF_TERM_URI, string_copy(), string_create_n(), string_strlen(), rdf_term::type, rdf_term_value::uri, and rdf_term::value\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

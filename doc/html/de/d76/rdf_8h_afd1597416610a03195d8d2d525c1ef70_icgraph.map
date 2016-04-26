@@ -1,0 +1,10 @@
+<map id="rdf_term_copy" name="rdf_term_copy">
+<area shape="rect" id="node2" href="$d9/d03/check__rdf__term__copy_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="204,5,254,31"/>
+<area shape="rect" id="node3" href="$d9/de5/rdf__statement_8c.html#aebb93cbc837e07de307b06d055aaa761" title="rdf_statement_copy" alt="" coords="160,55,298,80"/>
+<area shape="rect" id="node5" href="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14" title="yy_reduce" alt="" coords="188,104,271,129"/>
+<area shape="rect" id="node4" href="$d6/d8f/check__sequence__free_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="349,55,400,80"/>
+<area shape="rect" id="node6" href="$d6/d1c/turtle__parser_8c.html#a3c36da155e7cc782a7c759461bfc4acb" title="Parse" alt="" coords="346,104,402,129"/>
+<area shape="rect" id="node7" href="$db/d06/test__lemon_8c.html#a32f57dfc8fb69715ace3977789c4010e" title="ardp_parser_exec" alt="" coords="452,79,581,104"/>
+<area shape="rect" id="node8" href="$db/d06/test__lemon_8c.html#a5f6da0e12004e85804719717c0fe18d0" title="Flush parser to end one parsing unit. " alt="" coords="450,128,582,153"/>
+<area shape="rect" id="node9" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="630,128,680,153"/>
+</map>

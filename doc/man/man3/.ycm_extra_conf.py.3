@@ -1,0 +1,109 @@
+.TH "/Developer/school/ardp/.ycm_extra_conf.py" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/.ycm_extra_conf.py \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "def \fBDirectoryOfThisScript\fP ()"
+.br
+.ti -1c
+.RI "def \fBMakeRelativePathsInFlagsAbsolute\fP (\fBflags\fP, working_directory)"
+.br
+.ti -1c
+.RI "def \fBIsHeaderFile\fP (filename)"
+.br
+.ti -1c
+.RI "def \fBGetCompilationInfoForFile\fP (filename)"
+.br
+.ti -1c
+.RI "def \fBFlagsForFile\fP (filename, kwargs)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "list \fBflags\fP"
+.br
+.ti -1c
+.RI "string \fBcompilation_database_folder\fP = ''"
+.br
+.ti -1c
+.RI "tuple \fBdatabase\fP = ycm_core\&.CompilationDatabase( \fBcompilation_database_folder\fP )"
+.br
+.ti -1c
+.RI "list \fBSOURCE_EXTENSIONS\fP = [ '\&.cpp', '\&.cxx', '\&.cc', '\&.\fBc\fP', '\&.m', '\&.mm' ]"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "def DirectoryOfThisScript ()"
+
+.PP
+Definition at line 65 of file \&.ycm_extra_conf\&.py\&.
+.PP
+Referenced by FlagsForFile()\&.
+.SS "def FlagsForFile ( filename,  kwargs)"
+
+.PP
+Definition at line 121 of file \&.ycm_extra_conf\&.py\&.
+.PP
+References DirectoryOfThisScript(), GetCompilationInfoForFile(), and MakeRelativePathsInFlagsAbsolute()\&.
+.SS "def GetCompilationInfoForFile ( filename)"
+
+.PP
+Definition at line 103 of file \&.ycm_extra_conf\&.py\&.
+.PP
+References IsHeaderFile()\&.
+.PP
+Referenced by FlagsForFile()\&.
+.SS "def IsHeaderFile ( filename)"
+
+.PP
+Definition at line 98 of file \&.ycm_extra_conf\&.py\&.
+.PP
+Referenced by GetCompilationInfoForFile()\&.
+.SS "def MakeRelativePathsInFlagsAbsolute ( flags,  working_directory)"
+
+.PP
+Definition at line 69 of file \&.ycm_extra_conf\&.py\&.
+.PP
+Referenced by FlagsForFile()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "string compilation_database_folder = ''"
+
+.PP
+Definition at line 56 of file \&.ycm_extra_conf\&.py\&.
+.SS "database = ycm_core\&.CompilationDatabase( \fBcompilation_database_folder\fP )"
+
+.PP
+Definition at line 59 of file \&.ycm_extra_conf\&.py\&.
+.SS "list flags"
+\fBInitial value:\fP
+.PP
+.nf
+1 = [
+2     '-x',
+3     'c',
+4     '-DHAVE_CONFIG_H',
+5     '-I\&.',
+6     '-I\&.\&./\&.\&.',
+7     '-I\&.\&./\&.\&./include',
+8 ]
+.fi
+.PP
+Definition at line 36 of file \&.ycm_extra_conf\&.py\&.
+.SS "list SOURCE_EXTENSIONS = [ '\&.cpp', '\&.cxx', '\&.cc', '\&.\fBc\fP', '\&.m', '\&.mm' ]"
+
+.PP
+Definition at line 63 of file \&.ycm_extra_conf\&.py\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

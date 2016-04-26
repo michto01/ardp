@@ -1,0 +1,14 @@
+.TH "bug" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+bug \- Bug List 
+
+.IP "\fBFile \fBlexer\&.h\fP \fP" 1c
+Internal dispatch queue code needs to be cleaned up and locks need to be set properly (currently not working as designed)\&.  
+.IP "\fBFile \fBsequence\&.c\fP \fP" 1c
+sequence_free -> items freeing is causing the segfault\&. (free disabled for now\&.)  
+.IP "\fBFile \fButil\&.h\fP \fP" 1c
+A known bug 
+.PP
+

@@ -1,0 +1,14 @@
+.TH "md___developer_school_ardp__r_e_a_d_m_e" 3 "Tue Apr 19 2016" "Version 2.1.3" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+md___developer_school_ardp__r_e_a_d_m_e \- ARDP - Another RDF document parser 
+RDF is one of the building block of the \fCsemantic web\fP\&. The designated format \fCXML/RDF\fP has complex and somewhat hard to read syntax\&. Therefore several alternative formats were created so that it's easier for humans to read them, but most of them are not compatible with each other\&. The goal of this thesis is to create tool to serialize \fCTurtle\fP (and \fCN-Triples\fP) syntax to simple triples\&.
+.PP
+The implementation program called ARDP (another RDF document parser) should be focused on performance and correct handling of Unicode charset\&. The implementation is done in \fCC\fP language with use of the newest syntax \fCC11\fP\&. It uses the \fCGNU Autotools\fP as it's build system and \fCclang\fP as compiler ( \fCGCC\fP is not tested due to code reliability on clang's features, extensions and syntactic sugar)\&.
+.PP
+The primary development and deployment platforms are \fCMac OSX\fP and \fCGNU\\Linux\fP or other \fC*nix\fP system with support of the Autotools and Clang(LLVM) compiler\&. The \fCWindows\fP platform is supported via \fCcygwin\fP but is not being tested\&. The primary platforms are tested via \fCContinuous Integration\fP service \fCTravis-CI\fP\&.
+.PP
+Run compile this project one should execute following steps: ``` git clone https://github.com/michto01/ardp.git cd ardp \&./autogen\&.sh mkdir build #optional cd build #optional \&.\&./configure # \&./configure if optional steps were not taken make make check #optional make install #may require \fCsudo\fP access ```
+.PP
+Current implementation build status: \fC![Build Status](https://travis-ci\&.org/michto01/ardp\&.svg?branch=master)\fP 

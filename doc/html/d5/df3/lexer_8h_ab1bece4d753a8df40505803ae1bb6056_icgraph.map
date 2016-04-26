@@ -1,0 +1,8 @@
+<map id="ardp_lexer_is_ready" name="ardp_lexer_is_ready">
+<area shape="rect" id="node2" href="$dc/d1b/lexers_2turtle_8c.html#a70051edb3a62388bb92f4a12cf90cd74" title="Lex the block of data. " alt="" coords="214,49,352,88"/>
+<area shape="rect" id="node3" href="$dc/d1b/lexers_2turtle_8c.html#af942e21a2717f9a7715645feb9cf5955" title="Process reader until the input is exhausted. " alt="" coords="419,5,557,44"/>
+<area shape="rect" id="node5" href="$dc/d1b/lexers_2turtle_8c.html#a5ac446a5cbfeec92647c0f900f2972d7" title="ardp_lexer_process\l_reader_BUG" alt="" coords="419,93,557,132"/>
+<area shape="rect" id="node6" href="$dc/d1b/lexers_2turtle_8c.html#a3d449109bcd6f8b42fcf3428b6fec62a" title="ardp_lexer_process\l_reader_old" alt="" coords="419,179,557,217"/>
+<area shape="rect" id="node7" href="$dc/d1b/lexers_2turtle_8c.html#ae79ab750940fc212a8a8c9be1b97d391" title="ardp_lexer_turtle_process\l_block" alt="" coords="195,215,371,253"/>
+<area shape="rect" id="node4" href="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627" title="main" alt="" coords="605,12,656,37"/>
+</map>

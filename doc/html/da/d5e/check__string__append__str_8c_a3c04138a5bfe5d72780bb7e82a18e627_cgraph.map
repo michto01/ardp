@@ -1,0 +1,8 @@
+<map id="main" name="main">
+<area shape="rect" id="node2" href="$da/d66/string_8h.html#a37392b4b5db92c2f361fdee529b5e055" title="Append two ardp string to one another. " alt="" coords="104,5,232,31"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="123,55,212,80"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#aaded537f5c2631707954b4d2ec7bfca6" title="Create new string from string buffer. " alt="" coords="118,153,217,179"/>
+<area shape="rect" id="node7" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="116,104,219,129"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="296,55,377,80"/>
+<area shape="rect" id="node6" href="$d1/db0/string_8c.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="280,153,393,179"/>
+</map>

@@ -1,0 +1,807 @@
+.TH "/Developer/school/ardp/src/lib/parsers/turtle_parser.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/parsers/turtle_parser.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+\fC#include <stddef\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <ardp/rdf\&.h>\fP
+.br
+\fC#include <ardp/string\&.h>\fP
+.br
+\fC#include <ardp/sequence\&.h>\fP
+.br
+\fC#include <ardp/lexer\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+\fC#include <ardp/parser\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "union \fBYYMINORTYPE\fP"
+.br
+.ti -1c
+.RI "struct \fByyStackEntry\fP"
+.br
+.ti -1c
+.RI "struct \fByyParser\fP"
+.br
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBYYMALLOCARGTYPE\fP   u64"
+.br
+.ti -1c
+.RI "#define \fBYYERROR\fP"
+.br
+.ti -1c
+.RI "#define \fBXSD\fP   'xsd:'"
+.br
+.ti -1c
+.RI "#define \fBINTERFACE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBYYCODETYPE\fP   unsigned char"
+.br
+.ti -1c
+.RI "#define \fBYYNOCODE\fP   58"
+.br
+.ti -1c
+.RI "#define \fBYYACTIONTYPE\fP   unsigned char"
+.br
+.ti -1c
+.RI "#define \fBParseTOKENTYPE\fP   void*"
+.br
+.ti -1c
+.RI "#define \fBYYSTACKDEPTH\fP   100"
+.br
+.ti -1c
+.RI "#define \fBParseARG_SDECL\fP   struct \fBparser\fP* p ;"
+.br
+.ti -1c
+.RI "#define \fBParseARG_PDECL\fP   , struct \fBparser\fP* p"
+.br
+.ti -1c
+.RI "#define \fBParseARG_FETCH\fP   struct \fBparser\fP* p  = yypParser->p"
+.br
+.ti -1c
+.RI "#define \fBParseARG_STORE\fP   yypParser->p  = p"
+.br
+.ti -1c
+.RI "#define \fBYYNSTATE\fP   80"
+.br
+.ti -1c
+.RI "#define \fBYYNRULE\fP   60"
+.br
+.ti -1c
+.RI "#define \fBYY_NO_ACTION\fP   (\fBYYNSTATE\fP+\fBYYNRULE\fP+2)"
+.br
+.ti -1c
+.RI "#define \fBYY_ACCEPT_ACTION\fP   (\fBYYNSTATE\fP+\fBYYNRULE\fP+1)"
+.br
+.ti -1c
+.RI "#define \fBYY_ERROR_ACTION\fP   (\fBYYNSTATE\fP+\fBYYNRULE\fP)"
+.br
+.ti -1c
+.RI "#define \fByytestcase\fP(X)"
+.br
+.ti -1c
+.RI "#define \fBYY_SHIFT_USE_DFLT\fP   (-1)"
+.br
+.ti -1c
+.RI "#define \fBYY_SHIFT_MAX\fP   29"
+.br
+.ti -1c
+.RI "#define \fBYY_REDUCE_USE_DFLT\fP   (-32)"
+.br
+.ti -1c
+.RI "#define \fBYY_REDUCE_MAX\fP   15"
+.br
+.ti -1c
+.RI "#define \fBYY_SZ_ACTTAB\fP   (int)(sizeof(\fByy_action\fP)/sizeof(\fByy_action\fP[0]))"
+.br
+.ti -1c
+.RI "#define \fBTOKEN\fP   (yyminor\&.yy0)"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBParseTrace\fP (FILE *TraceFILE, char *zTracePrompt)"
+.br
+.ti -1c
+.RI "void * \fBParseAlloc\fP (void *(*mallocProc)(size_t))"
+.br
+.ti -1c
+.RI "static void \fByy_destructor\fP (\fByyParser\fP *yypParser, \fBYYCODETYPE\fP yymajor, \fBYYMINORTYPE\fP *yypminor)"
+.br
+.ti -1c
+.RI "static int \fByy_pop_parser_stack\fP (\fByyParser\fP *pParser)"
+.br
+.ti -1c
+.RI "void \fBParseFree\fP (void *p, void(*freeProc)(void *))"
+.br
+.ti -1c
+.RI "static int \fByy_find_shift_action\fP (\fByyParser\fP *pParser, \fBYYCODETYPE\fP iLookAhead)"
+.br
+.ti -1c
+.RI "static int \fByy_find_reduce_action\fP (int stateno, \fBYYCODETYPE\fP iLookAhead)"
+.br
+.ti -1c
+.RI "static void \fByyStackOverflow\fP (\fByyParser\fP *yypParser, \fBYYMINORTYPE\fP *yypMinor)"
+.br
+.ti -1c
+.RI "static void \fByy_shift\fP (\fByyParser\fP *yypParser, int yyNewState, int yyMajor, \fBYYMINORTYPE\fP *yypMinor)"
+.br
+.ti -1c
+.RI "static void \fByy_accept\fP (\fByyParser\fP *)"
+.br
+.ti -1c
+.RI "static void \fByy_reduce\fP (\fByyParser\fP *yypParser, int yyruleno)"
+.br
+.ti -1c
+.RI "static void \fByy_parse_failed\fP (\fByyParser\fP *yypParser)"
+.br
+.ti -1c
+.RI "static void \fByy_syntax_error\fP (\fByyParser\fP *yypParser, int yymajor, \fBYYMINORTYPE\fP yyminor)"
+.br
+.ti -1c
+.RI "void \fBParse\fP (void *yyp, int yymajor, \fBParseTOKENTYPE\fP yyminorParseARG_PDECL)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "const uint8_t *const \fBxsd_uri\fP = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfNil\fP = (uint8_t *) 'http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#nil'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfFirst\fP = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#First'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfRest\fP = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#Rest'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfBoolean\fP = (uint8_t*) \fBXSD\fP'Boolean'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfInt\fP = (uint8_t*) \fBXSD\fP'int'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfFloat\fP = (uint8_t*) \fBXSD\fP'float'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfDouble\fP = (uint8_t*) \fBXSD\fP'double'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfLong\fP = (uint8_t*) \fBXSD\fP'long'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfShort\fP = (uint8_t*) \fBXSD\fP'short'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfInteger\fP = (uint8_t*) \fBXSD\fP'integer'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfDecimal\fP = (uint8_t*) \fBXSD\fP'decimal'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfString\fP = (uint8_t*) \fBXSD\fP'string'"
+.br
+.ti -1c
+.RI "const uint8_t *const \fBrdfType\fP = (uint8_t *) 'http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#type'"
+.br
+.ti -1c
+.RI "static const \fBYYMINORTYPE\fP \fByyzerominor\fP = { 0 }"
+.br
+.ti -1c
+.RI "static const \fBYYACTIONTYPE\fP \fByy_action\fP []"
+.br
+.ti -1c
+.RI "static const \fBYYCODETYPE\fP \fByy_lookahead\fP []"
+.br
+.ti -1c
+.RI "static const signed char \fByy_shift_ofst\fP []"
+.br
+.ti -1c
+.RI "static const signed char \fByy_reduce_ofst\fP []"
+.br
+.ti -1c
+.RI "static const \fBYYACTIONTYPE\fP \fByy_default\fP []"
+.br
+.ti -1c
+.RI "static FILE * \fByyTraceFILE\fP = 0"
+.br
+.ti -1c
+.RI "static char * \fByyTracePrompt\fP = 0"
+.br
+.ti -1c
+.RI "static const char *const \fByyTokenName\fP []"
+.br
+.ti -1c
+.RI "static const char *const \fByyRuleName\fP []"
+.br
+.ti -1c
+.RI "struct {"
+.br
+.ti -1c
+.RI "\fBYYCODETYPE\fP \fBlhs\fP"
+.br
+.ti -1c
+.RI "unsigned char \fBnrhs\fP"
+.br
+.ti -1c
+.RI "} \fByyRuleInfo\fP []"
+.br
+.in -1c
+.SH "Data Structure Documentation"
+.PP 
+.SH "union YYMINORTYPE"
+.PP 
+Definition at line 105 of file turtle_parser\&.c\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+\fBParseTOKENTYPE\fP \fIyy0\fP 
+.br
+.PP
+\fButf8\fP \fIyy2\fP 
+.br
+.PP
+struct \fBsequence\fP * \fIyy33\fP 
+.br
+.PP
+struct \fBrdf_term\fP * \fIyy79\fP 
+.br
+.PP
+\fBdatatype_sys_t\fP * \fIyy8\fP 
+.br
+.PP
+int \fIyyinit\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct yyStackEntry"
+.PP 
+Definition at line 278 of file turtle_parser\&.c\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+\fBYYCODETYPE\fP \fImajor\fP 
+.br
+.PP
+\fBYYMINORTYPE\fP \fIminor\fP 
+.br
+.PP
+\fBYYACTIONTYPE\fP \fIstateno\fP 
+.br
+.PP
+.RE
+.PP
+.SH "struct yyParser"
+.PP 
+Definition at line 289 of file turtle_parser\&.c\&.
+.PP
+\fBData Fields:\fP
+.RS 4
+int \fIyyerrcnt\fP 
+.br
+.PP
+int \fIyyidx\fP 
+.br
+.PP
+\fBParseARG_SDECL\fP \fByyStackEntry\fP \fIyystack[\fBYYSTACKDEPTH\fP]\fP 
+.br
+.PP
+.RE
+.PP
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define INTERFACE   1"
+
+.PP
+Definition at line 65 of file turtle_parser\&.c\&.
+.SS "#define ParseARG_FETCH   struct \fBparser\fP* p  = yypParser->p"
+
+.PP
+Definition at line 118 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_accept(), yy_destructor(), yy_parse_failed(), yy_reduce(), yy_syntax_error(), and yyStackOverflow()\&.
+.SS "#define ParseARG_PDECL   , struct \fBparser\fP* p"
+
+.PP
+Definition at line 117 of file turtle_parser\&.c\&.
+.SS "#define ParseARG_SDECL   struct \fBparser\fP* p ;"
+
+.PP
+Definition at line 116 of file turtle_parser\&.c\&.
+.SS "#define ParseARG_STORE   yypParser->p  = p"
+
+.PP
+Definition at line 119 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_accept(), yy_parse_failed(), yy_syntax_error(), and yyStackOverflow()\&.
+.SS "#define ParseTOKENTYPE   void*"
+
+.PP
+Definition at line 104 of file turtle_parser\&.c\&.
+.SS "#define TOKEN   (yyminor\&.yy0)"
+
+.PP
+Referenced by yy_syntax_error()\&.
+.SS "#define XSD   'xsd:'"
+
+.PP
+Definition at line 39 of file turtle_parser\&.c\&.
+.SS "#define YY_ACCEPT_ACTION   (\fBYYNSTATE\fP+\fBYYNRULE\fP+1)"
+
+.PP
+Definition at line 123 of file turtle_parser\&.c\&.
+.SS "#define YY_ERROR_ACTION   (\fBYYNSTATE\fP+\fBYYNRULE\fP)"
+
+.PP
+Definition at line 124 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse()\&.
+.SS "#define YY_NO_ACTION   (\fBYYNSTATE\fP+\fBYYNRULE\fP+2)"
+
+.PP
+Definition at line 122 of file turtle_parser\&.c\&.
+.SS "#define YY_REDUCE_MAX   15"
+
+.PP
+Definition at line 234 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action()\&.
+.SS "#define YY_REDUCE_USE_DFLT   (-32)"
+
+.PP
+Definition at line 233 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action()\&.
+.SS "#define YY_SHIFT_MAX   29"
+
+.PP
+Definition at line 227 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_shift_action()\&.
+.SS "#define YY_SHIFT_USE_DFLT   (-1)"
+
+.PP
+Definition at line 226 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_shift_action()\&.
+.SS "#define YY_SZ_ACTTAB   (int)(sizeof(\fByy_action\fP)/sizeof(\fByy_action\fP[0]))"
+
+.PP
+Definition at line 249 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action(), and yy_find_shift_action()\&.
+.SS "#define YYACTIONTYPE   unsigned char"
+
+.PP
+Definition at line 103 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce(), and yy_shift()\&.
+.SS "#define YYCODETYPE   unsigned char"
+
+.PP
+Definition at line 101 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_find_shift_action(), yy_pop_parser_stack(), yy_reduce(), yy_shift(), and yy_syntax_error()\&.
+.SS "#define YYERROR"
+\fBValue:\fP
+.PP
+.nf
+do {                                                               \\
+                        ardp_fprintf(stderr,                                       \
+                                     kARDPColorMagenta,                            \
+                                     "\n[parser error] on line: %lu\n\n", p->stats\&.line);   \
+                        p->stats\&.n_errors++;                                       \
+                }while(0)
+.fi
+.PP
+Definition at line 26 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "#define YYMALLOCARGTYPE   u64"
+
+.PP
+Definition at line 24 of file turtle_parser\&.c\&.
+.SS "#define YYNOCODE   58"
+
+.PP
+Definition at line 102 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_find_reduce_action(), and yy_find_shift_action()\&.
+.SS "#define YYNRULE   60"
+
+.PP
+Definition at line 121 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_reduce(), and yy_syntax_error()\&.
+.SS "#define YYNSTATE   80"
+
+.PP
+Definition at line 120 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_reduce(), and yy_syntax_error()\&.
+.SS "#define YYSTACKDEPTH   100"
+
+.PP
+Definition at line 114 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_shift()\&.
+.SS "#define yytestcase(X)"
+
+.PP
+Definition at line 139 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SH "Function Documentation"
+.PP 
+.SS "void Parse (void * yyp, int yymajor, \fBParseTOKENTYPE\fP yyminor ParseARG_PDECL)"
+
+.PP
+Definition at line 1737 of file turtle_parser\&.c\&.
+.PP
+References yyStackEntry::major, ParseARG_STORE, yyStackEntry::stateno, YYMINORTYPE::yy0, yy_destructor(), YY_ERROR_ACTION, yy_find_reduce_action(), yy_find_shift_action(), yy_parse_failed(), yy_pop_parser_stack(), yy_reduce(), yy_shift(), yy_syntax_error(), YYCODETYPE, yyParser::yyerrcnt, yyParser::yyidx, YYNOCODE, YYNRULE, YYNSTATE, yyParser::yystack, yyStackOverflow(), yyTokenName, yyTraceFILE, yyTracePrompt, and yyzerominor\&.
+.PP
+Referenced by ardp_parser_exec(), and ardp_parser_finish()\&.
+.SS "void* ParseAlloc (void *(*)(size_t) mallocProc)"
+
+.PP
+Definition at line 462 of file turtle_parser\&.c\&.
+.PP
+References yyParser::yyidx, and yyParser::yystack\&.
+.PP
+Referenced by ardp_parser_create()\&.
+.SS "void ParseFree (void * p, void(*)(void *) freeProc)"
+
+.PP
+Definition at line 619 of file turtle_parser\&.c\&.
+.PP
+References yy_pop_parser_stack(), yyParser::yyidx, and yyParser::yystack\&.
+.PP
+Referenced by ardp_parser_destroy()\&.
+.SS "void ParseTrace (FILE * TraceFILE, char * zTracePrompt)"
+
+.PP
+Definition at line 329 of file turtle_parser\&.c\&.
+.PP
+References yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by ardp_parser_trace()\&.
+.SS "static void yy_accept (\fByyParser\fP * yypParser)\fC [static]\fP"
+
+.PP
+Definition at line 1699 of file turtle_parser\&.c\&.
+.PP
+References ParseARG_FETCH, ParseARG_STORE, yy_pop_parser_stack(), yyParser::yyidx, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "static void yy_destructor (\fByyParser\fP * yypParser, \fBYYCODETYPE\fP yymajor, \fBYYMINORTYPE\fP * yypminor)\fC [static]\fP"
+
+.PP
+Definition at line 484 of file turtle_parser\&.c\&.
+.PP
+References ParseARG_FETCH, rdf_term_free(), sequence_free(), string_dealloc(), YYMINORTYPE::yy0, YYMINORTYPE::yy2, YYMINORTYPE::yy33, YYMINORTYPE::yy79, and YYMINORTYPE::yy8\&.
+.PP
+Referenced by Parse(), yy_pop_parser_stack(), and yy_reduce()\&.
+.SS "static int yy_find_reduce_action (int stateno, \fBYYCODETYPE\fP iLookAhead)\fC [static]\fP"
+
+.PP
+Definition at line 706 of file turtle_parser\&.c\&.
+.PP
+References yy_action, yy_default, yy_lookahead, YY_REDUCE_MAX, yy_reduce_ofst, YY_REDUCE_USE_DFLT, YY_SZ_ACTTAB, and YYNOCODE\&.
+.PP
+Referenced by Parse(), and yy_reduce()\&.
+.SS "static int yy_find_shift_action (\fByyParser\fP * pParser, \fBYYCODETYPE\fP iLookAhead)\fC [static]\fP"
+
+.PP
+Definition at line 650 of file turtle_parser\&.c\&.
+.PP
+References yyStackEntry::stateno, yy_action, yy_default, yy_lookahead, YY_SHIFT_MAX, yy_shift_ofst, YY_SHIFT_USE_DFLT, YY_SZ_ACTTAB, YYCODETYPE, yyParser::yyidx, YYNOCODE, yyParser::yystack, yyTokenName, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by Parse(), and yy_syntax_error()\&.
+.SS "static void yy_parse_failed (\fByyParser\fP * yypParser)\fC [static]\fP"
+
+.PP
+Definition at line 1648 of file turtle_parser\&.c\&.
+.PP
+References ardp_fprintf(), kARDPColorMagenta, ParseARG_FETCH, ParseARG_STORE, yy_pop_parser_stack(), yyParser::yyidx, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by Parse()\&.
+.SS "static int yy_pop_parser_stack (\fByyParser\fP * pParser)\fC [static]\fP"
+
+.PP
+Definition at line 589 of file turtle_parser\&.c\&.
+.PP
+References yyStackEntry::major, yyStackEntry::minor, yy_destructor(), YYCODETYPE, yyParser::yyidx, yyParser::yystack, yyTokenName, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by Parse(), ParseFree(), yy_accept(), yy_parse_failed(), and yyStackOverflow()\&.
+.SS "static void yy_reduce (\fByyParser\fP * yypParser, int yyruleno)\fC [static]\fP"
+
+.PP
+Definition at line 875 of file turtle_parser\&.c\&.
+.PP
+References datatype_sys_t::datatype, datatype_sys_t::langtag, yyStackEntry::major, yyStackEntry::minor, rdf_statement::object, ParseARG_FETCH, rdf_statement::predicate, rdf_statement_free(), rdf_statement_from_nodes(), rdf_term_copy(), rdf_term_free(), rdf_term_from_blank(), rdf_term_from_curie(), rdf_term_from_literal(), rdf_term_from_uri(), RDF_TERM_URI, rdfBoolean, rdfDecimal, rdfDouble, rdfFirst, rdfInteger, rdfNil, rdfRest, rdfType, sequence_create(), sequence_free(), sequence_get_at(), sequence_push(), sequence_shift(), sequence_size(), sequence_unshift(), yyStackEntry::stateno, string_copy(), string_create(), string_create_n(), string_dealloc(), rdf_statement::subject, rdf_term::type, rdf_term_value::uri, rdf_term::value, YYMINORTYPE::yy0, YYMINORTYPE::yy2, YYMINORTYPE::yy33, YYMINORTYPE::yy79, YYMINORTYPE::yy8, yy_accept(), yy_destructor(), yy_find_reduce_action(), yy_shift(), YYACTIONTYPE, YYCODETYPE, YYERROR, yyParser::yyidx, YYNRULE, YYNSTATE, yyRuleInfo, yyRuleName, yyParser::yystack, yytestcase, yyTraceFILE, yyTracePrompt, and yyzerominor\&.
+.PP
+Referenced by Parse()\&.
+.SS "static void yy_shift (\fByyParser\fP * yypParser, int yyNewState, int yyMajor, \fBYYMINORTYPE\fP * yypMinor)\fC [static]\fP"
+
+.PP
+Definition at line 757 of file turtle_parser\&.c\&.
+.PP
+References yyStackEntry::major, yyStackEntry::minor, yyStackEntry::stateno, YYACTIONTYPE, YYCODETYPE, yyParser::yyidx, yyParser::yystack, YYSTACKDEPTH, yyStackOverflow(), yyTokenName, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by Parse(), and yy_reduce()\&.
+.SS "static void yy_syntax_error (\fByyParser\fP * yypParser, int yymajor, \fBYYMINORTYPE\fP yyminor)\fC [static]\fP"
+
+.PP
+Definition at line 1672 of file turtle_parser\&.c\&.
+.PP
+References ardp_fprintf(), kARDPColorBoldMagenta, kARDPColorMagenta, ParseARG_FETCH, ParseARG_STORE, TOKEN, yy_find_shift_action(), YYCODETYPE, YYNRULE, YYNSTATE, and yyTokenName\&.
+.PP
+Referenced by Parse()\&.
+.SS "static void yyStackOverflow (\fByyParser\fP * yypParser, \fBYYMINORTYPE\fP * yypMinor)\fC [static]\fP"
+
+.PP
+Definition at line 736 of file turtle_parser\&.c\&.
+.PP
+References ardp_fprintf(), kARDPColorMagenta, ParseARG_FETCH, ParseARG_STORE, yy_pop_parser_stack(), yyParser::yyidx, yyTraceFILE, and yyTracePrompt\&.
+.PP
+Referenced by Parse(), and yy_shift()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "const uint8_t* const rdfBoolean = (uint8_t*) \fBXSD\fP'Boolean'"
+
+.PP
+Definition at line 40 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfDecimal = (uint8_t*) \fBXSD\fP'decimal'"
+
+.PP
+Definition at line 47 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfDouble = (uint8_t*) \fBXSD\fP'double'"
+
+.PP
+Definition at line 43 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfFirst = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#First'"
+
+.PP
+Definition at line 36 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfFloat = (uint8_t*) \fBXSD\fP'float'"
+
+.PP
+Definition at line 42 of file turtle_parser\&.c\&.
+.SS "const uint8_t* const rdfInt = (uint8_t*) \fBXSD\fP'int'"
+
+.PP
+Definition at line 41 of file turtle_parser\&.c\&.
+.SS "const uint8_t* const rdfInteger = (uint8_t*) \fBXSD\fP'integer'"
+
+.PP
+Definition at line 46 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfLong = (uint8_t*) \fBXSD\fP'long'"
+
+.PP
+Definition at line 44 of file turtle_parser\&.c\&.
+.SS "const uint8_t* const rdfNil = (uint8_t *) 'http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#nil'"
+
+.PP
+Definition at line 35 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfRest = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#Rest'"
+
+.PP
+Definition at line 37 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const rdfShort = (uint8_t*) \fBXSD\fP'short'"
+
+.PP
+Definition at line 45 of file turtle_parser\&.c\&.
+.SS "const uint8_t* const rdfString = (uint8_t*) \fBXSD\fP'string'"
+
+.PP
+Definition at line 48 of file turtle_parser\&.c\&.
+.SS "const uint8_t* const rdfType = (uint8_t *) 'http://www\&.w3\&.org/1999/02/22-rdf-syntax-ns#type'"
+
+.PP
+Definition at line 50 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const uint8_t* const xsd_uri = (uint8_t *) 'http://www\&.w3\&.org/2001/XMLSchema#'"
+
+.PP
+Definition at line 33 of file turtle_parser\&.c\&.
+.SS "const \fBYYACTIONTYPE\fP yy_action[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+     52,   53,   21,   55,   56,   57,   58,    8,   54,    6,
+     31,   32,   61,   48,   42,   47,    2,   78,   49,   50,
+     51,   72,   77,   79,   13,   31,   32,   15,   66,   46,
+     69,   70,   71,   73,   74,   75,   76,   72,   10,    9,
+     67,   46,   22,   15,   24,   12,   69,   70,   71,   73,
+     74,   75,   76,   63,   10,   72,    3,   46,   20,   59,
+     28,   68,   77,   79,   69,   70,   71,   73,   74,   75,
+     76,   18,   10,   31,   32,   46,   41,   11,  141,    1,
+      4,    7,   27,   14,   34,   36,   37,   38,   72,   23,
+     43,   44,   45,   30,   35,   39,   40,   69,   70,   71,
+     73,   74,   75,   76,    5,   10,   60,   19,   46,   80,
+     64,   17,   62,   31,   32,   25,   29,   16,  142,   26,
+    142,    7,    2,   14,   31,   32,   31,   32,   77,   79,
+    142,   78,   45,   33,    7,  142,   14,  142,   36,   37,
+     38,  142,  142,   43,   44,   45,  142,   65,  142,  142,
+      2,  142,  142,  142,  142,  142,   77,   79,
+}
+.fi
+.PP
+Definition at line 190 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action(), and yy_find_shift_action()\&.
+.SS "const \fBYYACTIONTYPE\fP yy_default[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+     82,  140,  140,  140,  140,  140,   98,  140,  140,  103,
+    130,  140,   99,  101,  124,  106,  140,  140,  140,  140,
+    140,  140,  140,  104,  140,  140,  140,  140,  140,  140,
+    121,  135,  136,  139,  122,  123,  125,  126,  127,  128,
+    129,  131,  132,  133,  134,  137,  138,   96,   97,  109,
+    110,  111,   81,   83,   84,   85,   86,   87,   88,   89,
+     90,   91,   92,   93,   94,   95,  100,  102,  105,  113,
+    114,  115,  116,  117,  118,  119,  120,  107,  108,  112,
+}
+.fi
+.PP
+Definition at line 239 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action(), and yy_find_shift_action()\&.
+.SS "const \fBYYCODETYPE\fP yy_lookahead[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+     27,   28,   29,   30,   31,   32,   33,   34,    1,   36,
+      4,    5,    1,   35,   45,   37,   38,   11,   45,   46,
+     47,   36,   44,   45,   39,    4,    5,   42,   41,   56,
+     45,   46,   47,   48,   49,   50,   51,   36,   53,    9,
+     39,   56,    3,   42,    5,   40,   45,   46,   47,   48,
+     49,   50,   51,    4,   53,   36,   38,   56,    3,    1,
+      5,   42,   44,   45,   45,   46,   47,   48,   49,   50,
+     51,    4,   53,    4,    5,   56,   19,   20,   25,   26,
+     52,   12,    4,   14,   15,   16,   17,   18,   36,   43,
+     21,   22,   23,   13,   42,   54,   55,   45,   46,   47,
+     48,   49,   50,   51,   10,   53,    1,    4,   56,    0,
+      4,    2,    4,    4,    5,    6,    7,    8,   57,   35,
+     57,   12,   38,   14,    4,    5,    4,    5,   44,   45,
+     57,   11,   23,   13,   12,   57,   14,   57,   16,   17,
+     18,   57,   57,   21,   22,   23,   57,   35,   57,   57,
+     38,   57,   57,   57,   57,   57,   44,   45,
+}
+.fi
+.PP
+Definition at line 208 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action(), and yy_find_shift_action()\&.
+.SS "const signed char yy_reduce_ofst[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+     53,  -27,  -15,    1,   52,   19,  -22,   84,  112,   18,
+     41,  -31,  -13,    5,   28,   46,
+}
+.fi
+.PP
+Definition at line 235 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_reduce_action()\&.
+.SS "const signed char yy_shift_ofst[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= {
+     -1,  109,  122,  122,   69,  122,    6,  120,    6,    6,
+     57,   21,   30,   -1,   -1,   -1,   55,   39,   11,   58,
+     49,    7,  103,   94,   78,   67,   80,  105,  106,  108,
+}
+.fi
+.PP
+Definition at line 228 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_find_shift_action()\&.
+.SS "const { \&.\&.\&. }   yyRuleInfo[]\fC [static]\fP"
+
+.PP
+Referenced by yy_reduce()\&.
+.SS "const char* const yyRuleName[]\fC [static]\fP"
+
+.PP
+Definition at line 362 of file turtle_parser\&.c\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "const char* const yyTokenName[]\fC [static]\fP"
+\fBInitial value:\fP
+.PP
+.nf
+= { 
+  "$",             "DOT",           "PREFIX",        "COLON",       
+  "IRIREF",        "QNAME",         "BASE",          "SPARQL_BASE", 
+  "SPARQL_PREFIX",  "SEMICOLON",     "COMMA",         "A",           
+  "L_SQUARE",      "R_SQUARE",      "L_CURLY",       "R_CURLY",     
+  "INTEGER_LITERAL",  "DECIMAL_LITERAL",  "DOUBLE_LITERAL",  "LANGTAG",     
+  "HAT",           "BOOLEAN_LITERAL",  "STRING_LITERAL",  "BLANK_LITERAL",
+  "error",         "turtleDoc",     "statements",    "statement",   
+  "directive",     "triples",       "prefixID",      "base",        
+  "sparqlPrefix",  "sparqlBase",    "subject",       "predicateObjectList",
+  "blankNodePropertyList",  "predicateObjectList_astr",  "verb",          "objectList",  
+  "predicateObjectList_ast",  "predicateObjectList_qst",  "object",        "objectList_ast",
+  "predicate",     "iri",           "blankNode",     "collection",  
+  "literal",       "rdfLiteral",    "numericalLiteral",  "booleanLiteral",
+  "collection_ast",  "string",        "rdfLiteral_qst",  "rdfLiteral_opt",
+  "anon",        
+}
+.fi
+.PP
+Definition at line 340 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), yy_find_shift_action(), yy_pop_parser_stack(), yy_shift(), and yy_syntax_error()\&.
+.SS "FILE* yyTraceFILE = 0\fC [static]\fP"
+
+.PP
+Definition at line 307 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), ParseTrace(), yy_accept(), yy_find_shift_action(), yy_parse_failed(), yy_pop_parser_stack(), yy_reduce(), yy_shift(), and yyStackOverflow()\&.
+.SS "char* yyTracePrompt = 0\fC [static]\fP"
+
+.PP
+Definition at line 308 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), ParseTrace(), yy_accept(), yy_find_shift_action(), yy_parse_failed(), yy_pop_parser_stack(), yy_reduce(), yy_shift(), and yyStackOverflow()\&.
+.SS "const \fBYYMINORTYPE\fP yyzerominor = { 0 }\fC [static]\fP"
+
+.PP
+Definition at line 128 of file turtle_parser\&.c\&.
+.PP
+Referenced by Parse(), and yy_reduce()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

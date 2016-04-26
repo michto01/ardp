@@ -1,0 +1,6 @@
+<map id="rdf_term_from_uri" name="rdf_term_from_uri">
+<area shape="rect" id="node2" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="192,5,282,31"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="181,55,294,80"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#a134c79b629c363220b78fdcf761a69eb" title="Length of the fat&#45;pointer string. " alt="" coords="190,104,284,129"/>
+<area shape="rect" id="node3" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="342,55,422,80"/>
+</map>

@@ -1,0 +1,47 @@
+digraph "p"
+{
+ // INTERACTIVE_SVG=YES
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="p",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="_triple",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#ab48aab69d9c6f5e7e073a50e505e1fa0"];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="ardp_parser_create\l_internal",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#a0a1bc799a2da60fe82e1061e72016dd5",tooltip="Parser ///. "];
+  Node3 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="ardp_parser_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#a0360aabf481135a87f18e29fc81e5c21",tooltip="Create and initialize all prerequisites for shared_parser. "];
+  Node4 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="main",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d8/da8/ardp_8c.html#a3c04138a5bfe5d72780bb7e82a18e627"];
+  Node1 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="ardp_lexer_process\l_block",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dc/d1b/lexers_2turtle_8c.html#a70051edb3a62388bb92f4a12cf90cd74",tooltip="Lex the block of data. "];
+  Node6 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="ardp_lexer_process\l_reader",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dc/d1b/lexers_2turtle_8c.html#af942e21a2717f9a7715645feb9cf5955",tooltip="Process reader until the input is exhausted. "];
+  Node7 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="ardp_lexer_process\l_reader_old",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dc/d1b/lexers_2turtle_8c.html#a3d449109bcd6f8b42fcf3428b6fec62a"];
+  Node1 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="ardp_lexer_turtle_process\l_block",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dc/d1b/lexers_2turtle_8c.html#ae79ab750940fc212a8a8c9be1b97d391"];
+  Node9 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="expand_curie",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#a75806af329d99c4a3ba569197f9b576f"];
+  Node10 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="hash_simple",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d1/d04/hash_8c.html#a76265ee9aea00484914b9bdabb150a44",tooltip="A Simple Hash Function. "];
+  Node1 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="main",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d6/d8f/check__sequence__free_8c.html#a3c04138a5bfe5d72780bb7e82a18e627"];
+  Node1 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="sequence_create",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d4/d43/sequence_8c.html#a1a70901569107d9a97dd916b3d086d7b"];
+  Node13 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="yy_reduce",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d6/d1c/turtle__parser_8c.html#a7c419a9b25711c666a9a2449ef377f14"];
+  Node14 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="Parse",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$d6/d1c/turtle__parser_8c.html#a3c36da155e7cc782a7c759461bfc4acb"];
+  Node15 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="ardp_parser_exec",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#a32f57dfc8fb69715ace3977789c4010e"];
+  Node15 -> Node17 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node17 [label="ardp_parser_finish",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$db/d06/test__lemon_8c.html#a5f6da0e12004e85804719717c0fe18d0",tooltip="Flush parser to end one parsing unit. "];
+  Node17 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

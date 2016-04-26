@@ -1,0 +1,6 @@
+<map id="rdf_statement_copy" name="rdf_statement_copy">
+<area shape="rect" id="node2" href="$d9/de5/rdf__statement_8c.html#aeff78c7f1d1aebc96f2de9e0f35e17c5" title="Create new empty RDF statement. " alt="" coords="192,5,339,31"/>
+<area shape="rect" id="node3" href="$de/d76/rdf_8h.html#afd1597416610a03195d8d2d525c1ef70" title="rdf_term_copy" alt="" coords="212,55,319,80"/>
+<area shape="rect" id="node4" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="387,55,477,80"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="525,55,605,80"/>
+</map>

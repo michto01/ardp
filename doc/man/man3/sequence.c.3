@@ -1,0 +1,159 @@
+.TH "/Developer/school/ardp/src/lib/sequence.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/src/lib/sequence.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <ardp/sequence\&.h>\fP
+.br
+\fC#include <ardp/util\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "static int \fBsequence_ensure\fP (struct \fBsequence\fP *seq, size_t capacity, int grow_at_front)"
+.br
+.ti -1c
+.RI "struct \fBsequence\fP * \fBsequence_create\fP (\fBsequence_free_handler\fP f, \fBsequence_error_handler\fP e, \fBsequence_print_handler\fP p)"
+.br
+.ti -1c
+.RI "size_t \fBsequence_size\fP (struct \fBsequence\fP *seq)"
+.br
+.ti -1c
+.RI "void \fBsequence_free\fP (struct \fBsequence\fP *seq)"
+.br
+.ti -1c
+.RI "int \fBsequence_set_at\fP (struct \fBsequence\fP *seq, int idx, void *data)"
+.br
+.ti -1c
+.RI "void * \fBsequence_get_at\fP (struct \fBsequence\fP *seq, int idx)"
+.br
+.ti -1c
+.RI "void * \fBsequence_delete_at\fP (struct \fBsequence\fP *seq, int idx)"
+.br
+.ti -1c
+.RI "void * \fBsequence_pop\fP (struct \fBsequence\fP *seq)"
+.br
+.ti -1c
+.RI "int \fBsequence_push\fP (struct \fBsequence\fP *s, void *data)"
+.br
+.ti -1c
+.RI "int \fBsequence_shift\fP (struct \fBsequence\fP *seq, void *data)"
+.br
+.ti -1c
+.RI "void * \fBsequence_unshift\fP (struct \fBsequence\fP *seq)"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Implements \fCsequence\fP interface to allow for arbitrary storage of data\&.
+.PP
+\fBAuthor:\fP
+.RS 4
+Tomas Michalek tomas.michalek.st@vsb.cz 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+2016
+.RE
+.PP
+\fBBug\fP
+.RS 4
+sequence_free -> items freeing is causing the segfault\&. (free disabled for now\&.) 
+.RE
+.PP
+
+.PP
+Definition in file \fBsequence\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "struct \fBsequence\fP* sequence_create (\fBsequence_free_handler\fP f, \fBsequence_error_handler\fP e, \fBsequence_print_handler\fP p)"
+
+.PP
+Definition at line 47 of file sequence\&.c\&.
+.PP
+References sequence::error, sequence::free, sequence::print, and unlikely\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "void* sequence_delete_at (struct \fBsequence\fP * seq, int idx)"
+
+.PP
+Definition at line 150 of file sequence\&.c\&.
+.PP
+References sequence::head, sequence::items, sequence::size, and unlikely\&.
+.SS "static int sequence_ensure (struct \fBsequence\fP * seq, size_t capacity, int grow_at_front)\fC [static]\fP"
+
+.PP
+Definition at line 15 of file sequence\&.c\&.
+.PP
+References sequence::capacity, sequence::head, sequence::items, SEQUENCE_MIN_CAPACITY, and sequence::size\&.
+.PP
+Referenced by sequence_push(), sequence_set_at(), and sequence_shift()\&.
+.SS "void sequence_free (struct \fBsequence\fP * seq)"
+
+.PP
+Definition at line 73 of file sequence\&.c\&.
+.PP
+References sequence::free, sequence::items, sequence_size(), and sequence_unshift()\&.
+.PP
+Referenced by main(), yy_destructor(), and yy_reduce()\&.
+.SS "void* sequence_get_at (struct \fBsequence\fP * seq, int idx)"
+
+.PP
+Definition at line 141 of file sequence\&.c\&.
+.PP
+References sequence::head, sequence::items, sequence::size, and unlikely\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "void* sequence_pop (struct \fBsequence\fP * seq)"
+
+.PP
+Definition at line 166 of file sequence\&.c\&.
+.PP
+References sequence::head, sequence::items, sequence::size, and unlikely\&.
+.SS "int sequence_push (struct \fBsequence\fP * s, void * data)"
+
+.PP
+Definition at line 181 of file sequence\&.c\&.
+.PP
+References sequence::capacity, sequence::free, sequence::head, sequence::items, sequence_ensure(), and sequence::size\&.
+.PP
+Referenced by main(), and yy_reduce()\&.
+.SS "int sequence_set_at (struct \fBsequence\fP * seq, int idx, void * data)"
+
+.PP
+Definition at line 94 of file sequence\&.c\&.
+.PP
+References sequence::capacity, sequence::free, sequence::head, sequence::items, sequence_ensure(), sequence::size, and unlikely\&.
+.SS "int sequence_shift (struct \fBsequence\fP * seq, void * data)"
+
+.PP
+Definition at line 202 of file sequence\&.c\&.
+.PP
+References sequence::capacity, sequence::free, sequence::head, sequence::items, sequence_ensure(), sequence::size, and unlikely\&.
+.PP
+Referenced by yy_reduce()\&.
+.SS "size_t sequence_size (struct \fBsequence\fP * seq)"
+
+.PP
+Definition at line 65 of file sequence\&.c\&.
+.PP
+References sequence::size, and unlikely\&.
+.PP
+Referenced by sequence_free(), and yy_reduce()\&.
+.SS "void* sequence_unshift (struct \fBsequence\fP * seq)"
+
+.PP
+Definition at line 222 of file sequence\&.c\&.
+.PP
+References sequence::head, sequence::items, sequence::size, and unlikely\&.
+.PP
+Referenced by sequence_free(), and yy_reduce()\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.

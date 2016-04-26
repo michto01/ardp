@@ -1,0 +1,18 @@
+<map id="main" name="main">
+<area shape="rect" id="node2" href="$de/d76/rdf_8h.html#a02ce4093fd0ce96649f011edf0b77bdb" title="rdf_statement_free" alt="" coords="109,5,242,31"/>
+<area shape="rect" id="node7" href="$de/d76/rdf_8h.html#a4cac26f6b264b67efcc5490306ae438a" title="rdf_statement_from\l_nodes" alt="" coords="107,55,244,93"/>
+<area shape="rect" id="node9" href="$de/d76/rdf_8h.html#a881ed93cd1f373a3f6d2a08bf6e9707d" title="rdf_term_from_blank" alt="" coords="104,117,248,143"/>
+<area shape="rect" id="node11" href="$de/d76/rdf_8h.html#a4b73977af4ee19333e270d1c6b287d9f" title="rdf_term_from_curie" alt="" coords="105,167,246,192"/>
+<area shape="rect" id="node12" href="$de/d76/rdf_8h.html#af988cc14c5a775936dc0875d903c52ea" title="rdf_term_from_literal" alt="" coords="104,216,248,241"/>
+<area shape="rect" id="node13" href="$de/d76/rdf_8h.html#ac2094070a1cf38a9a583f040f8f3eb5d" title="rdf_term_from_uri" alt="" coords="112,265,239,291"/>
+<area shape="rect" id="node16" href="$da/d66/string_8h.html#aaded537f5c2631707954b4d2ec7bfca6" title="Create new string from string buffer. " alt="" coords="127,315,225,340"/>
+<area shape="rect" id="node3" href="$d9/de5/rdf__statement_8c.html#a3ea695afe82e1c554e0ec256a0f4c024" title="rdf_statement_clear" alt="" coords="300,7,439,32"/>
+<area shape="rect" id="node4" href="$de/d76/rdf_8h.html#ae723a9696763fcfdf0571c471f46cce0" title="rdf_term_free" alt="" coords="491,60,593,85"/>
+<area shape="rect" id="node5" href="$da/d66/string_8h.html#aa242601b8ce30ceaf886714e0ba18656" title="Destroy the string. " alt="" coords="641,88,744,113"/>
+<area shape="rect" id="node6" href="$da/d66/string_8h.html#ac39095a309502a451f48236a2d946c35" title="Helper function to shift the string to header positio. " alt="" coords="792,165,873,191"/>
+<area shape="rect" id="node8" href="$d9/de5/rdf__statement_8c.html#aeff78c7f1d1aebc96f2de9e0f35e17c5" title="Create new empty RDF statement. " alt="" coords="296,111,443,136"/>
+<area shape="rect" id="node10" href="$da/d66/string_8h.html#a99e3f005d845b99c14569c1362e08a99" title="Returns new copy of the specified string. " alt="" coords="325,165,414,191"/>
+<area shape="rect" id="node14" href="$da/d66/string_8h.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="313,215,426,240"/>
+<area shape="rect" id="node15" href="$da/d66/string_8h.html#a134c79b629c363220b78fdcf761a69eb" title="Length of the fat&#45;pointer string. " alt="" coords="495,240,589,265"/>
+<area shape="rect" id="node17" href="$d1/db0/string_8c.html#aec207c426a3897b4fcc1dcbd40e5d47f" title="Create new string from content of the buffer of specified length. " alt="" coords="313,316,426,341"/>
+</map>

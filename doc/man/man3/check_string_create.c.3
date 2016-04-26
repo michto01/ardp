@@ -1,0 +1,54 @@
+.TH "/Developer/school/ardp/tests/check_string_create.c" 3 "Tue Apr 26 2016" "Version 2.2.1" "ARDP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/Developer/school/ardp/tests/check_string_create.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <ardp/string\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <assert\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "int \fBcolor_stdout_is_tty\fP = -1"
+.br
+.RI "\fIGenerally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Check if the various string functions are implemented properly\&. 
+.PP
+Definition in file \fBcheck_string_create\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char ** argv)"
+
+.PP
+Definition at line 13 of file check_string_create\&.c\&.
+.PP
+References string_create(), and string_create_n()\&.
+.SH "Variable Documentation"
+.PP 
+.SS "int color_stdout_is_tty = -1"
+
+.PP
+Generally the color code will lazily figure this out itself, but this provides a mechanism for callers to override autodetection\&. 
+.PP
+Definition at line 11 of file check_string_create\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ARDP from the source code\&.
