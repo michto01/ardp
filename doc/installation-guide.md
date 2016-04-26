@@ -5,9 +5,11 @@ _The recommened approach on GNU/Linux is to translate the Debian apt-get command
 
 ##Linux dependencies
 The generic linux installation requires several tools to be installed. This guide suppose that the distribution has the basic development support and that _llvm-clang_ is already installed and is relatively up-to-date (3.5.0+). If the target platform is Debian based distribution, single command should build and install all required dependencies:
-    
-    sudo apt-get -y install libdispatch-dev zlib1g-dev bzip2 libbz2-dev autotools-dev autoconf ragel lemon
-
+```sh
+    sudo apt-get -y install libdispatch-dev 
+    zlib1g-dev bzip2 libbz2-dev autotools-dev 
+    autoconf ragel lemon
+```
 Zlib installation:
 ```sh
         wget http://www.zlib.net/zlib-1.2.8.tar.gz
