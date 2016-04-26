@@ -1,1 +1,98 @@
-/usr/local/Cellar/automake/1.15/share/automake-1.15/INSTALL
+Installation guide
+-----------------------------------------------------------------------
+
+Following chapters outlines the necessary dependencies and environment for
+building the ARDP. The tested environment were OSX and Ubuntu, but generic
+approach should apply to all *nix platforms.
+
+The recommened approach on GNU/Linux is to translate the Debian apt-get command
+into the package manager command of chosen distribution, as package managers
+usually resolve additional decencies which may be required for the packages and
+were not discovered during their presence on test distribution.
+
+Linux dependencies
+======================
+
+The generic linux installation requires several tools to be installed. This
+guide suppose that the distribution has the basic development support and that
+llvm-clang is already installed and is relatively up-to-date (3.5.0+). If the
+target platform is Debian based distribution, single command should build and
+install all required dependencies:
+
+        sudo apt-get -y install libdispatch-dev
+                                zlib1g-dev bzip2 libbz2-dev autotools-dev
+                                autoconf ragel lemon
+
+## MANUAL INSTALATION
+
+Zlib installation:
+        wget http://www.zlib.net/zlib-1.2.8.tar.gz
+        tar -xvzf zlib-1.2.8.tar.gz
+        cd zlib-1.2.8 ./configure && make && sudo make install
+
+BZip2 installation:
+        wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz
+        tar -xvzf bzip2-1.0.6.tar.gz
+        cd bzip2-1.0.6 ./configure && make && sudo make install
+
+LibDispatch installation:
+        #Needs to have CLANG installed for the BlockRuntime
+        git clone git://git.macosforge.org/libdispatch.git
+        cd libdispatch
+        sh autogen.sh
+        ./configure CC=clang --with-blocks-runtime=/usr/local/lib
+        make check
+        make && sudo make install
+
+
+
+OSX dependencies
+=====================================
+In order to install the dependencies used to build the ARDP on OSX, one should
+install XCode using the the AppStore. After installation of the Xcode, command
+for installing the CLT should be entered in terminal:
+        xcode-select --install
+
+If any of the dependencies are missing, it is recommended to install Homebrew
+package manager from https://brew.sh and installing the depencecies from it, or
+installing *wget command and follow the steps as specified in linux generic
+installation from source.
+
+Installing the ARDP
+==============================================
+
+After all dependencies are installed the ARDP should be ready to be build and
+installed.  ARDP can be obtained using two methods: one is the ARDP version
+included on CD which is part of this thesis. In such case one should copy the
+ardp-*.tar.gz, unpack it and skip the following steps related to git.
+
+The other method is to download the sources from github git repository. The
+github has the newest version of the work regardless of the status of CD and is
+recommended as source, for improvements and changes are likely to be made to
+codebase. The github code which is identical to the content of the CD is tagged
+with label 'thesis'.
+
+        git clone https://www.github.com/michto01/ardp
+        cd ardp
+        sh autogen.sh # bootstrap the package.
+
+As is visible in the previous listing, the git repository requires aditional
+step, namely running the script autogen.sh, which creates files, which are
+target specific and therefore are in .gitignore file. Optionally, one can
+generate the new code from the tools ragel and lemon. This allows to change and
+fine-tune the behavior of the generators tools; eg. change the style of
+generated output for ragel:
+        # from ardp root directory
+        ragel src/lib/lexers/turtle.rl -G2 src/lib/lexers/turtle.c
+        cd src/lib/parsers lemon -s ./turtle_parser.y
+
+The last step is to finally build the ARDP. It is done using the standard Unix
+autotools combo; to maintain the clarity of the package, build is done in
+separate directory as to avoid processed files mixup with source code:
+
+        mkdir build && cd build # optional
+        ../configure               # ./configure if building from root
+        make
+        make check # optional
+        sudo make install
+
