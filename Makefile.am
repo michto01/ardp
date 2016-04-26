@@ -20,4 +20,5 @@ SUBDIRS = src \
           tests \
           examples
 
-EXTRA_DIST = include
+EXTRA_DIST = include \
+			 examples
